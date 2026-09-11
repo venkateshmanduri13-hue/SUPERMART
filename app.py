@@ -24,7 +24,7 @@ def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
 
-    # Users Table: Strictly UNIQUE Phone
+    # Users Table
     c.execute('''CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         phone TEXT UNIQUE NOT NULL,
@@ -97,7 +97,6 @@ def init_db():
         conn.commit()
     conn.close()
 
-# PWA Config
 PWA_MANIFEST = {
     "name": "Supermart Online Store",
     "short_name": "Supermart",
@@ -113,7 +112,7 @@ PWA_MANIFEST = {
 }
 
 PWA_SW_JS = """
-const CACHE_NAME = 'supermart-cache-v4';
+const CACHE_NAME = 'supermart-cache-v5';
 const ASSETS = ['/', '/manifest.json'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
@@ -129,7 +128,7 @@ self.addEventListener('fetch', (e) => {
 """
 
 # ==============================================================================
-# 2. CUSTOMER FRONTEND (WITH FLIPKART STYLE LIVE LOCATION SHEET & PINCODE AUTOFILL)
+# 2. CUSTOMER FRONTEND (CLEAN 2D ICONS, PROFILE EDIT, MULTI-LANGUAGE)
 # ==============================================================================
 CUSTOMER_HTML = f"""
 <!DOCTYPE html>
@@ -150,24 +149,24 @@ CUSTOMER_HTML = f"""
       --primary: #9333ea;
       --primary-dark: #7e22ce;
       --accent: #ec4899;
-      --glass-bg: rgba(255, 255, 255, 0.85);
-      --glass-card: rgba(255, 255, 255, 0.90);
-      --glass-border: rgba(226, 232, 240, 0.8);
+      --glass-bg: rgba(255, 255, 255, 0.90);
+      --glass-card: #ffffff;
+      --glass-border: #e2e8f0;
       --text: #1e1b4b;
       --muted: #64748b;
       --whatsapp: #25d366;
-      --shadow: 0 8px 24px rgba(149, 157, 165, 0.12);
+      --shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
     }}
     * {{ box-sizing: border-box; margin: 0; padding: 0; font-family: Roboto, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }}
     
     body {{
-      background: linear-gradient(135deg, #f3e8ff 0%, #fdf2f8 50%, #f1f5f9 100%);
-      background-attachment: fixed;
+      background: #f8fafc;
       color: var(--text);
       padding-bottom: 75px;
       min-height: 100vh;
     }}
 
+    /* Clean 2D Minimalist Top Header */
     .top-bar {{
       position: sticky; top: 0; z-index: 1000;
       background: var(--glass-bg);
@@ -178,42 +177,50 @@ CUSTOMER_HTML = f"""
     .header-row1 {{ display: flex; justify-content: space-between; align-items: center; }}
     .brand-logo {{ font-size: 20px; font-weight: 900; color: var(--primary); display: flex; align-items: center; gap: 6px; cursor: pointer; }}
     .brand-logo span {{ background: linear-gradient(135deg, #9333ea, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
-    .top-icons {{ display: flex; gap: 8px; align-items: center; }}
-    .icon-bubble {{
-      background: rgba(255,255,255,0.75); border: 1px solid var(--glass-border);
-      padding: 6px 10px; border-radius: 20px; font-size: 13px; font-weight: bold;
-      cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    
+    .top-icons {{ display: flex; gap: 10px; align-items: center; }}
+    
+    /* 2D Circular Minimalist Icons (Last Image Style) */
+    .icon-2d-btn {{
+      width: 38px; height: 38px; border-radius: 50%;
+      background: #ffffff; border: 1px solid #e2e8f0;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06); position: relative; cursor: pointer;
+      transition: transform 0.15s ease;
     }}
-
+    .icon-2d-btn:active {{ transform: scale(0.92); }}
+    .icon-badge-num {{
+      position: absolute; top: -3px; right: -3px;
+      background: #ef4444; color: #fff; font-size: 10px; font-weight: bold;
+      width: 17px; height: 17px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    }}
+    
     .search-container {{ margin-top: 8px; position: relative; }}
     .search-input {{
       width: 100%; height: 42px; border: 1px solid #cbd5e1;
       border-radius: 24px; padding: 0 42px 0 38px; font-size: 13px;
-      outline: none; background: #ffffff; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+      outline: none; background: #ffffff; box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
     }}
     .search-left-icon {{ position: absolute; left: 14px; top: 11px; color: #94a3b8; font-size: 15px; }}
     .search-right-icon {{ position: absolute; right: 14px; top: 10px; color: #94a3b8; font-size: 16px; cursor: pointer; }}
 
-    /* Delivering Address Strip */
     .delivery-strip {{
-      background: rgba(243, 232, 255, 0.75); backdrop-filter: blur(6px);
-      padding: 8px 14px; font-size: 12px; font-weight: bold; color: #6b21a8;
-      display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(216, 180, 254, 0.5);
+      background: #f1f5f9; padding: 8px 14px; font-size: 12px; font-weight: bold; color: #475569;
+      display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0;
       cursor: pointer;
     }}
 
     .circles-strip {{
       display: flex; gap: 14px; overflow-x: auto; padding: 12px 14px;
-      background: var(--glass-bg); backdrop-filter: blur(8px);
-      border-bottom: 1px solid var(--glass-border);
+      background: #ffffff; border-bottom: 1px solid var(--glass-border);
     }}
     .circles-strip::-webkit-scrollbar {{ display: none; }}
     .circle-item {{ display: flex; flex-direction: column; align-items: center; min-width: 64px; cursor: pointer; }}
     .circle-img {{
       width: 54px; height: 54px; border-radius: 50%; object-fit: cover;
-      border: 2px solid #e9d5ff; box-shadow: 0 2px 6px rgba(147, 51, 234, 0.15);
+      border: 2px solid #e2e8f0; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }}
-    .circle-item.active .circle-img {{ border-color: var(--primary); transform: scale(1.08); }}
+    .circle-item.active .circle-img {{ border-color: var(--primary); transform: scale(1.06); }}
     .circle-label {{ font-size: 11px; font-weight: bold; margin-top: 5px; color: var(--text); text-align: center; white-space: nowrap; }}
 
     .sort-filter-bar {{
@@ -225,13 +232,12 @@ CUSTOMER_HTML = f"""
 
     .grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; }}
     .card {{
-      background: var(--glass-card); backdrop-filter: blur(10px);
-      border: 1px solid var(--glass-border); border-radius: 12px;
+      background: #ffffff; border: 1px solid var(--glass-border); border-radius: 12px;
       padding: 10px; display: flex; flex-direction: column; position: relative;
       box-shadow: var(--shadow); cursor: pointer;
     }}
     .card-heart {{
-      position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.85);
+      position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.9);
       border: 1px solid #e2e8f0; width: 30px; height: 30px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; z-index: 2;
     }}
@@ -258,7 +264,7 @@ CUSTOMER_HTML = f"""
       font-size: 13px; font-weight: 800; cursor: pointer; width: 100%; margin-top: auto;
     }}
 
-    /* PDP */
+    /* PDP Full View */
     .product-view-sheet {{
       background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 75px; box-shadow: var(--shadow);
     }}
@@ -311,8 +317,7 @@ CUSTOMER_HTML = f"""
     .screen {{ display: none; padding: 12px; }}
     .screen.active {{ display: block; }}
     .sheet {{
-      background: var(--glass-card); backdrop-filter: blur(12px);
-      border: 1px solid var(--glass-border); border-radius: 12px;
+      background: #ffffff; border: 1px solid var(--glass-border); border-radius: 12px;
       padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow);
     }}
 
@@ -327,18 +332,15 @@ CUSTOMER_HTML = f"""
     }}
     .modal-close {{ position: absolute; top: 12px; right: 16px; font-size: 24px; font-weight: bold; cursor: pointer; border: none; background: transparent; }}
 
-    /* Bottom Sheet Style Modal for Location (Flipkart Style) */
     #locationModal .modal-box {{
       position: fixed; bottom: 0; left: 0; right: 0; max-width: 100%;
       border-radius: 16px 16px 0 0; padding: 20px 16px 30px 16px;
-      animation: slideUp 0.3s ease;
     }}
-    @keyframes slideUp {{ from {{ transform: translateY(100%); }} to {{ transform: translateY(0); }} }}
 
     .bottom-nav {{
       position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
-      background: var(--glass-bg); backdrop-filter: blur(14px);
-      border-top: 1px solid var(--glass-border); display: flex; justify-content: space-around; align-items: center; z-index: 1000;
+      background: #ffffff; border-top: 1px solid var(--glass-border);
+      display: flex; justify-content: space-around; align-items: center; z-index: 1000;
     }}
     .nav-btn {{
       background: none; border: none; font-size: 11px; font-weight: 700;
@@ -354,9 +356,8 @@ CUSTOMER_HTML = f"""
 
     #offlineOverlay {{
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(12px);
-      z-index: 999999; display: none; flex-direction: column;
-      align-items: center; justify-content: center; padding: 24px; text-align: center;
+      background: rgba(255, 255, 255, 0.96); z-index: 999999;
+      display: none; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center;
     }}
     .offline-dog-img {{
       width: 220px; height: 220px; border-radius: 20px; object-fit: cover;
@@ -373,7 +374,7 @@ CUSTOMER_HTML = f"""
 <body>
 
   <div id="pwaInstallBanner">
-    <span>📲 Install Supermart App for faster shopping!</span>
+    <span id="txtPwaBanner">📲 Install Supermart App for faster shopping!</span>
     <button onclick="triggerPWAInstall()" style="background:#22c55e; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-weight:bold; cursor:pointer;">INSTALL</button>
   </div>
 
@@ -388,16 +389,37 @@ CUSTOMER_HTML = f"""
 
   <div id="toast" class="toast"></div>
 
+  <!-- Minimalist Clean 2D Header -->
   <header class="top-bar" id="mainHeader">
     <div class="header-row1">
       <div class="brand-logo" onclick="switchView('shop')">
         <span>🛍️ SUPERMART</span>
       </div>
       <div class="top-icons">
-        <div class="icon-bubble" id="pwaNavBtn" onclick="triggerPWAInstall()" style="display:none; color:var(--primary);">📲 Install</div>
-        <div class="icon-bubble" onclick="switchView('wishlist')">❤️ <span id="wishCount">0</span></div>
-        <div class="icon-bubble" onclick="switchView('cart')">🛒 <span id="cartCount">0</span></div>
-        <div class="icon-bubble" id="userAuthBtn" onclick="handleAuthClick()">👤 Login</div>
+        <!-- Minimalist 2D Wishlist -->
+        <div class="icon-2d-btn" onclick="switchView('wishlist')" title="Wishlist">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1e1b4b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+          <span class="icon-badge-num" id="wishCount">0</span>
+        </div>
+
+        <!-- Minimalist 2D Cart (Last Image Clean Style) -->
+        <div class="icon-2d-btn" onclick="switchView('cart')" title="Cart">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="#1e1b4b">
+            <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
+          </svg>
+          <span class="icon-badge-num" id="cartCount">0</span>
+        </div>
+
+        <!-- Minimalist 2D User Profile -->
+        <div class="icon-2d-btn" id="userAuthBtn" onclick="handleAuthClick()" title="Profile" style="width:auto; padding:0 10px; border-radius:20px; font-size:12px; font-weight:bold;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e1b4b" stroke-width="2" style="margin-right:4px;">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span id="userAuthText">Login</span>
+        </div>
       </div>
     </div>
     
@@ -408,7 +430,6 @@ CUSTOMER_HTML = f"""
     </div>
   </header>
 
-  <!-- Delivering Strip that triggers Flipkart Style Location Sheet -->
   <div class="delivery-strip" id="pincodeStrip" onclick="openLocationModal()">
     <div style="display:flex; align-items:center; gap:6px;">
       <span>📍</span>
@@ -421,7 +442,7 @@ CUSTOMER_HTML = f"""
     <div class="circles-strip">
       <div class="circle-item active" onclick="selectCircleCategory('All', this)">
         <img class="circle-img" src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=150&q=80">
-        <span class="circle-label">All Items</span>
+        <span class="circle-label" id="catAll">All Items</span>
       </div>
       <div class="circle-item" onclick="selectCircleCategory('Groceries', this)">
         <img class="circle-img" src="https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=150&q=80">
@@ -536,7 +557,6 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- CHECKOUT WITH AUTOMATIC DISTRICT, MANDAL, POST OFFICE AUTO-FILL -->
   <section id="checkoutScreen" class="screen">
     <div class="sheet">
       <h3>Confirm Delivery Address</h3>
@@ -598,12 +618,30 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
+  <!-- CUSTOMER PROFILE WITH EDIT ADDRESS & LANGUAGE SELECTION -->
   <section id="profileScreen" class="screen">
     <div class="sheet">
-      <h3>Customer Account</h3>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 id="txtProfileTitle">Customer Account</h3>
+        <!-- App Language Switcher -->
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-size:12px; font-weight:bold;">🌐</span>
+          <select id="langSelect" onchange="changeLanguage(this.value)" style="border:1px solid #cbd5e1; border-radius:6px; padding:4px 8px; font-size:12px; font-weight:bold; background:#fff; outline:none;">
+            <option value="en">English (Default)</option>
+            <option value="te">తెలుగు (Telugu)</option>
+            <option value="hi">हिन्दी (Hindi)</option>
+          </select>
+        </div>
+      </div>
+
       <div id="profileDetails" style="margin-top: 14px;"></div>
+
+      <!-- EDIT PROFILE & ADDRESS BUTTON -->
+      <button class="btn-big" onclick="openEditProfileModal()" style="background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; margin:14px 0 8px 0; min-height:40px; font-size:13px;">
+        ✏️ Edit Profile & Delivery Address
+      </button>
       
-      <div style="margin-top: 16px; border-top: 1px solid var(--glass-border); padding-top: 14px;">
+      <div style="margin-top: 14px; border-top: 1px solid var(--glass-border); padding-top: 14px;">
         <h4 style="font-size: 14px; margin-bottom: 8px;">🔐 Change Password:</h4>
         <form onsubmit="handleChangePassword(event)" style="display:grid; gap:8px;">
           <input type="password" id="newPassInput" placeholder="Enter New Password" required style="padding:10px; border:1px solid var(--glass-border); border-radius:6px; font-size:13px;">
@@ -619,7 +657,27 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- FLIPKART STYLE 'SELECT DELIVERY ADDRESS' BOTTOM SHEET MODAL -->
+  <!-- EDIT PROFILE / DELIVERY ADDRESS MODAL -->
+  <div class="modal" id="editProfileModal">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeEditProfileModal()">&times;</button>
+      <h3 style="margin-bottom: 14px;">✏️ Edit Delivery Address</h3>
+      <form onsubmit="handleSaveProfile(event)" style="display:grid; gap:10px;">
+        <label style="font-size:12px; font-weight:bold;">Your Name:</label>
+        <input type="text" id="epName" placeholder="Full Name" required style="padding:10px; border:1px solid var(--glass-border); border-radius:6px; font-size:14px;">
+        
+        <label style="font-size:12px; font-weight:bold;">Postal Pincode:</label>
+        <input type="text" id="epPincode" placeholder="6-digit Pincode" pattern="[0-9]{{6}}" required style="padding:10px; border:1px solid var(--glass-border); border-radius:6px; font-size:14px;">
+        
+        <label style="font-size:12px; font-weight:bold;">Complete Address (Door No, Street, Village/Mandal):</label>
+        <textarea id="epAddress" placeholder="Street, Flat/Door No, Landmark" required style="padding:10px; border:1px solid var(--glass-border); border-radius:6px; font-size:14px; height:75px;"></textarea>
+
+        <button type="submit" class="btn-big btn-primary" style="margin-top:6px;">SAVE ADDRESS</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- LOCATION SHEET -->
   <div class="modal" id="locationModal">
     <div class="modal-box">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
@@ -632,7 +690,6 @@ CUSTOMER_HTML = f"""
         <input type="text" id="locSearchPincode" placeholder="Search by pincode (e.g. 532427)" onkeyup="if(event.key==='Enter') quickSetPincode(this.value)" style="width:100%; padding:10px 10px 10px 34px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px;">
       </div>
 
-      <!-- Real GPS Current Location Button -->
       <div onclick="detectGPSLocation()" style="display:flex; gap:12px; align-items:center; padding:12px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; cursor:pointer; margin-bottom:14px;">
         <div style="background:#22c55e; color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px;">🎯</div>
         <div>
@@ -673,7 +730,7 @@ CUSTOMER_HTML = f"""
 
       <div id="otpBox" style="display:none; text-align:center; margin-top:14px;">
         <p style="font-size:13px; color:var(--muted); margin-bottom:8px;">
-          💬 WhatsApp opened! Send the verification message, then enter the 4-digit code below:
+          💬 WhatsApp opened! Send verification code, then enter the 4-digit code below:
         </p>
         <a id="waDirectBtn" href="#" target="_blank" class="btn-big btn-whatsapp" style="margin-bottom:12px; font-size:13px;">
           📲 Click here if WhatsApp didn't open
@@ -691,19 +748,19 @@ CUSTOMER_HTML = f"""
   <nav class="bottom-nav" id="mainBottomNav">
     <button class="nav-btn active" id="bShop" onclick="switchView('shop')">
       <span style="font-size: 18px;">🏠</span>
-      <span>Home</span>
+      <span id="navHome">Home</span>
     </button>
     <button class="nav-btn" id="bCart" onclick="switchView('cart')">
       <span style="font-size: 18px;">🛒</span>
-      <span>Cart</span>
+      <span id="navCart">Cart</span>
     </button>
     <button class="nav-btn" id="bOrders" onclick="switchView('orders')">
       <span style="font-size: 18px;">📦</span>
-      <span>My Orders</span>
+      <span id="navOrders">Orders</span>
     </button>
     <button class="nav-btn" id="bProfile" onclick="switchView('profile')">
       <span style="font-size: 18px;">👤</span>
-      <span>Account</span>
+      <span id="navAccount">Account</span>
     </button>
   </nav>
 
@@ -714,6 +771,44 @@ CUSTOMER_HTML = f"""
     let isRegister = false;
     let activeProduct = null;
     let currentRegPhone = "";
+    let currentLang = "en";
+
+    // Multi-Language Dictionary
+    const LANG_DATA = {{
+      en: {{
+        home: "Home", cart: "Cart", orders: "Orders", account: "Account",
+        catAll: "All Items", searchPlace: "Search Atta, Oil, Tomato, Phone...",
+        deliveringTo: "Delivering to: Select delivery location",
+        profileTitle: "Customer Account", saveAddr: "SAVE ADDRESS"
+      }},
+      te: {{
+        home: "హోమ్", cart: "కార్ట్", orders: "ఆర్డర్లు", account: "ఖాతా",
+        catAll: "అన్ని వస్తువులు", searchPlace: "నూనె, బియ్యం, కూరగాయలు, ఫోన్ వెతకండి...",
+        deliveringTo: "డెలివరీ లొకేషన్ ఎంచుకోండి",
+        profileTitle: "కస్టమర్ ఖాతా వివరాలు", saveAddr: "అడ్రస్ సేవ్ చేయండి"
+      }},
+      hi: {{
+        home: "होम", cart: "कार्ट", orders: "ऑर्डर्स", account: "खाता",
+        catAll: "सभी सामान", searchPlace: "आटा, तेल, सब्जियां, फोन खोजें...",
+        deliveringTo: "डिलीवरी लोकेशन चुनें",
+        profileTitle: "ग्राहक खाता विवरण", saveAddr: "पता सुरक्षित करें"
+      }}
+    }};
+
+    function changeLanguage(lang) {{
+      currentLang = lang;
+      const d = LANG_DATA[lang] || LANG_DATA.en;
+      document.getElementById('navHome').innerText = d.home;
+      document.getElementById('navCart').innerText = d.cart;
+      document.getElementById('navOrders').innerText = d.orders;
+      document.getElementById('navAccount').innerText = d.account;
+      document.getElementById('catAll').innerText = d.catAll;
+      document.getElementById('searchInput').placeholder = d.searchPlace;
+      document.getElementById('txtProfileTitle').innerText = d.profileTitle;
+      document.getElementById('langSelect').value = lang;
+      localStorage.setItem('sm_lang', lang);
+      toast("Language updated: " + (lang === 'te' ? "తెలుగు" : (lang === 'hi' ? "हिन्दी" : "English")));
+    }}
 
     // PWA
     let deferredPrompt;
@@ -724,16 +819,12 @@ CUSTOMER_HTML = f"""
       e.preventDefault();
       deferredPrompt = e;
       document.getElementById('pwaInstallBanner').style.display = 'flex';
-      document.getElementById('pwaNavBtn').style.display = 'flex';
     }});
     function triggerPWAInstall() {{
       if (deferredPrompt) {{
         deferredPrompt.prompt();
         deferredPrompt.userChoice.then((r) => {{
-          if (r.outcome === 'accepted') {{
-            document.getElementById('pwaInstallBanner').style.display = 'none';
-            document.getElementById('pwaNavBtn').style.display = 'none';
-          }}
+          if (r.outcome === 'accepted') document.getElementById('pwaInstallBanner').style.display = 'none';
           deferredPrompt = null;
         }});
       }} else {{
@@ -761,12 +852,11 @@ CUSTOMER_HTML = f"""
       }} catch(e) {{}}
     }}
     document.addEventListener('click', function(e) {{
-      if (e.target.closest('button') || e.target.closest('.card') || e.target.closest('.circle-item') || e.target.closest('.nav-btn') || e.target.closest('.icon-bubble')) {{
+      if (e.target.closest('button') || e.target.closest('.card') || e.target.closest('.circle-item') || e.target.closest('.nav-btn') || e.target.closest('.icon-2d-btn')) {{
         playTouchSound();
       }}
     }}, true);
 
-    // Network Status
     function checkNetworkStatus() {{
       const overlay = document.getElementById('offlineOverlay');
       if (!navigator.onLine) overlay.style.display = 'flex';
@@ -783,7 +873,7 @@ CUSTOMER_HTML = f"""
       setTimeout(() => {{ t.style.display = 'none'; }}, 2800);
     }}
 
-    /* REAL INDIA POST PINCODE AUTO-LOOKUP */
+    /* POSTAL PINCODE LOOKUP */
     async function handlePincodeLookup(pin) {{
       pin = pin.trim();
       const status = document.getElementById('pincodeStatus');
@@ -799,28 +889,21 @@ CUSTOMER_HTML = f"""
             status.innerText = `✓ Verified: ${{details.Name}}, ${{details.District}}`;
             status.style.color = "#16a34a";
           }} else {{
-            status.innerText = "Pincode not found. Please enter city manually.";
+            status.innerText = "Pincode not found. Enter city manually.";
             status.style.color = "#ea580c";
           }}
-        }} catch(e) {{
-          status.innerText = "";
-        }}
-      }} else {{
-        status.innerText = "";
-      }}
+        }} catch(e) {{ status.innerText = ""; }}
+      }} else {{ status.innerText = ""; }}
     }}
 
-    /* REAL GPS CURRENT LOCATION DETECTOR */
+    /* GPS LOCATION */
     function detectGPSLocation() {{
-      if(!navigator.geolocation) {{
-        return toast("Geolocation not supported by browser.");
-      }}
+      if(!navigator.geolocation) return toast("Geolocation not supported.");
       toast("Fetching live GPS coordinates...");
       navigator.geolocation.getCurrentPosition(async (pos) => {{
         const lat = pos.coords.latitude;
         const lon = pos.coords.longitude;
         try {{
-          // Reverse geocoding via OpenStreetMap Nominatim
           const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${{lat}}&lon=${{lon}}`);
           const data = await res.json();
           if(data && data.address) {{
@@ -831,22 +914,16 @@ CUSTOMER_HTML = f"""
             const fullLoc = `Delivering to: ${{place}} ${{pin ? ('- ' + pin) : ''}}`;
             document.getElementById('deliveringToText').innerText = fullLoc;
 
-            // Pre-fill checkout form if open
             if(document.getElementById('chkPincode')) {{
               document.getElementById('chkPincode').value = pin;
               document.getElementById('chkMandal').value = place;
-              document.getElementById('chkDistrict').value = `${{addr.state_district || addr.county || ''}}, ${{addr.state || ''}}`;
+              document.getElementById('chkDistrict').value = `${{addr.state_district || ''}}, ${{addr.state || ''}}`;
             }}
-
             toast(`Location set: ${{place}}`);
             closeLocationModal();
           }}
-        }} catch(err) {{
-          toast("GPS fetched, but reverse address timed out.");
-        }}
-      }}, (err) => {{
-        toast("GPS Permission denied or unavailable.");
-      }});
+        }} catch(err) {{ toast("GPS fetched, but reverse address timed out."); }}
+      }}, () => {{ toast("GPS Permission denied."); }});
     }}
 
     function openLocationModal() {{
@@ -864,8 +941,42 @@ CUSTOMER_HTML = f"""
         handlePincodeLookup(pin);
         closeLocationModal();
         toast("Delivery location updated!");
+      }} else {{ toast("Enter 6-digit valid pincode."); }}
+    }}
+
+    /* PROFILE & ADDRESS EDIT MODAL HANDLERS */
+    function openEditProfileModal() {{
+      if(!currentUser) {{
+        toast("Please Sign In first!");
+        return openAuthModal();
+      }}
+      document.getElementById('epName').value = currentUser.name || '';
+      document.getElementById('epPincode').value = currentUser.pincode || '';
+      document.getElementById('epAddress').value = currentUser.address || '';
+      document.getElementById('editProfileModal').style.display = 'flex';
+    }}
+    function closeEditProfileModal() {{ document.getElementById('editProfileModal').style.display = 'none'; }}
+
+    async function handleSaveProfile(e) {{
+      e.preventDefault();
+      const payload = {{
+        name: document.getElementById('epName').value.trim(),
+        pincode: document.getElementById('epPincode').value.trim(),
+        address: document.getElementById('epAddress').value.trim()
+      }};
+
+      const res = await fetch('/api/user/update-profile', {{
+        method: 'POST',
+        headers: {{'Content-Type': 'application/json'}},
+        body: JSON.stringify(payload)
+      }});
+      const d = await res.json();
+      if(d.success) {{
+        toast("Address & Profile saved successfully!");
+        closeEditProfileModal();
+        checkUserSession();
       }} else {{
-        toast("Enter 6-digit valid pincode.");
+        toast(d.message || "Failed to update address.");
       }}
     }}
 
@@ -874,16 +985,17 @@ CUSTOMER_HTML = f"""
       const data = await res.json();
       if(data.authenticated) {{
         currentUser = data.user;
-        document.getElementById('userAuthBtn').innerText = '👤 ' + currentUser.phone;
+        document.getElementById('userAuthText').innerText = currentUser.name ? currentUser.name.split(' ')[0] : currentUser.phone;
         if(currentUser.address && currentUser.pincode) {{
           document.getElementById('deliveringToText').innerText = `Delivering to: ${{currentUser.address.slice(0, 18)}}... - ${{currentUser.pincode}}`;
         }}
       }} else {{
         currentUser = null;
-        document.getElementById('userAuthBtn').innerText = '👤 Login';
+        document.getElementById('userAuthText').innerText = "Login";
         document.getElementById('deliveringToText').innerText = "Delivering to: Select delivery location";
       }}
       refreshCounts();
+      renderProfile();
     }}
 
     async function loadCatalog() {{
@@ -1287,8 +1399,9 @@ CUSTOMER_HTML = f"""
       }}
       cont.innerHTML = `
         <div style="line-height: 1.8; font-size: 14px;">
+          <p><strong>Name:</strong> ${{currentUser.name || 'Not Added Yet'}}</p>
           <p><strong>Registered Phone:</strong> +91 ${{currentUser.phone}} (Permanent)</p>
-          <p><strong>Delivery Address:</strong> ${{currentUser.address ? (currentUser.address + ' - PIN: ' + currentUser.pincode) : 'No address saved yet. (Auto-saves upon checkout)'}}</p>
+          <p><strong>Delivery Address:</strong> ${{currentUser.address ? (currentUser.address + ' - PIN: ' + currentUser.pincode) : 'No address saved yet. (Tap Edit button below to add)'}}</p>
         </div>
       `;
     }}
@@ -1405,6 +1518,10 @@ CUSTOMER_HTML = f"""
       switchView('shop');
       toast("Logged out successfully.");
     }}
+
+    // Load Saved Language on Startup
+    const savedLang = localStorage.getItem('sm_lang') || 'en';
+    changeLanguage(savedLang);
 
     checkUserSession();
     loadCatalog();
@@ -1878,7 +1995,25 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
         body = self.rfile.read(length)
         data = json.loads(body.decode('utf-8')) if length else {}
 
-        # 1. Request WhatsApp OTP
+        # 1. Update Profile & Address
+        if url.path == '/api/user/update-profile':
+            if not user: return self._json({"success": False, "message": "Login required"})
+            name = data.get('name', '').strip()
+            pincode = data.get('pincode', '').strip()
+            address = data.get('address', '').strip()
+
+            conn = sqlite3.connect(DB_FILE)
+            c = conn.cursor()
+            c.execute("UPDATE users SET name = ?, pincode = ?, address = ? WHERE id = ?", (name, pincode, address, user['id']))
+            conn.commit()
+            conn.close()
+
+            user['name'] = name
+            user['pincode'] = pincode
+            user['address'] = address
+            return self._json({"success": True})
+
+        # 2. Request WhatsApp OTP
         if url.path == '/api/register/request-otp':
             phone = data.get('phone', '').strip().replace(' ', '')
             password = data.get('password', '')
@@ -1906,7 +2041,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
 
             return self._json({"success": True, "wa_link": wa_link, "message": "WhatsApp verification opened."})
 
-        # 2. Verify WhatsApp OTP
+        # 3. Verify WhatsApp OTP
         if url.path == '/api/register/verify-otp':
             phone = data.get('phone', '').strip()
             user_otp = data.get('otp', '').strip()
@@ -1933,7 +2068,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
                 self._json({"success": False, "message": "Mobile number already registered."})
             return
 
-        # 3. Login with Mobile + Password
+        # 4. Login with Mobile + Password
         if url.path == '/api/login':
             phone = data.get('phone', '').strip()
             pw = hash_pw(data.get('password', ''))
@@ -1953,7 +2088,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
                 self._json({"success": False, "message": "Invalid Mobile Number or Password."})
             return
 
-        # 4. Change Password
+        # 5. Change Password
         if url.path == '/api/user/change-password':
             if not user: return self._json({"success": False, "message": "Login required"})
             new_pw = hash_pw(data.get('password', ''))
@@ -1965,12 +2100,12 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
-        # 5. Logout
+        # 6. Logout
         if url.path == '/api/logout':
             self._json({"success": True}, set_cookie="sm_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT")
             return
 
-        # 6. Cart Add
+        # 7. Cart Add
         if url.path == '/api/cart/add':
             if not user: return self._json({"success": False, "message": "Login required"}, status=401)
             conn = sqlite3.connect(DB_FILE)
@@ -1984,7 +2119,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
-        # 7. Cart Remove
+        # 8. Cart Remove
         if url.path == '/api/cart/remove':
             if not user: return self._json({"success": False})
             conn = sqlite3.connect(DB_FILE)
@@ -1995,7 +2130,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
-        # 8. Wishlist Toggle
+        # 9. Wishlist Toggle
         if url.path == '/api/wishlist/toggle':
             if not user: return self._json({"success": False, "message": "Login required"})
             pid = data.get('product_id')
@@ -2014,7 +2149,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True, "message": msg})
             return
 
-        # 9. Order Placement
+        # 10. Order Placement
         if url.path == '/api/order/place':
             if not user: return self._json({"success": False, "message": "Login required"})
             conn = sqlite3.connect(DB_FILE)
@@ -2055,7 +2190,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True, "order_id": order_id})
             return
 
-        # 10. Cancel Order
+        # 11. Cancel Order
         if url.path == '/api/order/cancel':
             if not user: return self._json({"success": False})
             conn = sqlite3.connect(DB_FILE)
@@ -2072,7 +2207,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
                 self._json({"success": False, "message": "Order already in transit / cannot cancel."})
             return
 
-        # 11. Product Management
+        # 12. Product Management
         if url.path == '/api/seller/product/add':
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()

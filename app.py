@@ -319,7 +319,7 @@ CUSTOMER_HTML = f"""
     </div>
   </div>
 
-  <!-- AUTH (SIGN UP / SIGN IN / FORGOT PW) MODAL -->
+  <!-- AUTH (SIGN UP / SIGN IN) MODAL -->
   <div class="modal" id="authModal">
     <div class="modal-box" style="max-width: 380px;">
       <button class="modal-close" onclick="closeAuthModal()">&times;</button>
@@ -331,17 +331,32 @@ CUSTOMER_HTML = f"""
         </div>
         <input type="email" id="authEmail" placeholder="Email Address" required style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px;">
         <input type="password" id="authPassword" placeholder="Password" required style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px;">
+        
+        <div id="forgotPwdLinkHolder" style="text-align: right;">
+          <a href="javascript:void(0)" onclick="openForgotModal()" style="color:var(--muted); font-size:12px; text-decoration:none; font-weight:bold;">Forgot password?</a>
+        </div>
+
         <button type="submit" class="btn-big btn-primary" id="authSubmitBtn">SIGN IN</button>
       </form>
 
-      <div style="margin-top: 12px; text-align: center; font-size: 13px;">
-        <p id="forgotLinkWrapper" style="margin-bottom: 8px;">
-          <a href="javascript:void(0)" onclick="setAuthMode('forgot')" style="color:var(--accent-orange); font-weight:bold; text-decoration:none;">Forgot Password?</a>
-        </p>
-        <p>
-          <a href="javascript:void(0)" onclick="setAuthMode(currentAuthMode === 'register' ? 'login' : 'register')" id="authSwitchLink" style="color: var(--primary); font-weight: bold; text-decoration:none;">New here? Create an account</a>
-        </p>
-      </div>
+      <p style="margin-top: 14px; font-size: 13px; text-align: center; color: var(--muted);">
+        <a href="javascript:void(0)" onclick="toggleAuthMode()" id="authSwitchLink" style="color: var(--primary); font-weight: bold; text-decoration:none;">New here? Create an account</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- FORGOT PASSWORD MODAL -->
+  <div class="modal" id="forgotModal">
+    <div class="modal-box" style="max-width: 380px;">
+      <button class="modal-close" onclick="closeForgotModal()">&times;</button>
+      <h2 style="margin-bottom: 8px;">Reset Password</h2>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 14px;">Enter your registered email and choose a new password.</p>
+      
+      <form onsubmit="handleForgotPassword(event)" style="display:grid; gap:10px;">
+        <input type="email" id="fpEmail" placeholder="Registered Email" required style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px;">
+        <input type="password" id="fpNewPassword" placeholder="Enter New Password" required minlength="4" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px;">
+        <button type="submit" class="btn-big btn-orange">RESET & SAVE PASSWORD</button>
+      </form>
     </div>
   </div>
 
@@ -368,7 +383,7 @@ CUSTOMER_HTML = f"""
     let products = [];
     let currentCategory = 'All';
     let currentUser = null;
-    let currentAuthMode = 'login'; // 'login', 'register', 'forgot'
+    let isRegister = false;
 
     function toast(msg) {{
       const t = document.getElementById('toast');
@@ -686,53 +701,55 @@ CUSTOMER_HTML = f"""
       if(currentUser) switchView('profile');
       else openAuthModal();
     }}
-
     function openAuthModal() {{ 
-      setAuthMode('login');
+      isRegister = false;
+      document.getElementById('nameInputGroup').style.display = 'none';
+      document.getElementById('forgotPwdLinkHolder').style.display = 'block';
+      document.getElementById('authTitle').innerText = 'Customer Login';
+      document.getElementById('authSubmitBtn').innerText = 'SIGN IN';
+      document.getElementById('authSwitchLink').innerText = 'New here? Create an account';
       document.getElementById('authModal').style.display = 'flex'; 
     }}
-
     function closeAuthModal() {{ document.getElementById('authModal').style.display = 'none'; }}
+    function toggleAuthMode() {{
+      isRegister = !isRegister;
+      document.getElementById('nameInputGroup').style.display = isRegister ? 'block' : 'none';
+      document.getElementById('forgotPwdLinkHolder').style.display = isRegister ? 'none' : 'block';
+      document.getElementById('authTitle').innerText = isRegister ? 'Create Supermart Account' : 'Customer Login';
+      document.getElementById('authSubmitBtn').innerText = isRegister ? 'REGISTER & SIGN IN' : 'SIGN IN';
+      document.getElementById('authSwitchLink').innerText = isRegister ? 'Already registered? Login here' : 'New here? Create an account';
+    }}
 
-    function setAuthMode(mode) {{
-      currentAuthMode = mode;
-      const nameGroup = document.getElementById('nameInputGroup');
-      const title = document.getElementById('authTitle');
-      const btn = document.getElementById('authSubmitBtn');
-      const switchLink = document.getElementById('authSwitchLink');
-      const forgotWrap = document.getElementById('forgotLinkWrapper');
-      const pwInput = document.getElementById('authPassword');
+    function openForgotModal() {{
+      closeAuthModal();
+      document.getElementById('forgotModal').style.display = 'flex';
+    }}
+    function closeForgotModal() {{
+      document.getElementById('forgotModal').style.display = 'none';
+    }}
 
-      if (mode === 'register') {{
-        nameGroup.style.display = 'block';
-        title.innerText = 'Create Supermart Account';
-        btn.innerText = 'REGISTER & SIGN IN';
-        pwInput.placeholder = 'Create Password';
-        forgotWrap.style.display = 'none';
-        switchLink.innerText = 'Already have an account? Sign In';
-      }} else if (mode === 'forgot') {{
-        nameGroup.style.display = 'none';
-        title.innerText = 'Reset Password';
-        btn.innerText = 'RESET PASSWORD';
-        pwInput.placeholder = 'Enter New Password';
-        forgotWrap.style.display = 'none';
-        switchLink.innerText = 'Back to Login';
+    async function handleForgotPassword(e) {{
+      e.preventDefault();
+      const email = document.getElementById('fpEmail').value.trim();
+      const new_password = document.getElementById('fpNewPassword').value;
+      const res = await fetch('/api/forgot-password', {{
+        method: 'POST',
+        headers: {{'Content-Type': 'application/json'}},
+        body: JSON.stringify({{ email, new_password }})
+      }});
+      const d = await res.json();
+      if(d.success) {{
+        toast("Password updated successfully! Please Sign In.");
+        closeForgotModal();
+        openAuthModal();
       }} else {{
-        nameGroup.style.display = 'none';
-        title.innerText = 'Customer Login';
-        btn.innerText = 'SIGN IN';
-        pwInput.placeholder = 'Password';
-        forgotWrap.style.display = 'block';
-        switchLink.innerText = 'New here? Create an account';
+        toast(d.message || "Failed to reset password.");
       }}
     }}
 
     async function handleAuthSubmit(e) {{
       e.preventDefault();
-      let endpoint = '/api/login';
-      if(currentAuthMode === 'register') endpoint = '/api/register';
-      if(currentAuthMode === 'forgot') endpoint = '/api/forgot-password';
-
+      const endpoint = isRegister ? '/api/register' : '/api/login';
       const payload = {{
         email: document.getElementById('authEmail').value,
         password: document.getElementById('authPassword').value,
@@ -745,13 +762,13 @@ CUSTOMER_HTML = f"""
       }});
       const d = await res.json();
       if(d.success) {{
-        toast(currentAuthMode === 'forgot' ? "Password reset successfully! Logged in." : "Welcome to Supermart!");
+        toast("Welcome to Supermart!");
         closeAuthModal();
         checkUserSession();
       }} else {{
-        if(currentAuthMode === 'register' && d.message && d.message.includes("already registered")) {{
+        if(isRegister && d.message && d.message.includes("already registered")) {{
           toast("Account exists! Switched to Login mode. Enter password to sign in.");
-          setAuthMode('login');
+          toggleAuthMode();
         }} else {{
           toast(d.message || "Authentication error.");
         }}
@@ -1054,26 +1071,23 @@ class CustomerHandler(http.server.BaseHTTPRequestHandler):
                 self._json({"success": False, "message": "Invalid email or password."})
             return
 
-        # 3. Forgot Password / Reset
+        # 3. Forgot Password
         if url.path == '/api/forgot-password':
             email = data.get('email', '').strip().lower()
-            new_pw = data.get('password', '').strip()
+            new_pw = data.get('new_password', '')
             if not email or not new_pw:
-                return self._json({"success": False, "message": "Email and new password required."})
-            
-            hashed = hash_pw(new_pw)
+                self._json({"success": False, "message": "Email and new password required."})
+                return
+            pw_hash = hash_pw(new_pw)
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()
-            c.execute("SELECT id, name, email, phone, address, pincode FROM users WHERE email = ?", (email,))
+            c.execute("SELECT id FROM users WHERE email = ?", (email,))
             row = c.fetchone()
             if row:
-                c.execute("UPDATE users SET password = ? WHERE email = ?", (hashed, email))
+                c.execute("UPDATE users SET password = ? WHERE email = ?", (pw_hash, email))
                 conn.commit()
                 conn.close()
-                token = str(uuid.uuid4())
-                u_obj = {"id": row[0], "name": row[1], "email": row[2], "phone": row[3], "address": row[4], "pincode": row[5]}
-                SESSIONS[token] = u_obj
-                self._json({"success": True}, set_cookie=f"sm_session={token}; Path=/; HttpOnly")
+                self._json({"success": True})
             else:
                 conn.close()
                 self._json({"success": False, "message": "No account found with this email."})
@@ -1155,7 +1169,6 @@ class CustomerHandler(http.server.BaseHTTPRequestHandler):
             items_str = ", ".join([f"{r[0]} (x{r[2]})" for r in items])
             order_id = "SM" + str(uuid.uuid4().hex[:6]).upper()
 
-            # Save / Update User Address Automatically
             c.execute("UPDATE users SET phone = ?, address = ?, pincode = ? WHERE id = ?",
                       (data['phone'], data['address'], data['pincode'], user['id']))
             user['phone'] = data['phone']

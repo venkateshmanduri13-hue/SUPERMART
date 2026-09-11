@@ -3,6 +3,7 @@ import socketserver
 import sqlite3
 import json
 import urllib.parse
+import urllib.request
 import uuid
 import hashlib
 import os
@@ -12,13 +13,38 @@ from http import cookies
 DB_FILE = "supermart.db"
 SECRET_KEY = "SUPERMART_SECRET_KEY_PRO_2026"
 ADMIN_WHATSAPP = "917670912836"
-ADMIN_PIN = "1234"
+ADMIN_PIN = "630528"
+
+# INTEGRATED FAST2SMS API KEY FOR REAL SMS OTP
+FAST2SMS_API_KEY = "Fg9wyaCS8sRbiGeX1WpU6zVqAjc2m4TNLI5PuQOYHtrDfv0K3h5eT8MqEkZ0WnoCVRpwGh6xNufXBi29"
 
 SESSIONS = {}
 PENDING_REGISTRATIONS = {}
 
 def hash_pw(pw):
     return hashlib.sha256((pw + SECRET_KEY).encode()).hexdigest()
+
+def send_real_sms_otp(phone, otp):
+    """Sends real OTP SMS automatically to customer phone's Messenger app via Fast2SMS API"""
+    try:
+        url = "https://www.fast2sms.com/dev/bulkV2"
+        headers = {
+            "authorization": FAST2SMS_API_KEY,
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "route": "otp",
+            "variables_values": str(otp),
+            "numbers": str(phone)
+        }
+        req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers=headers)
+        with urllib.request.urlopen(req) as resp:
+            res_body = resp.read().decode('utf-8')
+            print("Fast2SMS API Response:", res_body)
+            return True
+    except Exception as e:
+        print("SMS Dispatch Error:", e)
+        return False
 
 def init_db():
     conn = sqlite3.connect(DB_FILE)
@@ -111,7 +137,7 @@ PWA_MANIFEST = {
 }
 
 PWA_SW_JS = """
-const CACHE_NAME = 'supermart-cache-v9';
+const CACHE_NAME = 'supermart-cache-v11';
 const ASSETS = ['/', '/manifest.json'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
@@ -671,7 +697,7 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- PROFILE / ACCOUNT SCREEN (Meesho Style Replica with Day/Night Mode) -->
+  <!-- MEESHO STYLE ACCOUNT & SETTINGS SCREEN -->
   <section id="profileScreen" class="screen" style="padding:10px 12px;">
     <div style="display:flex; justify-content:space-between; align-items:center; background:var(--card-bg); padding:16px; border-radius:12px; margin-bottom:12px; box-shadow:var(--shadow); border:1px solid var(--border);">
       <div style="display:flex; align-items:center; gap:12px;">
@@ -839,7 +865,7 @@ CUSTOMER_HTML = f"""
     </div>
   </div>
 
-  <!-- AUTH MODAL WITH AUTOMATIC WHATSAPP BOT API OTP -->
+  <!-- AUTH MODAL -->
   <div class="modal" id="authModal">
     <div class="modal-box" style="max-width: 380px;">
       <button class="modal-close" onclick="closeAuthModal()">&times;</button>
@@ -862,13 +888,10 @@ CUSTOMER_HTML = f"""
 
       <div id="otpBox" style="display:none; text-align:center; margin-top:14px;">
         <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:8px; margin-bottom:12px;">
-          <strong style="color:#15803d; font-size:13px;">🤖 Automated WhatsApp Bot OTP</strong><br>
-          <p style="font-size:11px; color:var(--muted); margin-top:4px;">Click the button below to generate and receive your verification code automatically.</p>
+          <strong style="color:#15803d; font-size:13px;">📩 SMS OTP Dispatched!</strong><br>
+          <p style="font-size:11px; color:var(--muted); margin-top:4px;">Check your phone's SMS Messenger app for the 4-digit code.</p>
         </div>
-        <a id="waDirectBtn" href="#" target="_blank" class="btn-big btn-whatsapp" style="margin-bottom:12px; font-size:13px;">
-          📲 Open WhatsApp Bot for OTP
-        </a>
-        <input type="number" id="otpInput" placeholder="Enter 4-digit OTP" style="width:100%; padding:12px; border:2px solid var(--primary); border-radius:6px; text-align:center; font-size:18px; letter-spacing:6px; margin-bottom:10px; background:var(--bg); color:var(--text);">
+        <input type="number" id="otpInput" placeholder="Enter 4-digit SMS OTP" style="width:100%; padding:12px; border:2px solid var(--primary); border-radius:6px; text-align:center; font-size:18px; letter-spacing:6px; margin-bottom:10px; background:var(--bg); color:var(--text);">
         <button class="btn-big btn-primary" onclick="verifyMobileOtp()">VERIFY & CREATE ACCOUNT</button>
       </div>
 
@@ -878,7 +901,6 @@ CUSTOMER_HTML = f"""
     </div>
   </div>
 
-  <!-- 2D Minimalist Bottom Navigation -->
   <nav class="bottom-nav" id="mainBottomNav">
     <button class="nav-btn active" id="bShop" onclick="switchView('shop')">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
@@ -943,8 +965,15 @@ CUSTOMER_HTML = f"""
     }}
 
     function updateDarkModeUI(isDark) {{
+      const icon = document.getElementById('darkModeIcon');
       const stat = document.getElementById('darkModeStatus');
-      if(stat) stat.innerText = isDark ? "Dark" : "Light";
+      if(isDark) {{
+        icon.innerText = "☀️";
+        stat.innerText = "Dark";
+      }} else {{
+        icon.innerText = "🌙";
+        stat.innerText = "Light";
+      }}
     }}
 
     if(localStorage.getItem('sm_dark') === '1') {{
@@ -1085,7 +1114,7 @@ CUSTOMER_HTML = f"""
     async function syncLocationToProfile(pin, addressStr) {{
       await fetch('/api/user/update-profile', {{
         method: 'POST',
-        headers: {{'Content-Type': 'application/json'}},
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({{
           name: currentUser.name || "Customer",
           pincode: pin,
@@ -1135,7 +1164,7 @@ CUSTOMER_HTML = f"""
 
       const res = await fetch('/api/user/update-profile', {{
         method: 'POST',
-        headers: {{'Content-Type': 'application/json'}},
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(payload)
       }});
       const d = await res.json();
@@ -1317,7 +1346,6 @@ CUSTOMER_HTML = f"""
       switchView('cart');
     }}
 
-    /* STRICT VISIBILITY ROUTING: Search only on Home, Location only on Orders/Profile */
     function switchView(name) {{
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -1538,7 +1566,7 @@ CUSTOMER_HTML = f"""
       const res = await fetch('/api/order/cancel', {{
         method: 'POST',
         headers: {{'Content-Type': 'application/json'}},
-        body: JSON.stringify({{order_id: id}})
+        body: JSON.stringify({order_id: id})
       }});
       const d = await res.json();
       toast(d.message);
@@ -1577,7 +1605,7 @@ CUSTOMER_HTML = f"""
       const res = await fetch('/api/user/change-password', {{
         method: 'POST',
         headers: {{'Content-Type': 'application/json'}},
-        body: JSON.stringify({{ password: newPw }})
+        body: JSON.stringify({ password: newPw })
       }});
       const d = await res.json();
       if(d.success) {{
@@ -1610,7 +1638,7 @@ CUSTOMER_HTML = f"""
       document.getElementById('confirmPwGroup').style.display = isRegister ? 'block' : 'none';
       document.getElementById('forgotPwLink').style.display = isRegister ? 'none' : 'block';
       document.getElementById('authTitle').innerText = isRegister ? 'Create Supermart Account' : 'Sign In with Mobile';
-      document.getElementById('authSubmitBtn').innerText = isRegister ? 'GET WHATSAPP OTP ➔' : 'SIGN IN';
+      document.getElementById('authSubmitBtn').innerText = isRegister ? 'SEND SMS OTP ➔' : 'SIGN IN';
       document.getElementById('authSwitchLink').innerText = isRegister ? 'Already registered? Sign In' : 'New customer? Sign Up here';
       document.getElementById('authMainForm').style.display = 'grid';
       document.getElementById('otpBox').style.display = 'none';
@@ -1628,18 +1656,14 @@ CUSTOMER_HTML = f"""
         const res = await fetch('/api/register/request-otp', {{
           method: 'POST',
           headers: {{'Content-Type': 'application/json'}},
-          body: JSON.stringify({{ phone: phone, password: password }})
+          body: JSON.stringify({ phone: phone, password: password })
         }});
         const d = await res.json();
         if(d.success) {{
           currentRegPhone = phone;
           document.getElementById('authMainForm').style.display = 'none';
-          document.getElementById('waDirectBtn').href = d.wa_link;
           document.getElementById('otpBox').style.display = 'block';
-          
-          // Automatically trigger WhatsApp bot chat URL without manual typing
-          window.open(d.wa_link, '_blank');
-          toast("WhatsApp Bot triggered! Confirm message & enter OTP.");
+          toast("Real SMS OTP sent to mobile phone!");
         }} else {{
           toast(d.message || "Registration error.");
         }}
@@ -1647,7 +1671,7 @@ CUSTOMER_HTML = f"""
         const res = await fetch('/api/login', {{
           method: 'POST',
           headers: {{'Content-Type': 'application/json'}},
-          body: JSON.stringify({{ phone: phone, password: password }})
+          body: JSON.stringify({ phone: phone, password: password })
         }});
         const d = await res.json();
         if(d.success) {{
@@ -1667,7 +1691,7 @@ CUSTOMER_HTML = f"""
       const res = await fetch('/api/register/verify-otp', {{
         method: 'POST',
         headers: {{'Content-Type': 'application/json'}},
-        body: JSON.stringify({{ phone: currentRegPhone, otp: otp }})
+        body: JSON.stringify({ phone: currentRegPhone, otp: otp })
       }});
       const d = await res.json();
       if(d.success) {{
@@ -1698,7 +1722,7 @@ CUSTOMER_HTML = f"""
 """
 
 # ==============================================================================
-# 3. SELLER / ADMIN FRONTEND
+# 3. SELLER / ADMIN FRONTEND WITH FROSTED GLASS UI & PIN 630528
 # ==============================================================================
 SELLER_HTML = """
 <!DOCTYPE html>
@@ -1709,11 +1733,29 @@ SELLER_HTML = """
   <title>SUPERMART - Seller Dashboard</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: Roboto, -apple-system, sans-serif; }
-    body { background: #f1f5f9; padding: 14px; color: #1e293b; padding-bottom: 50px; }
-    .header-bar { background: #0f172a; color: #fff; padding: 14px 18px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-    .box { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin-bottom: 14px; }
-    input, textarea, select { width: 100%; min-height: 44px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; margin-bottom: 10px; font-size: 14px; }
-    .btn { min-height: 42px; border: none; border-radius: 6px; font-weight: 800; cursor: pointer; width: 100%; font-size: 13px; text-decoration: none; display: flex; align-items: center; justify-content: center; }
+    body {
+      background: linear-gradient(135deg, #f3e8ff 0%, #fdf2f8 50%, #f1f5f9 100%);
+      background-attachment: fixed;
+      padding: 14px; color: #1e293b; padding-bottom: 60px; min-height: 100vh;
+    }
+    .header-bar {
+      background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); color: #fff;
+      padding: 16px 20px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); border: 1px solid rgba(255,255,255,0.1);
+    }
+    .box {
+      background: rgba(255, 255, 255, 0.88); backdrop-filter: blur(12px);
+      border: 1px solid rgba(226, 232, 240, 0.8); border-radius: 14px;
+      padding: 18px; margin-bottom: 16px; box-shadow: 0 8px 24px rgba(149, 157, 165, 0.1);
+    }
+    input, textarea, select {
+      width: 100%; min-height: 44px; border: 1px solid #cbd5e1;
+      border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; font-size: 14px; outline: none; background: #fff;
+    }
+    .btn {
+      min-height: 44px; border: none; border-radius: 8px; font-weight: 800; cursor: pointer;
+      width: 100%; font-size: 13px; text-decoration: none; display: flex; align-items: center; justify-content: center;
+    }
     .btn-blue { background: #2563eb; color: #fff; }
     .btn-green { background: #16a34a; color: #fff; flex: 1; }
     .btn-yellow { background: #d97706; color: #fff; flex: 1; }
@@ -1721,14 +1763,16 @@ SELLER_HTML = """
     .btn-gray { background: #64748b; color: #fff; }
     .btn-whatsapp { background: #25d366; color: #fff; margin-top: 8px; font-weight: bold; }
     
-    .order-card, .prod-row { background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; margin-bottom: 10px; }
-    .order-card { border-left: 6px solid #2563eb; }
+    .order-card, .prod-row {
+      background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+    .order-card { border-left: 6px solid #9333ea; }
 
-    .modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; z-index:9999; padding:12px; }
-    .modal-box { background:#fff; width:100%; max-width:480px; border-radius:8px; padding:18px; max-height:90vh; overflow-y:auto; position:relative; }
+    .modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:9999; padding:12px; }
+    .modal-box { background:#fff; width:100%; max-width:480px; border-radius:14px; padding:20px; max-height:90vh; overflow-y:auto; position:relative; }
     
     #adminLockOverlay {
-      position: fixed; top:0; left:0; width:100%; height:100%; background:#0f172a; z-index:10000;
+      position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.92); backdrop-filter:blur(8px); z-index:10000;
       display: flex; align-items: center; justify-content: center; padding: 16px;
     }
   </style>
@@ -1736,10 +1780,10 @@ SELLER_HTML = """
 <body>
 
   <div id="adminLockOverlay">
-    <div style="background:#fff; padding:24px; border-radius:10px; width:100%; max-width:340px; text-align:center;">
-      <h3 style="margin-bottom:8px;">🔒 Seller Hub Login</h3>
-      <p style="color:#64748b; font-size:12px; margin-bottom:14px;">Enter your 4-digit Master Admin PIN</p>
-      <input type="password" id="pinInput" placeholder="Enter PIN (Default: 1234)" style="text-align:center; letter-spacing:4px; font-size:18px;">
+    <div style="background:#fff; padding:28px; border-radius:16px; width:100%; max-width:340px; text-align:center; box-shadow:0 12px 30px rgba(0,0,0,0.2);">
+      <h3 style="margin-bottom:8px; color:#1e1b4b;">🔒 Seller Hub Login</h3>
+      <p style="color:#64748b; font-size:12px; margin-bottom:16px;">Enter your Master Admin PIN (630528)</p>
+      <input type="password" id="pinInput" placeholder="••••••" style="text-align:center; letter-spacing:6px; font-size:20px;">
       <button class="btn btn-blue" onclick="checkPin()">UNLOCK DASHBOARD</button>
     </div>
   </div>
@@ -1747,9 +1791,9 @@ SELLER_HTML = """
   <div class="header-bar">
     <div>
       <h2>SUPERMART SELLER HUB</h2>
-      <small style="color: #94a3b8;">Inventory & Live Orders Fulfillment</small>
+      <small style="color: #cbd5e1;">Professional Inventory & Live Orders Management</small>
     </div>
-    <button onclick="refreshAll()" style="background:#334155; color:#fff; border:none; padding:8px 16px; border-radius:4px; font-weight:bold; cursor:pointer;">🔄 REFRESH</button>
+    <button onclick="refreshAll()" style="background:#334155; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:bold; cursor:pointer;">🔄 REFRESH</button>
   </div>
 
   <div class="box">
@@ -1847,7 +1891,7 @@ SELLER_HTML = """
 
     function checkPin() {
       const pin = document.getElementById('pinInput').value;
-      if (pin === "1234") {
+      if (pin === "630528") {
         document.getElementById('adminLockOverlay').style.display = 'none';
         refreshAll();
       } else {
@@ -1881,8 +1925,8 @@ SELLER_HTML = """
             <span style="color:#94a3b8; font-size:12px; text-decoration:line-through;">₹${p.orig_price}</span>
           </div>
           <div style="display:flex; gap:6px;">
-            <button onclick="openEditModal(${p.id})" style="background:#2563eb; color:#fff; border:none; padding:8px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">✏️ Edit</button>
-            <button onclick="handleDeleteProduct(${p.id})" style="background:#fee2e2; color:#ef4444; border:none; padding:8px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">🗑️</button>
+            <button onclick="openEditModal(${p.id})" style="background:#2563eb; color:#fff; border:none; padding:8px 12px; border-radius:6px; font-weight:bold; cursor:pointer;">✏️ Edit</button>
+            <button onclick="handleDeleteProduct(${p.id})" style="background:#fee2e2; color:#ef4444; border:none; padding:8px 12px; border-radius:6px; font-weight:bold; cursor:pointer;">🗑️</button>
           </div>
         </div>
       `).join('');
@@ -2201,10 +2245,8 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
                 "otp": generated_otp
             }
 
-            wa_msg = urllib.parse.quote(f"🤖 *SUPERMART BOT VERIFICATION*\n\nYour Account OTP is: *{generated_otp}*\n\n(Generated automatically for +91 {phone})")
-            wa_link = f"https://wa.me/{ADMIN_WHATSAPP}?text={wa_msg}"
-
-            return self._json({"success": True, "wa_link": wa_link, "message": "WhatsApp Bot OTP generated."})
+            send_real_sms_otp(phone, generated_otp)
+            return self._json({"success": True, "message": "SMS OTP sent to mobile phone."})
 
         if url.path == '/api/register/verify-otp':
             phone = data.get('phone', '').strip()
@@ -2212,7 +2254,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
 
             pending = PENDING_REGISTRATIONS.get(phone)
             if not pending or pending['otp'] != user_otp:
-                return self._json({"success": False, "message": "Invalid verification code! Please check WhatsApp message."})
+                return self._json({"success": False, "message": "Invalid SMS OTP code."})
 
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()

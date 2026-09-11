@@ -79,23 +79,23 @@ def init_db():
     c.execute("SELECT COUNT(*) FROM products")
     if c.fetchone()[0] == 0:
         samples = [
-            ("Aashirvaad Sharbati Whole Wheat Atta 5kg", "Groceries", "Aashirvaad", 240, 290, "100% Pure MP Sharbati Wheat, Stone Ground, High Dietary Fibre", "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=400&q=80"),
-            ("Fortune Sunlite Refined Sunflower Cooking Oil 1L", "Groceries", "Fortune", 135, 170, "Fortified with Vitamin A & D, Triple Refined Light Oil", "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=400&q=80"),
-            ("India Gate Classic Aged Basmati Rice 1kg", "Groceries", "India Gate", 175, 230, "Extra Long Grain Basmati, Aged 2 Years, Non-Sticky Fragrance", "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=400&q=80"),
-            ("Fresh Organic Farm Red Tomatoes 1kg", "Vegetables", "FreshFarm", 35, 45, "Naturally Ripened, Rich in Lycopene, Direct From Local Farmers", "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=400&q=80"),
-            ("Farm Fresh Green Capsicum / Shimla Mirch 500g", "Vegetables", "FreshFarm", 40, 55, "Crispy, Pesticide-Free, Packed With Vitamin C", "https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?auto=format&fit=crop&w=400&q=80"),
-            ("Farm Fresh Organic Potatoes (Aloo) 1kg", "Vegetables", "FreshFarm", 30, 40, "Handpicked Clean Skin Potatoes, Ideal for Daily Curries & Fries", "https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&w=400&q=80"),
-            ("Amul Pure Clarified Cow Ghee Jar 1L", "Dairy", "Amul", 595, 680, "Traditional Granular Texture, Rich Aromatic Cow Clarified Butter", "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=400&q=80"),
-            ("Apple iPhone 15 (Blue, 128 GB)", "Electronics", "Apple", 65999, 79900, "128 GB ROM | 6.1 inch Super Retina XDR Display | 48MP Dual Camera", "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=400&q=80"),
-            ("boAt Airdopes 141 Bluetooth Wireless Earbuds", "Electronics", "boAt", 1199, 4490, "42 Hours Battery, Low Latency Beast Mode, IPX4 Water Resistance", "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=400&q=80"),
-            ("Surf Excel Quick Wash Front & Top Detergent 1kg", "Household", "Surf Excel", 155, 190, "Removes Tough Stains in 1 Wash, Safe for Color & Fabric", "https://images.unsplash.com/photo-1584813470613-5b1c1cad3d69?auto=format&fit=crop&w=400&q=80")
+            ("Aashirvaad Sharbati Whole Wheat Atta 5kg", "Groceries", "Aashirvaad", 240, 290, "100% Pure MP Sharbati Wheat, Stone Ground, High Dietary Fibre", "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=500&q=80"),
+            ("Fortune Sunlite Refined Sunflower Cooking Oil 1L", "Groceries", "Fortune", 135, 170, "Fortified with Vitamin A & D, Triple Refined Light Oil", "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=500&q=80"),
+            ("India Gate Classic Aged Basmati Rice 1kg", "Groceries", "India Gate", 175, 230, "Extra Long Grain Basmati, Aged 2 Years, Non-Sticky Fragrance", "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=500&q=80"),
+            ("Fresh Organic Farm Red Tomatoes 1kg", "Vegetables", "FreshFarm", 35, 45, "Naturally Ripened, Rich in Lycopene, Direct From Local Farmers", "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=500&q=80"),
+            ("Farm Fresh Green Capsicum / Shimla Mirch 500g", "Vegetables", "FreshFarm", 40, 55, "Crispy, Pesticide-Free, Packed With Vitamin C", "https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?auto=format&fit=crop&w=500&q=80"),
+            ("Farm Fresh Organic Potatoes (Aloo) 1kg", "Vegetables", "FreshFarm", 30, 40, "Handpicked Clean Skin Potatoes, Ideal for Daily Curries & Fries", "https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&w=500&q=80"),
+            ("Amul Pure Clarified Cow Ghee Jar 1L", "Dairy", "Amul", 595, 680, "Traditional Granular Texture, Rich Aromatic Cow Clarified Butter", "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=500&q=80"),
+            ("Apple iPhone 15 (Blue, 128 GB)", "Electronics", "Apple", 65999, 79900, "128 GB ROM | 6.1 inch Super Retina XDR Display | 48MP Dual Camera", "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=500&q=80"),
+            ("boAt Airdopes 141 Bluetooth Wireless Earbuds", "Electronics", "boAt", 1199, 4490, "42 Hours Battery, Low Latency Beast Mode, IPX4 Water Resistance", "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=500&q=80"),
+            ("Surf Excel Quick Wash Front & Top Detergent 1kg", "Household", "Surf Excel", 155, 190, "Removes Tough Stains in 1 Wash, Safe for Color & Fabric", "https://images.unsplash.com/photo-1584813470613-5b1c1cad3d69?auto=format&fit=crop&w=500&q=80")
         ]
         c.executemany("INSERT INTO products (name, category, brand, price, orig_price, specs, image) VALUES (?, ?, ?, ?, ?, ?, ?)", samples)
         conn.commit()
     conn.close()
 
 # ==============================================================================
-# 2. CUSTOMER FRONTEND (MEESHO-STYLE GLASS TRANSPARENT UI)
+# 2. CUSTOMER FRONTEND (WITH FLIPKART STYLE PRODUCT DETAILS & RELATED ITEMS)
 # ==============================================================================
 CUSTOMER_HTML = f"""
 <!DOCTYPE html>
@@ -109,8 +109,8 @@ CUSTOMER_HTML = f"""
       --primary: #9333ea;
       --primary-dark: #7e22ce;
       --accent: #ec4899;
-      --glass-bg: rgba(255, 255, 255, 0.82);
-      --glass-card: rgba(255, 255, 255, 0.88);
+      --glass-bg: rgba(255, 255, 255, 0.85);
+      --glass-card: rgba(255, 255, 255, 0.90);
       --glass-border: rgba(226, 232, 240, 0.8);
       --text: #1e1b4b;
       --muted: #64748b;
@@ -127,7 +127,6 @@ CUSTOMER_HTML = f"""
       min-height: 100vh;
     }}
 
-    /* Transparent Sticky Header */
     .top-bar {{
       position: sticky; top: 0; z-index: 1000;
       background: var(--glass-bg);
@@ -146,7 +145,6 @@ CUSTOMER_HTML = f"""
       cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);
     }}
 
-    /* Search Bar with Visual Camera / Mic Icons */
     .search-container {{ margin-top: 8px; position: relative; }}
     .search-input {{
       width: 100%; height: 42px; border: 1px solid #cbd5e1;
@@ -156,7 +154,6 @@ CUSTOMER_HTML = f"""
     .search-left-icon {{ position: absolute; left: 14px; top: 11px; color: #94a3b8; font-size: 15px; }}
     .search-right-icon {{ position: absolute; right: 14px; top: 10px; color: #94a3b8; font-size: 16px; cursor: pointer; }}
 
-    /* Delivering Address Strip */
     .delivery-strip {{
       background: rgba(243, 232, 255, 0.7); backdrop-filter: blur(6px);
       padding: 7px 14px; font-size: 12px; font-weight: bold; color: #6b21a8;
@@ -164,7 +161,6 @@ CUSTOMER_HTML = f"""
       cursor: pointer;
     }}
 
-    /* Meesho Circular Categories Strip */
     .circles-strip {{
       display: flex; gap: 14px; overflow-x: auto; padding: 12px 14px;
       background: var(--glass-bg); backdrop-filter: blur(8px);
@@ -183,7 +179,6 @@ CUSTOMER_HTML = f"""
     .circle-item.active .circle-img {{ border-color: var(--primary); transform: scale(1.08); box-shadow: 0 4px 10px rgba(147,51,234,0.3); }}
     .circle-label {{ font-size: 11px; font-weight: bold; margin-top: 5px; color: var(--text); text-align: center; white-space: nowrap; }}
 
-    /* Real Sorting & Filter Bar */
     .sort-filter-bar {{
       display: flex; justify-content: space-between; align-items: center;
       background: #ffffff; padding: 8px 14px; border-bottom: 1px solid var(--glass-border);
@@ -194,13 +189,12 @@ CUSTOMER_HTML = f"""
       outline: none; font-size: 13px; cursor: pointer;
     }}
 
-    /* Product Grid & Glass Cards */
     .grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; }}
     .card {{
       background: var(--glass-card); backdrop-filter: blur(10px);
       border: 1px solid var(--glass-border); border-radius: 12px;
       padding: 10px; display: flex; flex-direction: column; position: relative;
-      box-shadow: var(--shadow); transition: transform 0.2s;
+      box-shadow: var(--shadow); transition: transform 0.2s; cursor: pointer;
     }}
     .card:active {{ transform: scale(0.98); }}
     .card-heart {{
@@ -232,7 +226,42 @@ CUSTOMER_HTML = f"""
       font-size: 13px; font-weight: 800; cursor: pointer; width: 100%; margin-top: auto;
     }}
 
-    /* Buttons & Modals */
+    /* Flipkart Style Full View Layout */
+    .product-view-sheet {{
+      background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 75px; box-shadow: var(--shadow);
+    }}
+    .pdp-img-box {{
+      width: 100%; height: 260px; display: flex; align-items: center; justify-content: center; position: relative;
+      background: #fafafa; border-radius: 10px; margin-bottom: 14px;
+    }}
+    .pdp-img-box img {{ max-width: 90%; max-height: 240px; object-fit: contain; }}
+    .offer-box {{
+      background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px; margin: 14px 0;
+    }}
+    .trust-badges {{
+      display: flex; justify-content: space-around; background: #f8fafc; border: 1px solid #e2e8f0;
+      border-radius: 8px; padding: 12px; margin: 14px 0; text-align: center; font-size: 11px; font-weight: bold;
+    }}
+    .related-scroll {{
+      display: flex; gap: 10px; overflow-x: auto; padding: 10px 0;
+    }}
+    .related-scroll::-webkit-scrollbar {{ display: none; }}
+    .related-card {{
+      min-width: 140px; max-width: 140px; background: #fff; border: 1px solid #e2e8f0;
+      border-radius: 8px; padding: 8px; cursor: pointer; flex-shrink: 0;
+    }}
+
+    .pdp-bottom-bar {{
+      position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
+      background: #fff; border-top: 1px solid #e2e8f0; display: flex; z-index: 1000;
+    }}
+    .btn-pdp-cart {{
+      flex: 1; background: #fff; color: #000; border: none; font-weight: bold; font-size: 14px; cursor: pointer;
+    }}
+    .btn-pdp-buy {{
+      flex: 1; background: #ff9f00; color: #fff; border: none; font-weight: bold; font-size: 14px; cursor: pointer;
+    }}
+
     .btn-big {{
       width: 100%; min-height: 46px; border: none; border-radius: 8px;
       font-size: 14px; font-weight: 800; cursor: pointer; display: flex;
@@ -262,7 +291,6 @@ CUSTOMER_HTML = f"""
     }}
     .modal-close {{ position: absolute; top: 12px; right: 16px; font-size: 24px; font-weight: bold; cursor: pointer; border: none; background: transparent; }}
 
-    /* Transparent Modern Bottom Bar */
     .bottom-nav {{
       position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
       background: var(--glass-bg); backdrop-filter: blur(14px);
@@ -286,8 +314,7 @@ CUSTOMER_HTML = f"""
 
   <div id="toast" class="toast"></div>
 
-  <!-- Transparent Header -->
-  <header class="top-bar">
+  <header class="top-bar" id="mainHeader">
     <div class="header-row1">
       <div class="brand-logo" onclick="switchView('shop')">
         <span>🛍️ SUPERMART</span>
@@ -299,7 +326,6 @@ CUSTOMER_HTML = f"""
       </div>
     </div>
     
-    <!-- Search Bar with Live Filter -->
     <div class="search-container">
       <span class="search-left-icon">🔍</span>
       <input type="text" id="searchInput" class="search-input" placeholder="Search by Product Name, Atta, Oil, iPhone..." onkeyup="filterAndSortItems()">
@@ -307,25 +333,23 @@ CUSTOMER_HTML = f"""
     </div>
   </header>
 
-  <!-- Live Delivery Pincode Strip -->
-  <div class="delivery-strip" onclick="switchView('profile')">
+  <div class="delivery-strip" id="pincodeStrip" onclick="switchView('profile')">
     <div style="display:flex; align-items:center; gap:6px;">
       <span>📍</span>
-      <span id="deliveringToText">Delivering to: Set Your Delivery Address</span>
+      <span id="deliveringToText">Delivering to: Click to set address</span>
     </div>
     <span>❯</span>
   </div>
 
   <!-- 1. PRODUCT STORE VIEW -->
   <section id="shopScreen" class="screen active" style="padding:0;">
-    <!-- Circular Meesho-Style Categories -->
     <div class="circles-strip">
       <div class="circle-item active" onclick="selectCircleCategory('All', this)">
         <img class="circle-img" src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=150&q=80">
         <span class="circle-label">All Items</span>
       </div>
       <div class="circle-item" onclick="selectCircleCategory('Groceries', this)">
-        <img class="circle-img" src="https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=150&q=80">
+        <img class="circle-img" src="https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=150&q=80">
         <span class="circle-label">🌾 Groceries</span>
       </div>
       <div class="circle-item" onclick="selectCircleCategory('Vegetables', this)">
@@ -346,7 +370,6 @@ CUSTOMER_HTML = f"""
       </div>
     </div>
 
-    <!-- Active Filter & Real Sort Bar -->
     <div class="sort-filter-bar">
       <span>Showing: <strong id="currentCatLabel" style="color:var(--primary);">All Products</strong></span>
       <div>
@@ -360,11 +383,64 @@ CUSTOMER_HTML = f"""
       </div>
     </div>
 
-    <!-- Product Grid -->
     <div class="grid" id="productGrid"></div>
   </section>
 
-  <!-- 2. CART VIEW -->
+  <!-- 2. FLIPKART STYLE PRODUCT DETAILS SCREEN WITH RELATED PRODUCTS -->
+  <section id="pdpScreen" class="screen" style="padding:10px;">
+    <button onclick="switchView('shop')" style="background:none; border:none; color:var(--primary); font-size:14px; font-weight:bold; margin-bottom:10px; cursor:pointer;">
+      ⬅ Back to Products
+    </button>
+    
+    <div class="product-view-sheet">
+      <div class="pdp-img-box">
+        <img id="pdpImg" src="">
+        <div class="card-heart" id="pdpHeart" style="top:10px; right:10px;">❤️</div>
+      </div>
+      
+      <span id="pdpBrand" style="color:var(--muted); font-size:12px; font-weight:800; text-transform:uppercase;"></span>
+      <h2 id="pdpTitle" style="font-size:16px; margin:4px 0 8px 0;"></h2>
+      
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span id="pdpRating" class="rating-pill"></span>
+        <span id="pdpReviews" style="font-size:12px; color:var(--muted);"></span>
+      </div>
+
+      <div class="price-row" style="margin: 10px 0;">
+        <span id="pdpPrice" class="price-now" style="font-size:24px;"></span>
+        <span id="pdpMvp" class="price-mrp" style="font-size:16px;"></span>
+        <span id="pdpOff" class="price-off" style="font-size:16px;"></span>
+      </div>
+
+      <div class="offer-box">
+        <div style="font-weight:bold; color:#1e40af; font-size:13px; margin-bottom:4px;">🏷️ Special Offers Available</div>
+        <p style="font-size:12px; color:#3b82f6;">Get tiered delivery charges & UPI discounts on final checkout.</p>
+      </div>
+
+      <div class="trust-badges">
+        <div>🚚<br>Fast Delivery</div>
+        <div>💵<br>Cash on Delivery</div>
+        <div>🛡️<br>Supermart Assured</div>
+      </div>
+
+      <h4 style="margin-top:16px;">Product Specifications:</h4>
+      <p id="pdpSpecs" style="color:#475569; font-size:13px; line-height:1.5; margin:6px 0 16px 0;"></p>
+
+      <hr style="border:none; border-top:1px solid #e2e8f0; margin:16px 0;">
+
+      <!-- SIMILAR / RELATED PRODUCTS SECTION -->
+      <h3 style="font-size:15px; margin-bottom:8px;">Similar & Related Products</h3>
+      <div class="related-scroll" id="relatedGrid"></div>
+    </div>
+
+    <!-- Fixed Bottom Buy Bar -->
+    <div class="pdp-bottom-bar" id="pdpBottomBar">
+      <button class="btn-pdp-cart" id="pdpAddToCartBtn">ADD TO CART</button>
+      <button class="btn-pdp-buy" id="pdpBuyNowBtn">BUY NOW</button>
+    </div>
+  </section>
+
+  <!-- 3. CART VIEW -->
   <section id="cartScreen" class="screen">
     <div class="sheet">
       <h3>Shopping Basket (<span id="cartCountTitle">0</span>)</h3>
@@ -389,7 +465,7 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- 3. CHECKOUT VIEW -->
+  <!-- 4. CHECKOUT VIEW -->
   <section id="checkoutScreen" class="screen">
     <div class="sheet">
       <h3>Confirm Delivery Address</h3>
@@ -408,7 +484,7 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- 4. ORDER SUCCESS CELEBRATION VIEW -->
+  <!-- 5. ORDER SUCCESS VIEW -->
   <section id="orderSuccessScreen" class="screen">
     <div class="sheet" style="text-align: center; padding: 30px 16px;">
       <div style="font-size: 55px; margin-bottom: 12px;">🎉</div>
@@ -424,7 +500,7 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- 5. ORDERS VIEW -->
+  <!-- 6. ORDERS VIEW -->
   <section id="ordersScreen" class="screen">
     <div class="sheet">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
@@ -435,7 +511,7 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- 6. WISHLIST VIEW -->
+  <!-- 7. WISHLIST VIEW -->
   <section id="wishlistScreen" class="screen">
     <div class="sheet">
       <h3>My Wishlist ❤️</h3>
@@ -443,7 +519,7 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- 7. PROFILE & ADDRESS VIEW -->
+  <!-- 8. PROFILE & ADDRESS VIEW -->
   <section id="profileScreen" class="screen">
     <div class="sheet">
       <h3>Customer Account</h3>
@@ -456,27 +532,6 @@ CUSTOMER_HTML = f"""
       <button class="btn-big btn-outline-red" style="margin-top: 14px;" onclick="logout()">LOGOUT ACCOUNT</button>
     </div>
   </section>
-
-  <!-- PRODUCT DETAILS MODAL -->
-  <div class="modal" id="prodModal">
-    <div class="modal-box">
-      <button class="modal-close" onclick="closeModal()">&times;</button>
-      <div style="width:100%; height:180px; display:flex; align-items:center; justify-content:center; margin-bottom:12px;">
-        <img id="mImg" src="" style="max-width:100%; max-height:100%; object-fit:contain;">
-      </div>
-      <span id="mBrand" style="color:var(--muted); font-size:12px; font-weight:800; text-transform:uppercase;"></span>
-      <h2 id="mTitle" style="font-size:17px; margin:4px 0 8px 0;"></h2>
-      <div id="mRating" class="rating-pill"></div>
-      <div class="price-row" style="margin: 10px 0;">
-        <span id="mPrice" class="price-now" style="font-size:22px;"></span>
-        <span id="mMvp" class="price-mrp" style="font-size:15px;"></span>
-        <span id="mOff" class="price-off"></span>
-      </div>
-      <h4 style="margin-top: 14px;">Product Specifications:</h4>
-      <p id="mSpecs" style="color:#475569; font-size:13px; line-height:1.5; margin:6px 0 20px 0;"></p>
-      <button id="mAddCartBtn" class="btn-big btn-primary">ADD TO BASKET 🛍️</button>
-    </div>
-  </div>
 
   <!-- AUTH MODAL -->
   <div class="modal" id="authModal">
@@ -500,7 +555,7 @@ CUSTOMER_HTML = f"""
   </div>
 
   <!-- Bottom Navigation -->
-  <nav class="bottom-nav">
+  <nav class="bottom-nav" id="mainBottomNav">
     <button class="nav-btn active" id="bShop" onclick="switchView('shop')">
       <span style="font-size: 18px;">🏠</span>
       <span>Home</span>
@@ -524,6 +579,7 @@ CUSTOMER_HTML = f"""
     let currentCategory = 'All';
     let currentUser = null;
     let isRegister = false;
+    let activeProduct = null;
 
     function toast(msg) {{
       const t = document.getElementById('toast');
@@ -599,10 +655,10 @@ CUSTOMER_HTML = f"""
       grid.innerHTML = items.map(p => {{
         const discount = p.orig_price > p.price ? Math.round(((p.orig_price - p.price) / p.orig_price) * 100) : 0;
         return `
-          <div class="card" onclick="openDetails(${{p.id}})">
+          <div class="card" onclick="openProductPage(${{p.id}})">
             <div class="card-heart" onclick="event.stopPropagation(); toggleWishlist(${{p.id}})">❤️</div>
             <div class="card-img-wrap">
-              <img src="${{p.image}}" onerror="this.src='https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400'">
+              <img src="${{p.image}}" onerror="this.src='https://images.unsplash.com/photo-1542838132-92c53300491e?w=400'">
             </div>
             <div class="mall-tag">✓ Mall</div>
             <div class="card-name">${{p.name}}</div>
@@ -618,9 +674,60 @@ CUSTOMER_HTML = f"""
       }}).join('');
     }}
 
+    /* Open Flipkart Style Product Details Page with Related Items */
+    function openProductPage(id) {{
+      const p = products.find(x => x.id === id);
+      if(!p) return;
+      activeProduct = p;
+
+      const discount = p.orig_price > p.price ? Math.round(((p.orig_price - p.price) / p.orig_price) * 100) : 0;
+      document.getElementById('pdpImg').src = p.image;
+      document.getElementById('pdpBrand').innerText = p.brand;
+      document.getElementById('pdpTitle').innerText = p.name;
+      document.getElementById('pdpRating').innerText = '★ ' + p.rating;
+      document.getElementById('pdpReviews').innerText = '(' + p.reviews_count + ' reviews)';
+      document.getElementById('pdpPrice').innerText = '₹' + p.price.toLocaleString();
+      document.getElementById('pdpMvp').innerText = '₹' + p.orig_price.toLocaleString();
+      document.getElementById('pdpOff').innerText = discount > 0 ? (discount + '% off') : '';
+      document.getElementById('pdpSpecs').innerText = p.specs || 'Supermart Assured Genuine Quality Product with Fast Doorstep Delivery.';
+
+      document.getElementById('pdpHeart').onclick = () => toggleWishlist(p.id);
+      document.getElementById('pdpAddToCartBtn').onclick = () => addToCart(p.id);
+      document.getElementById('pdpBuyNowBtn').onclick = () => buyNow(p.id);
+
+      // Render Related Products (same category, excluding current product)
+      const related = products.filter(item => item.category === p.category && item.id !== p.id);
+      const relGrid = document.getElementById('relatedGrid');
+      
+      if (related.length === 0) {{
+        relGrid.innerHTML = '<div style="font-size:12px; color:var(--muted); padding:10px 0;">No related items in this category.</div>';
+      }} else {{
+        relGrid.innerHTML = related.map(r => `
+          <div class="related-card" onclick="openProductPage(${{r.id}})">
+            <img src="${{r.image}}" style="width:100%; height:90px; object-fit:contain; margin-bottom:4px;">
+            <div style="font-size:11px; font-weight:bold; height:28px; overflow:hidden;">${{r.name}}</div>
+            <div style="font-size:12px; font-weight:bold; color:#000; margin-top:4px;">₹${{r.price.toLocaleString()}}</div>
+          </div>
+        `).join('');
+      }}
+
+      switchView('pdp');
+      window.scrollTo({{ top: 0, behavior: 'smooth' }});
+    }}
+
+    async function buyNow(id) {{
+      await addToCart(id);
+      switchView('cart');
+    }}
+
     function switchView(name) {{
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+      const isPdp = (name === 'pdp');
+      document.getElementById('mainHeader').style.display = isPdp ? 'none' : 'block';
+      document.getElementById('pincodeStrip').style.display = isPdp ? 'none' : 'flex';
+      document.getElementById('mainBottomNav').style.display = isPdp ? 'none' : 'flex';
 
       document.getElementById(name + 'Screen').classList.add('active');
       if(name === 'shop') document.getElementById('bShop').classList.add('active');
@@ -629,24 +736,6 @@ CUSTOMER_HTML = f"""
       if(name === 'profile') {{ document.getElementById('bProfile').classList.add('active'); renderProfile(); }}
       if(name === 'wishlist') renderWishlist();
     }}
-
-    function openDetails(id) {{
-      const p = products.find(x => x.id === id);
-      if(!p) return;
-      const discount = p.orig_price > p.price ? Math.round(((p.orig_price - p.price) / p.orig_price) * 100) : 0;
-      document.getElementById('mImg').src = p.image;
-      document.getElementById('mBrand').innerText = p.brand;
-      document.getElementById('mTitle').innerText = p.name;
-      document.getElementById('mRating').innerText = '★ ' + p.rating + ' (' + p.reviews_count + ' reviews)';
-      document.getElementById('mPrice').innerText = '₹' + p.price.toLocaleString();
-      document.getElementById('mMvp').innerText = '₹' + p.orig_price.toLocaleString();
-      document.getElementById('mOff').innerText = discount > 0 ? (discount + '% off') : '';
-      document.getElementById('mSpecs').innerText = p.specs || 'Supermart Assured Genuine Quality Product with Fast Doorstep Delivery.';
-      document.getElementById('mAddCartBtn').onclick = () => {{ addToCart(p.id); closeModal(); }};
-      document.getElementById('prodModal').style.display = 'flex';
-    }}
-
-    function closeModal() {{ document.getElementById('prodModal').style.display = 'none'; }}
 
     async function addToCart(id) {{
       if(!currentUser) {{ toast("Please Login to add items!"); openAuthModal(); return; }}
@@ -1490,7 +1579,6 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
                 self._json({"success": False, "message": "Order already processed / cannot cancel."})
             return
 
-        # Product Management: Add
         if url.path == '/api/seller/product/add':
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()
@@ -1503,7 +1591,6 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
-        # Product Management: Update / Edit
         if url.path == '/api/seller/product/update':
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()
@@ -1516,7 +1603,6 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
-        # Product Management: Delete
         if url.path == '/api/seller/product/delete':
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()

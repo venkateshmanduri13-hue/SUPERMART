@@ -368,7 +368,7 @@ CUSTOMER_HTML = f"""
       const t = document.getElementById('toast');
       t.innerText = msg;
       t.style.display = 'block';
-      setTimeout(() => {{ t.style.display = 'none'; }}, 2400);
+      setTimeout(() => {{ t.style.display = 'none'; }}, 2800);
     }}
 
     async function checkUserSession() {{
@@ -680,7 +680,14 @@ CUSTOMER_HTML = f"""
       if(currentUser) switchView('profile');
       else openAuthModal();
     }}
-    function openAuthModal() {{ document.getElementById('authModal').style.display = 'flex'; }}
+    function openAuthModal() {{ 
+      isRegister = false;
+      document.getElementById('nameInputGroup').style.display = 'none';
+      document.getElementById('authTitle').innerText = 'Customer Login';
+      document.getElementById('authSubmitBtn').innerText = 'SIGN IN';
+      document.getElementById('authSwitchLink').innerText = 'New here? Create an account';
+      document.getElementById('authModal').style.display = 'flex'; 
+    }}
     function closeAuthModal() {{ document.getElementById('authModal').style.display = 'none'; }}
     function toggleAuthMode() {{
       isRegister = !isRegister;
@@ -709,7 +716,12 @@ CUSTOMER_HTML = f"""
         closeAuthModal();
         checkUserSession();
       }} else {{
-        toast(d.message || "Authentication error.");
+        if(isRegister && d.message && d.message.includes("already registered")) {{
+          toast("Account exists! Switched to Login mode. Enter password to sign in.");
+          toggleAuthMode();
+        }} else {{
+          toast(d.message || "Authentication error.");
+        }}
       }}
     }}
 

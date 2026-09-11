@@ -111,7 +111,7 @@ PWA_MANIFEST = {
 }
 
 PWA_SW_JS = """
-const CACHE_NAME = 'supermart-cache-v8';
+const CACHE_NAME = 'supermart-cache-v9';
 const ASSETS = ['/', '/manifest.json'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
@@ -154,7 +154,6 @@ CUSTOMER_HTML = f"""
       --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }}
 
-    /* Dark Mode Theme Variables */
     body.dark-mode {{
       --bg: #0f172a;
       --card-bg: #1e293b;
@@ -672,7 +671,7 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- MEESHO STYLE ACCOUNT & SETTINGS SCREEN (2nd Image Replica with Day/Night Mode) -->
+  <!-- PROFILE / ACCOUNT SCREEN (Meesho Style Replica with Day/Night Mode) -->
   <section id="profileScreen" class="screen" style="padding:10px 12px;">
     <div style="display:flex; justify-content:space-between; align-items:center; background:var(--card-bg); padding:16px; border-radius:12px; margin-bottom:12px; box-shadow:var(--shadow); border:1px solid var(--border);">
       <div style="display:flex; align-items:center; gap:12px;">
@@ -705,7 +704,6 @@ CUSTOMER_HTML = f"""
         Account Settings & Activity
       </div>
 
-      <!-- Day / Night Mode Toggle Row -->
       <div class="meesho-item-row" onclick="toggleDarkMode()">
         <div class="meesho-item-left">
           <span id="darkModeIcon">🌙</span>
@@ -864,11 +862,11 @@ CUSTOMER_HTML = f"""
 
       <div id="otpBox" style="display:none; text-align:center; margin-top:14px;">
         <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:8px; margin-bottom:12px;">
-          <strong style="color:#15803d; font-size:13px;">🤖 WhatsApp Bot OTP Dispatched!</strong><br>
-          <p style="font-size:11px; color:var(--muted); margin-top:4px;">WhatsApp opened automatically. Click Send to trigger bot verification code.</p>
+          <strong style="color:#15803d; font-size:13px;">🤖 Automated WhatsApp Bot OTP</strong><br>
+          <p style="font-size:11px; color:var(--muted); margin-top:4px;">Click the button below to generate and receive your verification code automatically.</p>
         </div>
         <a id="waDirectBtn" href="#" target="_blank" class="btn-big btn-whatsapp" style="margin-bottom:12px; font-size:13px;">
-          📲 Resend WhatsApp Bot OTP
+          📲 Open WhatsApp Bot for OTP
         </a>
         <input type="number" id="otpInput" placeholder="Enter 4-digit OTP" style="width:100%; padding:12px; border:2px solid var(--primary); border-radius:6px; text-align:center; font-size:18px; letter-spacing:6px; margin-bottom:10px; background:var(--bg); color:var(--text);">
         <button class="btn-big btn-primary" onclick="verifyMobileOtp()">VERIFY & CREATE ACCOUNT</button>
@@ -937,7 +935,6 @@ CUSTOMER_HTML = f"""
       toast("Language set to: " + (lang === 'te' ? "తెలుగు" : (lang === 'hi' ? "हिन्दी" : "English")));
     }}
 
-    /* DARK / LIGHT MODE SWITCHER */
     function toggleDarkMode() {{
       const isDark = document.body.classList.toggle('dark-mode');
       localStorage.setItem('sm_dark', isDark ? '1' : '0');
@@ -946,15 +943,8 @@ CUSTOMER_HTML = f"""
     }}
 
     function updateDarkModeUI(isDark) {{
-      const icon = document.getElementById('darkModeIcon');
       const stat = document.getElementById('darkModeStatus');
-      if(isDark) {{
-        icon.innerText = "☀️";
-        stat.innerText = "Dark";
-      }} else {{
-        icon.innerText = "🌙";
-        stat.innerText = "Light";
-      }}
+      if(stat) stat.innerText = isDark ? "Dark" : "Light";
     }}
 
     if(localStorage.getItem('sm_dark') === '1') {{
@@ -967,7 +957,6 @@ CUSTOMER_HTML = f"""
     function openPasswordModal() {{ document.getElementById('passwordModal').style.display = 'flex'; }}
     function closePasswordModal() {{ document.getElementById('passwordModal').style.display = 'none'; }}
 
-    // PWA
     let deferredPrompt;
     if ('serviceWorker' in navigator) {{
       navigator.serviceWorker.register('/sw.js').then(() => {{}});
@@ -989,7 +978,6 @@ CUSTOMER_HTML = f"""
       }}
     }}
 
-    // Touch Sound
     let audioCtx = null;
     function playTouchSound() {{
       try {{
@@ -1622,7 +1610,7 @@ CUSTOMER_HTML = f"""
       document.getElementById('confirmPwGroup').style.display = isRegister ? 'block' : 'none';
       document.getElementById('forgotPwLink').style.display = isRegister ? 'none' : 'block';
       document.getElementById('authTitle').innerText = isRegister ? 'Create Supermart Account' : 'Sign In with Mobile';
-      document.getElementById('authSubmitBtn').innerText = isRegister ? 'SEND WHATSAPP BOT OTP ➔' : 'SIGN IN';
+      document.getElementById('authSubmitBtn').innerText = isRegister ? 'GET WHATSAPP OTP ➔' : 'SIGN IN';
       document.getElementById('authSwitchLink').innerText = isRegister ? 'Already registered? Sign In' : 'New customer? Sign Up here';
       document.getElementById('authMainForm').style.display = 'grid';
       document.getElementById('otpBox').style.display = 'none';
@@ -1649,9 +1637,9 @@ CUSTOMER_HTML = f"""
           document.getElementById('waDirectBtn').href = d.wa_link;
           document.getElementById('otpBox').style.display = 'block';
           
-          // Automatically trigger WhatsApp bot chat URL
-          window.location.href = d.wa_link;
-          toast("WhatsApp Bot opened! Send message to receive OTP code.");
+          // Automatically trigger WhatsApp bot chat URL without manual typing
+          window.open(d.wa_link, '_blank');
+          toast("WhatsApp Bot triggered! Confirm message & enter OTP.");
         }} else {{
           toast(d.message || "Registration error.");
         }}
@@ -2213,11 +2201,10 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
                 "otp": generated_otp
             }
 
-            # Automated WhatsApp Bot API URL format
-            wa_msg = urllib.parse.quote(f"🤖 *SUPERMART BOT VERIFICATION*\n\nYour 4-digit Account OTP is: *{generated_otp}*\n\n(Send this message to verify your mobile +91 {phone})")
+            wa_msg = urllib.parse.quote(f"🤖 *SUPERMART BOT VERIFICATION*\n\nYour Account OTP is: *{generated_otp}*\n\n(Generated automatically for +91 {phone})")
             wa_link = f"https://wa.me/{ADMIN_WHATSAPP}?text={wa_msg}"
 
-            return self._json({"success": True, "wa_link": wa_link, "message": "WhatsApp Bot triggered."})
+            return self._json({"success": True, "wa_link": wa_link, "message": "WhatsApp Bot OTP generated."})
 
         if url.path == '/api/register/verify-otp':
             phone = data.get('phone', '').strip()

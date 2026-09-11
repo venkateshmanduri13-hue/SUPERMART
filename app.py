@@ -6,6 +6,7 @@ import urllib.parse
 import uuid
 import hashlib
 import os
+import random
 from http import cookies
 
 DB_FILE = "supermart.db"
@@ -14,6 +15,7 @@ ADMIN_WHATSAPP = "917670912836"
 ADMIN_PIN = "1234"
 
 SESSIONS = {}
+PENDING_REGISTRATIONS = {}
 
 def hash_pw(pw):
     return hashlib.sha256((pw + SECRET_KEY).encode()).hexdigest()
@@ -22,12 +24,12 @@ def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
 
+    # Users Table: Strictly UNIQUE Phone
     c.execute('''CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT UNIQUE NOT NULL,
-        email TEXT UNIQUE NOT NULL,
+        phone TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
-        phone TEXT,
+        name TEXT,
         address TEXT,
         pincode TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -95,7 +97,7 @@ def init_db():
         conn.commit()
     conn.close()
 
-# PWA MANIFEST JSON
+# PWA Config
 PWA_MANIFEST = {
     "name": "Supermart Online Store",
     "short_name": "Supermart",
@@ -105,56 +107,29 @@ PWA_MANIFEST = {
     "theme_color": "#9333ea",
     "orientation": "portrait",
     "icons": [
-        {
-            "src": "https://cdn-icons-png.flaticon.com/512/3081/3081840.png",
-            "sizes": "192x192",
-            "type": "image/png"
-        },
-        {
-            "src": "https://cdn-icons-png.flaticon.com/512/3081/3081840.png",
-            "sizes": "512x512",
-            "type": "image/png"
-        }
+        {"src": "https://cdn-icons-png.flaticon.com/512/3081/3081840.png", "sizes": "192x192", "type": "image/png"},
+        {"src": "https://cdn-icons-png.flaticon.com/512/3081/3081840.png", "sizes": "512x512", "type": "image/png"}
     ]
 }
 
-# PWA SERVICE WORKER
 PWA_SW_JS = """
-const CACHE_NAME = 'supermart-cache-v1';
-const ASSETS = [
-  '/',
-  '/manifest.json'
-];
-
+const CACHE_NAME = 'supermart-cache-v3';
+const ASSETS = ['/', '/manifest.json'];
 self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-  );
+  e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
   self.skipWaiting();
 });
-
 self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) return caches.delete(key);
-        })
-      );
-    })
-  );
+  e.waitUntil(caches.keys().then((keys) => Promise.all(keys.map((k) => k !== CACHE_NAME && caches.delete(k)))));
   return self.clients.claim();
 });
-
 self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    fetch(e.request).catch(() => caches.match(e.request))
-  );
+  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
 });
 """
 
 # ==============================================================================
-# 2. CUSTOMER FRONTEND (WITH PWA SUPPORT)
+# 2. CUSTOMER FRONTEND (MOBILE NUMBER + WHATSAPP VERIFICATION)
 # ==============================================================================
 CUSTOMER_HTML = f"""
 <!DOCTYPE html>
@@ -164,7 +139,6 @@ CUSTOMER_HTML = f"""
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>SUPERMART - Online Smart Shopping</title>
   
-  <!-- PWA Meta Tags -->
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#9333ea">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -198,7 +172,6 @@ CUSTOMER_HTML = f"""
       position: sticky; top: 0; z-index: 1000;
       background: var(--glass-bg);
       backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
       border-bottom: 1px solid var(--glass-border);
       padding: 10px 14px;
     }}
@@ -381,7 +354,6 @@ CUSTOMER_HTML = f"""
       box-shadow: 0 10px 25px rgba(0,0,0,0.15); margin-bottom: 20px; border: 3px solid #e9d5ff;
     }}
 
-    /* PWA Install Banner */
     #pwaInstallBanner {{
       background: linear-gradient(135deg, #1e1b4b, #312e81); color: #fff;
       padding: 10px 14px; display: none; justify-content: space-between; align-items: center;
@@ -391,13 +363,11 @@ CUSTOMER_HTML = f"""
 </head>
 <body>
 
-  <!-- PWA Install Ribbon Banner -->
   <div id="pwaInstallBanner">
     <span>📲 Install Supermart App for faster shopping!</span>
     <button onclick="triggerPWAInstall()" style="background:#22c55e; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-weight:bold; cursor:pointer;">INSTALL</button>
   </div>
 
-  <!-- Offline Dog Screen -->
   <div id="offlineOverlay">
     <img class="offline-dog-img" src="https://cdn.phototourl.com/free/2026-09-11-91ddede7-9160-4e0a-885b-2f1f0256fb17.jpg" alt="No Connection Dog">
     <h2 style="color:var(--text); font-size: 20px; margin-bottom: 8px;">Waiting for Connection...</h2>
@@ -612,7 +582,7 @@ CUSTOMER_HTML = f"""
       <div id="profileDetails" style="margin-top: 14px;"></div>
       
       <div style="margin-top: 16px; border-top: 1px solid var(--glass-border); padding-top: 14px;">
-        <h4 style="font-size: 14px; margin-bottom: 8px;">🔐 Change Account Password:</h4>
+        <h4 style="font-size: 14px; margin-bottom: 8px;">🔐 Change Password:</h4>
         <form onsubmit="handleChangePassword(event)" style="display:grid; gap:8px;">
           <input type="password" id="newPassInput" placeholder="Enter New Password" required style="padding:10px; border:1px solid var(--glass-border); border-radius:6px; font-size:13px;">
           <button type="submit" class="btn-big btn-primary" style="min-height:38px; font-size:13px;">UPDATE PASSWORD</button>
@@ -627,18 +597,21 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
+  <!-- AUTH MODAL: MOBILE NUMBER + PASSWORD + CONFIRM PASSWORD + WHATSAPP OTP -->
   <div class="modal" id="authModal">
     <div class="modal-box" style="max-width: 380px;">
       <button class="modal-close" onclick="closeAuthModal()">&times;</button>
-      <h2 id="authTitle" style="margin-bottom: 14px;">Customer Login</h2>
+      <h2 id="authTitle" style="margin-bottom: 14px;">Sign In with Mobile</h2>
       
-      <form onsubmit="handleAuthSubmit(event)" style="display:grid; gap:10px;">
-        <div id="nameInputGroup" style="display:none;">
-          <input type="text" id="authName" placeholder="Unique Full Name / Username" style="width:100%; padding:10px; border:1px solid var(--glass-border); border-radius:6px;">
-        </div>
-        <input type="email" id="authEmail" placeholder="Email Address" required style="width:100%; padding:10px; border:1px solid var(--glass-border); border-radius:6px;">
-        <input type="password" id="authPassword" placeholder="Password" required style="width:100%; padding:10px; border:1px solid var(--glass-border); border-radius:6px;">
+      <!-- Stage 1: Mobile Form -->
+      <form id="authMainForm" onsubmit="handleAuthSubmit(event)" style="display:grid; gap:10px;">
+        <input type="tel" id="authPhone" placeholder="10-digit Mobile Number" pattern="[0-9]{{10}}" required style="width:100%; padding:10px; border:1px solid var(--glass-border); border-radius:6px; font-size:14px;">
+        <input type="password" id="authPassword" placeholder="Enter Password" required style="width:100%; padding:10px; border:1px solid var(--glass-border); border-radius:6px; font-size:14px;">
         
+        <div id="confirmPwGroup" style="display:none;">
+          <input type="password" id="authConfirmPassword" placeholder="Confirm Password" style="width:100%; padding:10px; border:1px solid var(--glass-border); border-radius:6px; font-size:14px;">
+        </div>
+
         <div id="forgotPwLink" style="text-align:right; font-size:12px;">
           <a href="https://wa.me/{ADMIN_WHATSAPP}?text=Hello%20Supermart,%20I%20forgot%20my%20login%20password.%20Please%20help%20me%20reset%20it." target="_blank" style="color:var(--primary); font-weight:bold; text-decoration:none;">Forgot Password?</a>
         </div>
@@ -646,8 +619,20 @@ CUSTOMER_HTML = f"""
         <button type="submit" class="btn-big btn-primary" id="authSubmitBtn">SIGN IN</button>
       </form>
 
+      <!-- Stage 2: WhatsApp OTP Verification Box -->
+      <div id="otpBox" style="display:none; text-align:center; margin-top:14px;">
+        <p style="font-size:13px; color:var(--muted); margin-bottom:8px;">
+          💬 WhatsApp opened! Send the verification message on WhatsApp, then enter the 4-digit code below:
+        </p>
+        <a id="waDirectBtn" href="#" target="_blank" class="btn-big btn-whatsapp" style="margin-bottom:12px; font-size:13px;">
+          📲 Click here if WhatsApp didn't open
+        </a>
+        <input type="number" id="otpInput" placeholder="Enter 4-digit Code" style="width:100%; padding:12px; border:2px solid var(--primary); border-radius:6px; text-align:center; font-size:18px; letter-spacing:6px; margin-bottom:10px;">
+        <button class="btn-big btn-primary" onclick="verifyMobileOtp()">VERIFY & CREATE ACCOUNT</button>
+      </div>
+
       <p style="margin-top: 14px; font-size: 13px; text-align: center; color: var(--muted);">
-        <a href="javascript:void(0)" onclick="toggleAuthMode()" id="authSwitchLink" style="color: var(--primary); font-weight: bold; text-decoration:none;">New here? Create an account</a>
+        <a href="javascript:void(0)" onclick="toggleAuthMode()" id="authSwitchLink" style="color: var(--primary); font-weight: bold; text-decoration:none;">New customer? Sign Up here</a>
       </p>
     </div>
   </div>
@@ -677,37 +662,35 @@ CUSTOMER_HTML = f"""
     let currentUser = null;
     let isRegister = false;
     let activeProduct = null;
+    let currentRegPhone = "";
 
-    /* PWA SERVICE WORKER & INSTALL PROMPT */
+    // PWA
     let deferredPrompt;
     if ('serviceWorker' in navigator) {{
-      navigator.serviceWorker.register('/sw.js').then(() => {{
-        console.log("PWA Service Worker Registered Successfully");
-      }});
+      navigator.serviceWorker.register('/sw.js').then(() => {{}});
     }}
-
     window.addEventListener('beforeinstallprompt', (e) => {{
       e.preventDefault();
       deferredPrompt = e;
       document.getElementById('pwaInstallBanner').style.display = 'flex';
       document.getElementById('pwaNavBtn').style.display = 'flex';
     }});
-
     function triggerPWAInstall() {{
       if (deferredPrompt) {{
         deferredPrompt.prompt();
-        deferredPrompt.userChoice.then((choiceResult) => {{
-          if (choiceResult.outcome === 'accepted') {{
+        deferredPrompt.userChoice.then((r) => {{
+          if (r.outcome === 'accepted') {{
             document.getElementById('pwaInstallBanner').style.display = 'none';
             document.getElementById('pwaNavBtn').style.display = 'none';
           }}
           deferredPrompt = null;
         }});
       }} else {{
-        alert("To install, tap Chrome browser menu (⋮) and select 'Add to Home screen' / 'Install App'.");
+        alert("To install, tap browser menu (⋮) and select 'Add to Home screen'.");
       }}
     }}
 
+    // Touch Sound
     let audioCtx = null;
     function playTouchSound() {{
       try {{
@@ -726,13 +709,13 @@ CUSTOMER_HTML = f"""
         osc.stop(audioCtx.currentTime + 0.04);
       }} catch(e) {{}}
     }}
-
     document.addEventListener('click', function(e) {{
       if (e.target.closest('button') || e.target.closest('.card') || e.target.closest('.circle-item') || e.target.closest('.nav-btn') || e.target.closest('.icon-bubble')) {{
         playTouchSound();
       }}
     }}, true);
 
+    // Network Status
     function checkNetworkStatus() {{
       const overlay = document.getElementById('offlineOverlay');
       if (!navigator.onLine) overlay.style.display = 'flex';
@@ -746,7 +729,7 @@ CUSTOMER_HTML = f"""
       const t = document.getElementById('toast');
       t.innerText = msg;
       t.style.display = 'block';
-      setTimeout(() => {{ t.style.display = 'none'; }}, 2500);
+      setTimeout(() => {{ t.style.display = 'none'; }}, 2800);
     }}
 
     async function checkUserSession() {{
@@ -754,7 +737,7 @@ CUSTOMER_HTML = f"""
       const data = await res.json();
       if(data.authenticated) {{
         currentUser = data.user;
-        document.getElementById('userAuthBtn').innerText = '👤 ' + currentUser.name.split(' ')[0];
+        document.getElementById('userAuthBtn').innerText = '👤 ' + currentUser.phone;
         if(currentUser.address && currentUser.pincode) {{
           document.getElementById('deliveringToText').innerText = `Delivering to: ${{currentUser.address.slice(0, 18)}}... - ${{currentUser.pincode}}`;
         }}
@@ -929,7 +912,7 @@ CUSTOMER_HTML = f"""
     }}
 
     async function addToCart(id) {{
-      if(!currentUser) {{ toast("Please Login to add items!"); openAuthModal(); return; }}
+      if(!currentUser) {{ toast("Please Sign In to add items!"); openAuthModal(); return; }}
       const res = await fetch('/api/cart/add', {{
         method: 'POST',
         headers: {{'Content-Type': 'application/json'}},
@@ -943,7 +926,7 @@ CUSTOMER_HTML = f"""
     }}
 
     async function toggleWishlist(id) {{
-      if(!currentUser) {{ toast("Please Login first!"); openAuthModal(); return; }}
+      if(!currentUser) {{ toast("Please Sign In first!"); openAuthModal(); return; }}
       const res = await fetch('/api/wishlist/toggle', {{
         method: 'POST',
         headers: {{'Content-Type': 'application/json'}},
@@ -970,7 +953,7 @@ CUSTOMER_HTML = f"""
 
     async function renderCart() {{
       if(!currentUser) {{
-        document.getElementById('cartListHolder').innerHTML = '<p style="padding:20px 0; text-align:center;">Please login to view basket.</p>';
+        document.getElementById('cartListHolder').innerHTML = '<p style="padding:20px 0; text-align:center;">Please Sign In to view basket.</p>';
         return;
       }}
       const res = await fetch('/api/cart');
@@ -1064,7 +1047,6 @@ CUSTOMER_HTML = f"""
         "Out for Delivery (Arriving Today)",
         "Delivered Successfully"
       ];
-
       let currentIndex = steps.findIndex(s => s.toLowerCase() === status.toLowerCase());
       if (currentIndex === -1) currentIndex = 0;
 
@@ -1082,7 +1064,7 @@ CUSTOMER_HTML = f"""
 
     async function loadOrders() {{
       if(!currentUser) {{
-        document.getElementById('ordersFeed').innerHTML = '<p style="padding:20px 0; text-align:center;">Login to view orders.</p>';
+        document.getElementById('ordersFeed').innerHTML = '<p style="padding:20px 0; text-align:center;">Sign In to view orders.</p>';
         return;
       }}
       const res = await fetch('/api/orders');
@@ -1127,7 +1109,7 @@ CUSTOMER_HTML = f"""
 
     async function renderWishlist() {{
       if(!currentUser) {{
-        document.getElementById('wishlistFeed').innerHTML = '<p style="padding:20px 0; text-align:center;">Login to see wishlist.</p>';
+        document.getElementById('wishlistFeed').innerHTML = '<p style="padding:20px 0; text-align:center;">Sign In to see wishlist.</p>';
         return;
       }}
       const res = await fetch('/api/wishlist');
@@ -1154,14 +1136,12 @@ CUSTOMER_HTML = f"""
     function renderProfile() {{
       const cont = document.getElementById('profileDetails');
       if(!currentUser) {{
-        cont.innerHTML = '<p>You are not logged in. <a href="javascript:openAuthModal()" style="color:var(--primary); font-weight:bold;">Click here to Login</a></p>';
+        cont.innerHTML = '<p>You are not signed in. <a href="javascript:openAuthModal()" style="color:var(--primary); font-weight:bold;">Click here to Sign In</a></p>';
         return;
       }}
       cont.innerHTML = `
         <div style="line-height: 1.8; font-size: 14px;">
-          <p><strong>Username:</strong> ${{currentUser.name}} (Permanent)</p>
-          <p><strong>Email:</strong> ${{currentUser.email}}</p>
-          <p><strong>Saved Phone:</strong> ${{currentUser.phone || 'Not Saved'}}</p>
+          <p><strong>Registered Phone:</strong> +91 ${{currentUser.phone}} (Permanent)</p>
           <p><strong>Delivery Address:</strong> ${{currentUser.address ? (currentUser.address + ' - PIN: ' + currentUser.pincode) : 'No address saved yet. (Auto-saves upon checkout)'}}</p>
         </div>
       `;
@@ -1190,49 +1170,91 @@ CUSTOMER_HTML = f"""
     }}
     function openAuthModal() {{ 
       isRegister = false;
-      document.getElementById('nameInputGroup').style.display = 'none';
+      document.getElementById('confirmPwGroup').style.display = 'none';
       document.getElementById('forgotPwLink').style.display = 'block';
-      document.getElementById('authTitle').innerText = 'Customer Login';
+      document.getElementById('authTitle').innerText = 'Sign In with Mobile';
       document.getElementById('authSubmitBtn').innerText = 'SIGN IN';
-      document.getElementById('authSwitchLink').innerText = 'New here? Create an account';
+      document.getElementById('authSwitchLink').innerText = 'New customer? Sign Up here';
+      document.getElementById('authMainForm').style.display = 'grid';
+      document.getElementById('otpBox').style.display = 'none';
       document.getElementById('authModal').style.display = 'flex'; 
     }}
     function closeAuthModal() {{ document.getElementById('authModal').style.display = 'none'; }}
     function toggleAuthMode() {{
       isRegister = !isRegister;
-      document.getElementById('nameInputGroup').style.display = isRegister ? 'block' : 'none';
+      document.getElementById('confirmPwGroup').style.display = isRegister ? 'block' : 'none';
       document.getElementById('forgotPwLink').style.display = isRegister ? 'none' : 'block';
-      document.getElementById('authTitle').innerText = isRegister ? 'Create Supermart Account' : 'Customer Login';
-      document.getElementById('authSubmitBtn').innerText = isRegister ? 'REGISTER & SIGN IN' : 'SIGN IN';
-      document.getElementById('authSwitchLink').innerText = isRegister ? 'Already registered? Login here' : 'New here? Create an account';
+      document.getElementById('authTitle').innerText = isRegister ? 'Create Supermart Account' : 'Sign In with Mobile';
+      document.getElementById('authSubmitBtn').innerText = isRegister ? 'VERIFY VIA WHATSAPP ➔' : 'SIGN IN';
+      document.getElementById('authSwitchLink').innerText = isRegister ? 'Already registered? Sign In' : 'New customer? Sign Up here';
+      document.getElementById('authMainForm').style.display = 'grid';
+      document.getElementById('otpBox').style.display = 'none';
     }}
 
     async function handleAuthSubmit(e) {{
       e.preventDefault();
-      const endpoint = isRegister ? '/api/register' : '/api/login';
-      const payload = {{
-        email: document.getElementById('authEmail').value.trim(),
-        password: document.getElementById('authPassword').value,
-        name: document.getElementById('authName').value.trim()
-      }};
+      const phone = document.getElementById('authPhone').value.trim();
+      const password = document.getElementById('authPassword').value;
 
-      const res = await fetch(endpoint, {{
+      if(isRegister) {{
+        const confirmPw = document.getElementById('authConfirmPassword').value;
+        if(password !== confirmPw) {{
+          return toast("Passwords do not match!");
+        }}
+
+        // Request WhatsApp OTP Verification
+        const res = await fetch('/api/register/request-otp', {{
+          method: 'POST',
+          headers: {{'Content-Type': 'application/json'}},
+          body: JSON.stringify({{ phone: phone, password: password }})
+        }});
+        const d = await res.json();
+        if(d.success) {{
+          currentRegPhone = phone;
+          document.getElementById('authMainForm').style.display = 'none';
+          document.getElementById('waDirectBtn').href = d.wa_link;
+          document.getElementById('otpBox').style.display = 'block';
+          
+          // Open WhatsApp automatically
+          window.open(d.wa_link, '_blank');
+          toast("WhatsApp opened! Send code and verify here.");
+        }} else {{
+          toast(d.message || "Registration error.");
+        }}
+      }} else {{
+        // Direct Login with Phone + Password
+        const res = await fetch('/api/login', {{
+          method: 'POST',
+          headers: {{'Content-Type': 'application/json'}},
+          body: JSON.stringify({{ phone: phone, password: password }})
+        }});
+        const d = await res.json();
+        if(d.success) {{
+          toast("Welcome to Supermart!");
+          closeAuthModal();
+          checkUserSession();
+        }} else {{
+          toast(d.message || "Invalid Mobile Number or Password.");
+        }}
+      }}
+    }}
+
+    async function verifyMobileOtp() {{
+      const otp = document.getElementById('otpInput').value.trim();
+      if(!otp || otp.length !== 4) return toast("Enter valid 4-digit code!");
+
+      const res = await fetch('/api/register/verify-otp', {{
         method: 'POST',
         headers: {{'Content-Type': 'application/json'}},
-        body: JSON.stringify(payload)
+        body: JSON.stringify({{ phone: currentRegPhone, otp: otp }})
       }});
       const d = await res.json();
       if(d.success) {{
-        toast("Welcome to Supermart!");
+        toast("Mobile verified & Account created!");
         closeAuthModal();
         checkUserSession();
       }} else {{
-        if(isRegister && d.message && (d.message.includes("already registered") || d.message.includes("exists"))) {{
-          toast("An account with this Email or Username already exists! Switched to Login.");
-          toggleAuthMode();
-        }} else {{
-          toast(d.message || "Authentication error.");
-        }}
+        toast(d.message || "Invalid verification code!");
       }}
     }}
 
@@ -1590,7 +1612,7 @@ SELLER_HTML = """
 """
 
 # ==============================================================================
-# 4. HTTP REQUEST HANDLERS & BACKEND APIS (WITH PWA ROUTING)
+# 4. HTTP REQUEST HANDLERS & BACKEND APIS (WITH WHATSAPP VERIFICATION)
 # ==============================================================================
 class UnifiedHandler(http.server.BaseHTTPRequestHandler):
 
@@ -1614,7 +1636,6 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
         url = urllib.parse.urlparse(self.path)
         user = self._get_user()
 
-        # PWA Manifest Route
         if url.path == '/manifest.json':
             self.send_response(200)
             self.send_header('Content-Type', 'application/manifest+json')
@@ -1622,7 +1643,6 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(PWA_MANIFEST).encode('utf-8'))
             return
 
-        # PWA Service Worker Route
         if url.path == '/sw.js':
             self.send_response(200)
             self.send_header('Content-Type', 'application/javascript')
@@ -1718,50 +1738,88 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
         body = self.rfile.read(length)
         data = json.loads(body.decode('utf-8')) if length else {}
 
-        # 1. Register with strict UNIQUE check for name & email
-        if url.path == '/api/register':
-            email = data.get('email', '').strip().lower()
-            name = data.get('name', '').strip()
-            pw = hash_pw(data.get('password', ''))
+        # 1. Request WhatsApp Verification Code
+        if url.path == '/api/register/request-otp':
+            phone = data.get('phone', '').strip().replace(' ', '')
+            password = data.get('password', '')
 
-            if not email or not name:
-                return self._json({"success": False, "message": "Email and Name are required."})
+            if len(phone) != 10 or not phone.isdigit():
+                return self._json({"success": False, "message": "Enter valid 10-digit mobile number."})
+
+            conn = sqlite3.connect(DB_FILE)
+            c = conn.cursor()
+            c.execute("SELECT id FROM users WHERE phone = ?", (phone,))
+            exists = c.fetchone()
+            conn.close()
+
+            if exists:
+                return self._json({"success": False, "message": "This mobile number is already registered! Please Sign In."})
+
+            # Generate 4-digit code
+            generated_otp = str(random.randint(1000, 9999))
+            PENDING_REGISTRATIONS[phone] = {
+                "password": hash_pw(password),
+                "otp": generated_otp
+            }
+
+            # WhatsApp message format
+            wa_msg = urllib.parse.quote(f"Supermart Account Verification Code: {generated_otp} for Mobile: +91 {phone}")
+            wa_link = f"https://wa.me/{ADMIN_WHATSAPP}?text={wa_msg}"
+
+            return self._json({
+                "success": True,
+                "wa_link": wa_link,
+                "message": "WhatsApp verification opened."
+            })
+
+        # 2. Verify WhatsApp Code and Complete Registration
+        if url.path == '/api/register/verify-otp':
+            phone = data.get('phone', '').strip()
+            user_otp = data.get('otp', '').strip()
+
+            pending = PENDING_REGISTRATIONS.get(phone)
+            if not pending or pending['otp'] != user_otp:
+                return self._json({"success": False, "message": "Invalid verification code! Please check WhatsApp message."})
 
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()
             try:
-                c.execute("INSERT INTO users (name, email, password) VALUES (?, ?, ?)", (name, email, pw))
+                c.execute("INSERT INTO users (phone, password) VALUES (?, ?)", (phone, pending['password']))
                 uid = c.lastrowid
                 conn.commit()
                 conn.close()
+                del PENDING_REGISTRATIONS[phone]
+
                 token = str(uuid.uuid4())
-                u_obj = {"id": uid, "name": name, "email": email, "phone": "", "address": "", "pincode": ""}
+                u_obj = {"id": uid, "phone": phone, "name": "", "address": "", "pincode": ""}
                 SESSIONS[token] = u_obj
                 self._json({"success": True}, set_cookie=f"sm_session={token}; Path=/; HttpOnly")
             except sqlite3.IntegrityError:
                 conn.close()
-                self._json({"success": False, "message": "An account with this Email or Username already exists. Please Sign In."})
+                self._json({"success": False, "message": "Mobile number already registered."})
             return
 
-        # 2. Login
+        # 3. Direct Login with Phone + Password
         if url.path == '/api/login':
-            email = data.get('email', '').strip().lower()
+            phone = data.get('phone', '').strip()
             pw = hash_pw(data.get('password', ''))
+
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()
-            c.execute("SELECT id, name, email, phone, address, pincode FROM users WHERE email = ? AND password = ?", (email, pw))
+            c.execute("SELECT id, phone, name, address, pincode FROM users WHERE phone = ? AND password = ?", (phone, pw))
             row = c.fetchone()
             conn.close()
+
             if row:
                 token = str(uuid.uuid4())
-                u_obj = {"id": row[0], "name": row[1], "email": row[2], "phone": row[3], "address": row[4], "pincode": row[5]}
+                u_obj = {"id": row[0], "phone": row[1], "name": row[2] or "", "address": row[3] or "", "pincode": row[4] or ""}
                 SESSIONS[token] = u_obj
                 self._json({"success": True}, set_cookie=f"sm_session={token}; Path=/; HttpOnly")
             else:
-                self._json({"success": False, "message": "Invalid email or password."})
+                self._json({"success": False, "message": "Invalid Mobile Number or Password."})
             return
 
-        # 3. Change Password
+        # 4. Change Password
         if url.path == '/api/user/change-password':
             if not user: return self._json({"success": False, "message": "Login required"})
             new_pw = hash_pw(data.get('password', ''))
@@ -1773,12 +1831,12 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
-        # 4. Logout
+        # 5. Logout
         if url.path == '/api/logout':
             self._json({"success": True}, set_cookie="sm_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT")
             return
 
-        # 5. Cart Add
+        # 6. Cart Add
         if url.path == '/api/cart/add':
             if not user: return self._json({"success": False, "message": "Login required"}, status=401)
             conn = sqlite3.connect(DB_FILE)
@@ -1792,7 +1850,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
-        # 6. Cart Remove
+        # 7. Cart Remove
         if url.path == '/api/cart/remove':
             if not user: return self._json({"success": False})
             conn = sqlite3.connect(DB_FILE)
@@ -1803,7 +1861,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
-        # 7. Wishlist Toggle
+        # 8. Wishlist Toggle
         if url.path == '/api/wishlist/toggle':
             if not user: return self._json({"success": False, "message": "Login required"})
             pid = data.get('product_id')
@@ -1822,7 +1880,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True, "message": msg})
             return
 
-        # 8. Order Placement
+        # 9. Order Placement
         if url.path == '/api/order/place':
             if not user: return self._json({"success": False, "message": "Login required"})
             conn = sqlite3.connect(DB_FILE)
@@ -1846,9 +1904,9 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             items_str = ", ".join([f"{r[0]} (x{r[2]})" for r in items])
             order_id = "SM" + str(uuid.uuid4().hex[:6]).upper()
 
-            c.execute("UPDATE users SET phone = ?, address = ?, pincode = ? WHERE id = ?",
-                      (data['phone'], data['address'], data['pincode'], user['id']))
-            user['phone'] = data['phone']
+            c.execute("UPDATE users SET name = ?, address = ?, pincode = ? WHERE id = ?",
+                      (data['name'], data['address'], data['pincode'], user['id']))
+            user['name'] = data['name']
             user['address'] = data['address']
             user['pincode'] = data['pincode']
 
@@ -1863,7 +1921,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True, "order_id": order_id})
             return
 
-        # 9. Cancel Order
+        # 10. Cancel Order
         if url.path == '/api/order/cancel':
             if not user: return self._json({"success": False})
             conn = sqlite3.connect(DB_FILE)
@@ -1880,7 +1938,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
                 self._json({"success": False, "message": "Order already in transit / cannot cancel."})
             return
 
-        # 10. Product Add
+        # 11. Product Management
         if url.path == '/api/seller/product/add':
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()
@@ -1893,7 +1951,6 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
-        # 11. Product Update
         if url.path == '/api/seller/product/update':
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()
@@ -1906,7 +1963,6 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
-        # 12. Product Delete
         if url.path == '/api/seller/product/delete':
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()
@@ -1916,7 +1972,6 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
-        # 13. Seller Order Stage Update
         if url.path == '/api/seller/order/update':
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()

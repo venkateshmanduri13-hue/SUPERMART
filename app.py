@@ -10,6 +10,7 @@ from http import cookies
 
 DB_FILE = "supermart.db"
 SECRET_KEY = "SUPERMART_SECRET_KEY_PRO_2026"
+ADMIN_WHATSAPP = "917670912836"
 
 SESSIONS = {}
 
@@ -102,7 +103,7 @@ def init_db():
 # ==============================================================================
 # 2. CUSTOMER FRONTEND (SUPERMART)
 # ==============================================================================
-CUSTOMER_HTML = """
+CUSTOMER_HTML = f"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -110,7 +111,7 @@ CUSTOMER_HTML = """
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>SUPERMART - Online Grocery & Electronics</title>
   <style>
-    :root {
+    :root {{
       --primary: #059669;
       --primary-dark: #047857;
       --accent: #f59e0b;
@@ -121,75 +122,68 @@ CUSTOMER_HTML = """
       --muted: #64748b;
       --border: #e2e8f0;
       --danger: #ef4444;
+      --whatsapp: #25d366;
       --shadow: 0 4px 6px -1px rgba(0,0,0,0.08);
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Roboto, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-    body { background: var(--bg); color: var(--text); padding-bottom: 75px; }
+    }}
+    * {{ box-sizing: border-box; margin: 0; padding: 0; font-family: Roboto, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }}
+    body {{ background: var(--bg); color: var(--text); padding-bottom: 75px; }}
 
-    /* Premium Header */
-    .header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; position: sticky; top: 0; z-index: 1000; box-shadow: var(--shadow); padding: 12px 16px; }
-    .header-top { display: flex; justify-content: space-between; align-items: center; }
-    .brand-title { font-size: 22px; font-weight: 900; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
-    .header-actions { display: flex; gap: 10px; align-items: center; }
-    .icon-btn { background: rgba(255,255,255,0.2); color: #fff; border: none; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    .header {{ background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; position: sticky; top: 0; z-index: 1000; box-shadow: var(--shadow); padding: 12px 16px; }}
+    .header-top {{ display: flex; justify-content: space-between; align-items: center; }}
+    .brand-title {{ font-size: 22px; font-weight: 900; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; cursor: pointer; }}
+    .header-actions {{ display: flex; gap: 10px; align-items: center; }}
+    .icon-btn {{ background: rgba(255,255,255,0.2); color: #fff; border: none; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; }}
     
-    .search-box { margin-top: 10px; position: relative; }
-    .search-box input { width: 100%; border: none; border-radius: 8px; padding: 12px 14px; font-size: 14px; outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); }
+    .search-box {{ margin-top: 10px; position: relative; }}
+    .search-box input {{ width: 100%; border: none; border-radius: 8px; padding: 12px 14px; font-size: 14px; outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); }}
 
-    /* Category Navigation */
-    .category-strip { background: #fff; padding: 10px 14px; display: flex; gap: 10px; overflow-x: auto; border-bottom: 1px solid var(--border); }
-    .category-strip::-webkit-scrollbar { display: none; }
-    .cat-pill { border: none; background: #f1f5f9; color: var(--muted); font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 20px; cursor: pointer; white-space: nowrap; transition: 0.2s; }
-    .cat-pill.active { background: var(--primary); color: #fff; }
+    .category-strip {{ background: #fff; padding: 10px 14px; display: flex; gap: 10px; overflow-x: auto; border-bottom: 1px solid var(--border); }}
+    .category-strip::-webkit-scrollbar {{ display: none; }}
+    .cat-pill {{ border: none; background: #f1f5f9; color: var(--muted); font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 20px; cursor: pointer; white-space: nowrap; transition: 0.2s; }}
+    .cat-pill.active {{ background: var(--primary); color: #fff; }}
 
-    /* Product Grid */
-    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; position: relative; cursor: pointer; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-    .wish-icon { position: absolute; top: 10px; right: 10px; background: #fff; border: 1px solid var(--border); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; cursor: pointer; z-index: 5; }
-    .card-img-wrap { width: 100%; height: 130px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
-    .card-img-wrap img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; }}
+    .card {{ background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; position: relative; cursor: pointer; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }}
+    .card:hover {{ transform: translateY(-2px); box-shadow: var(--shadow); }}
+    .wish-icon {{ position: absolute; top: 10px; right: 10px; background: #fff; border: 1px solid var(--border); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; cursor: pointer; z-index: 5; }}
+    .card-img-wrap {{ width: 100%; height: 130px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }}
+    .card-img-wrap img {{ max-width: 100%; max-height: 100%; object-fit: contain; }}
     
-    .card-title { font-size: 13px; font-weight: 700; height: 34px; overflow: hidden; line-height: 1.3; }
-    .rating-badge { background: #ecfdf5; color: var(--primary-dark); font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 4px; width: fit-content; margin: 4px 0; }
-    .price-row { display: flex; align-items: baseline; gap: 6px; margin: 4px 0 10px 0; }
-    .price-now { font-size: 16px; font-weight: 900; color: #000; }
-    .price-mrp { font-size: 12px; color: var(--muted); text-decoration: line-through; }
+    .card-title {{ font-size: 13px; font-weight: 700; height: 34px; overflow: hidden; line-height: 1.3; }}
+    .rating-badge {{ background: #ecfdf5; color: var(--primary-dark); font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 4px; width: fit-content; margin: 4px 0; }}
+    .price-row {{ display: flex; align-items: baseline; gap: 6px; margin: 4px 0 10px 0; }}
+    .price-now {{ font-size: 16px; font-weight: 900; color: #000; }}
+    .price-mrp {{ font-size: 12px; color: var(--muted); text-decoration: line-through; }}
 
-    /* Big Mobile Buttons */
-    .btn-big { width: 100%; min-height: 48px; border: none; border-radius: 8px; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
-    .btn-primary { background: var(--primary); color: #fff; }
-    .btn-orange { background: var(--accent-orange); color: #fff; }
-    .btn-outline-red { background: #fff; border: 1px solid var(--danger); color: var(--danger); }
+    .btn-big {{ width: 100%; min-height: 48px; border: none; border-radius: 8px; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; }}
+    .btn-primary {{ background: var(--primary); color: #fff; }}
+    .btn-orange {{ background: var(--accent-orange); color: #fff; }}
+    .btn-outline-red {{ background: #fff; border: 1px solid var(--danger); color: var(--danger); }}
+    .btn-whatsapp {{ background: var(--whatsapp); color: #fff; }}
 
-    /* Modal / Popups */
-    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 14px; }
-    .modal-box { background: #fff; width: 100%; max-width: 480px; max-height: 90vh; border-radius: 12px; overflow-y: auto; padding: 20px; position: relative; }
-    .modal-close { position: absolute; top: 12px; right: 16px; font-size: 24px; font-weight: bold; cursor: pointer; border: none; background: transparent; }
+    .modal {{ position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 14px; }}
+    .modal-box {{ background: #fff; width: 100%; max-width: 480px; max-height: 90vh; border-radius: 12px; overflow-y: auto; padding: 20px; position: relative; }}
+    .modal-close {{ position: absolute; top: 12px; right: 16px; font-size: 24px; font-weight: bold; cursor: pointer; border: none; background: transparent; }}
 
-    /* Screens */
-    .screen { display: none; padding: 12px; }
-    .screen.active { display: block; }
-    .sheet { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .screen {{ display: none; padding: 12px; }}
+    .screen.active {{ display: block; }}
+    .sheet {{ background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }}
 
-    /* Success Order Celebration Banner */
-    .celebration-box { text-align: center; padding: 30px 16px; background: #fff; border-radius: 12px; border: 2px solid var(--primary); margin: 20px auto; max-width: 450px; }
-    .celebration-icon { font-size: 55px; margin-bottom: 12px; animation: bounce 1s infinite alternate; }
-    @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+    .celebration-box {{ text-align: center; padding: 30px 16px; background: #fff; border-radius: 12px; border: 2px solid var(--primary); margin: 20px auto; max-width: 450px; }}
+    .celebration-icon {{ font-size: 55px; margin-bottom: 12px; animation: bounce 1s infinite alternate; }}
+    @keyframes bounce {{ from {{ transform: translateY(0); }} to {{ transform: translateY(-10px); }} }}
 
-    /* Bottom Nav Bar */
-    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: #fff; border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 1000; }
-    .nav-btn { background: none; border: none; font-size: 11px; font-weight: 700; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; cursor: pointer; }
-    .nav-btn.active { color: var(--primary); }
+    .bottom-nav {{ position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: #fff; border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 1000; }}
+    .nav-btn {{ background: none; border: none; font-size: 11px; font-weight: 700; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; cursor: pointer; }}
+    .nav-btn.active {{ color: var(--primary); }}
 
-    .toast { position: fixed; top: 75px; left: 50%; transform: translateX(-50%); background: #1e293b; color: #fff; padding: 12px 22px; border-radius: 30px; font-size: 13px; font-weight: 700; z-index: 9999; display: none; box-shadow: var(--shadow); }
+    .toast {{ position: fixed; top: 75px; left: 50%; transform: translateX(-50%); background: #1e293b; color: #fff; padding: 12px 22px; border-radius: 30px; font-size: 13px; font-weight: 700; z-index: 9999; display: none; box-shadow: var(--shadow); }}
   </style>
 </head>
 <body>
 
   <div id="toast" class="toast"></div>
 
-  <!-- Header -->
   <header class="header">
     <div class="header-top">
       <div class="brand-title" onclick="switchView('shop')">
@@ -206,7 +200,6 @@ CUSTOMER_HTML = """
     </div>
   </header>
 
-  <!-- Categories -->
   <div class="category-strip">
     <button class="cat-pill active" onclick="setCategory('All', this)">All Items</button>
     <button class="cat-pill" onclick="setCategory('Groceries', this)">🌾 Groceries</button>
@@ -216,12 +209,10 @@ CUSTOMER_HTML = """
     <button class="cat-pill" onclick="setCategory('Household', this)">🧼 Household</button>
   </div>
 
-  <!-- 1. PRODUCT STORE VIEW -->
   <section id="shopScreen" class="screen active">
     <div class="grid" id="productGrid"></div>
   </section>
 
-  <!-- 2. CART VIEW -->
   <section id="cartScreen" class="screen">
     <div class="sheet">
       <h3>Shopping Basket (<span id="cartCountTitle">0</span>)</h3>
@@ -233,7 +224,7 @@ CUSTOMER_HTML = """
           <strong>₹<span id="cartSubtotal">0</span></strong>
         </div>
         <div style="display:flex; justify-content:space-between; margin-bottom: 8px; color: var(--accent-orange);">
-          <span>Delivery Charges (Free above ₹500):</span>
+          <span>Delivery Charges:</span>
           <strong>₹<span id="cartDelivery">0</span></strong>
         </div>
         <div style="display:flex; justify-content:space-between; font-size: 18px; font-weight: 900; border-top: 1px dashed var(--border); padding-top: 8px;">
@@ -246,13 +237,12 @@ CUSTOMER_HTML = """
     </div>
   </section>
 
-  <!-- 3. CHECKOUT VIEW -->
   <section id="checkoutScreen" class="screen">
     <div class="sheet">
       <h3>Confirm Delivery Address</h3>
       <form onsubmit="handlePlaceOrder(event)" style="display: grid; gap: 12px; margin-top: 14px;">
         <input type="text" id="chkName" placeholder="Full Receiver Name" required style="padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px;">
-        <input type="tel" id="chkPhone" placeholder="10-digit Phone Number" pattern="[0-9]{10}" required style="padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px;">
+        <input type="tel" id="chkPhone" placeholder="10-digit Phone Number" pattern="[0-9]{{10}}" required style="padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px;">
         <input type="text" id="chkPincode" placeholder="Postal Pincode" required style="padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px;">
         <textarea id="chkAddress" placeholder="Complete Street, Flat/Door No, Landmark" required style="padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; height: 75px;"></textarea>
 
@@ -265,18 +255,21 @@ CUSTOMER_HTML = """
     </div>
   </section>
 
-  <!-- 4. CONGRATS ORDER SUCCESS VIEW -->
   <section id="orderSuccessScreen" class="screen">
     <div class="celebration-box">
       <div class="celebration-icon">🎉</div>
       <h2 style="color: var(--primary); margin-bottom: 6px;">Congrats!</h2>
       <h3 style="margin-bottom: 12px;">Your item is ordered successfully!</h3>
       <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">Order ID: <strong id="successOrderId">#</strong><br>Our partner will deliver to your doorstep shortly.</p>
+      
+      <a id="waSupportLink" href="https://wa.me/{ADMIN_WHATSAPP}" target="_blank" class="btn-big btn-whatsapp" style="margin-bottom:10px;">
+        💬 Chat on WhatsApp with Store
+      </a>
+
       <button class="btn-big btn-primary" onclick="switchView('orders')">TRACK MY ORDER 📦</button>
     </div>
   </section>
 
-  <!-- 5. ORDERS TRACKING VIEW -->
   <section id="ordersScreen" class="screen">
     <div class="sheet">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
@@ -287,7 +280,6 @@ CUSTOMER_HTML = """
     </div>
   </section>
 
-  <!-- 6. WISHLIST VIEW -->
   <section id="wishlistScreen" class="screen">
     <div class="sheet">
       <h3>My Wishlist ❤️</h3>
@@ -295,16 +287,19 @@ CUSTOMER_HTML = """
     </div>
   </section>
 
-  <!-- 7. PROFILE & SAVED ADDRESS VIEW -->
   <section id="profileScreen" class="screen">
     <div class="sheet">
       <h3>Customer Account</h3>
       <div id="profileDetails" style="margin-top: 14px;"></div>
-      <button class="btn-big btn-outline-red" style="margin-top: 20px;" onclick="logout()">LOGOUT ACCOUNT</button>
+      
+      <a href="https://wa.me/{ADMIN_WHATSAPP}?text=Hello%20Supermart%20Support" target="_blank" class="btn-big btn-whatsapp" style="margin-top:14px;">
+        💬 Contact Store on WhatsApp
+      </a>
+
+      <button class="btn-big btn-outline-red" style="margin-top: 14px;" onclick="logout()">LOGOUT ACCOUNT</button>
     </div>
   </section>
 
-  <!-- PRODUCT DETAILS MODAL (FULL SPECS) -->
   <div class="modal" id="prodModal">
     <div class="modal-box">
       <button class="modal-close" onclick="closeModal()">&times;</button>
@@ -324,7 +319,6 @@ CUSTOMER_HTML = """
     </div>
   </div>
 
-  <!-- AUTH (SIGN UP / SIGN IN) MODAL -->
   <div class="modal" id="authModal">
     <div class="modal-box" style="max-width: 380px;">
       <button class="modal-close" onclick="closeAuthModal()">&times;</button>
@@ -345,7 +339,6 @@ CUSTOMER_HTML = """
     </div>
   </div>
 
-  <!-- Mobile Bottom Nav -->
   <nav class="bottom-nav">
     <button class="nav-btn active" id="bShop" onclick="switchView('shop')">
       <span style="font-size: 18px;">🏪</span>
@@ -371,85 +364,85 @@ CUSTOMER_HTML = """
     let currentUser = null;
     let isRegister = false;
 
-    function toast(msg) {
+    function toast(msg) {{
       const t = document.getElementById('toast');
       t.innerText = msg;
       t.style.display = 'block';
-      setTimeout(() => { t.style.display = 'none'; }, 2400);
-    }
+      setTimeout(() => {{ t.style.display = 'none'; }}, 2400);
+    }}
 
-    async function checkUserSession() {
+    async function checkUserSession() {{
       const res = await fetch('/api/me');
       const data = await res.json();
-      if(data.authenticated) {
+      if(data.authenticated) {{
         currentUser = data.user;
         document.getElementById('userAuthBtn').innerText = '👤 ' + currentUser.name.split(' ')[0];
-      } else {
+      }} else {{
         currentUser = null;
         document.getElementById('userAuthBtn').innerText = '👤 Login';
-      }
+      }}
       refreshCounts();
-    }
+    }}
 
-    async function loadCatalog() {
+    async function loadCatalog() {{
       const res = await fetch('/api/products');
       products = await res.json();
       filterItems();
-    }
+    }}
 
-    function filterItems() {
+    function filterItems() {{
       const q = document.getElementById('searchInput').value.toLowerCase();
-      const filtered = products.filter(p => {
+      const filtered = products.filter(p => {{
         const catMatch = (currentCategory === 'All' || p.category === currentCategory);
         const textMatch = p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q);
         return catMatch && textMatch;
-      });
+      }});
       renderFeed(filtered);
-    }
+    }}
 
-    function renderFeed(items) {
+    function renderFeed(items) {{
       const grid = document.getElementById('productGrid');
-      if (items.length === 0) {
+      if (items.length === 0) {{
         grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:30px; color:var(--muted);">No matching products found.</div>';
         return;
-      }
+      }}
       grid.innerHTML = items.map(p => `
-        <div class="card" onclick="openDetails(${p.id})">
-          <div class="wish-icon" onclick="event.stopPropagation(); toggleWishlist(${p.id})">❤️</div>
+        <div class="card" onclick="openDetails(${{p.id}})">
+          <div class="wish-icon" onclick="event.stopPropagation(); toggleWishlist(${{p.id}})">❤️</div>
           <div class="card-img-wrap">
-            <img src="${p.image}" onerror="this.src='https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400'">
+            <img src="${{p.image}}" onerror="this.src='https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400'">
           </div>
-          <div class="card-title">${p.name}</div>
-          <div class="rating-badge">★ ${p.rating}</div>
+          <div class="card-title">${{p.name}}</div>
+          <div class="rating-badge">★ ${{p.rating}}</div>
           <div class="price-row">
-            <span class="price-now">₹${p.price.toLocaleString()}</span>
-            <span class="price-mrp">₹${p.orig_price.toLocaleString()}</span>
+            <span class="price-now">₹${{p.price.toLocaleString()}}</span>
+            <span class="price-mrp">₹${{p.orig_price.toLocaleString()}}</span>
           </div>
-          <button class="btn-big btn-primary" onclick="event.stopPropagation(); addToCart(${p.id})">Add to Basket 🛍️</button>
+          <button class="btn-big btn-primary" onclick="event.stopPropagation(); addToCart(${{p.id}})">Add to Basket 🛍️</button>
         </div>
       `).join('');
-    }
+    }}
 
-    function setCategory(cat, btn) {
+    function setCategory(cat, btn) {{
       currentCategory = cat;
       document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
       filterItems();
-    }
+    }}
 
-    function switchView(name) {
+    function switchView(name) {{
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
 
       document.getElementById(name + 'Screen').classList.add('active');
       if(name === 'shop') document.getElementById('bShop').classList.add('active');
-      if(name === 'cart') { document.getElementById('bCart').classList.add('active'); renderCart(); }
-      if(name === 'orders') { document.getElementById('bOrders').classList.add('active'); loadOrders(); }
-      if(name === 'profile') { document.getElementById('bProfile').classList.add('active'); renderProfile(); }
+      if(name === 'cart') {{ document.getElementById('bCart').classList.add('active'); renderCart(); }}
+      if(name === 'orders') {{ document.getElementById('bOrders').classList.add('active'); loadOrders(); }}
+      if(name === 'profile') {{ document.getElementById('bProfile').classList.add('active'); renderProfile(); }}
       if(name === 'wishlist') renderWishlist();
-    }
+    }}
 
-    function openDetails(id) {
+    function openDetails(id) {{
       const p = products.find(x => x.id === id);
       if(!p) return;
       document.getElementById('mImg').src = p.image;
@@ -459,265 +452,274 @@ CUSTOMER_HTML = """
       document.getElementById('mPrice').innerText = '₹' + p.price.toLocaleString();
       document.getElementById('mMvp').innerText = '₹' + p.orig_price.toLocaleString();
       document.getElementById('mSpecs').innerText = p.specs || 'Certified Premium Quality Product with Supermart Assured Freshness Guarantee.';
-      document.getElementById('mAddCartBtn').onclick = () => { addToCart(p.id); closeModal(); };
+      document.getElementById('mAddCartBtn').onclick = () => {{ addToCart(p.id); closeModal(); }};
       document.getElementById('prodModal').style.display = 'flex';
-    }
+    }}
 
-    function closeModal() { document.getElementById('prodModal').style.display = 'none'; }
+    function closeModal() {{ document.getElementById('prodModal').style.display = 'none'; }}
 
-    async function addToCart(id) {
-      if(!currentUser) {
+    async function addToCart(id) {{
+      if(!currentUser) {{
         toast("Please Login to add items!");
         openAuthModal();
         return;
-      }
-      const res = await fetch('/api/cart/add', {
+      }}
+      const res = await fetch('/api/cart/add', {{
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ product_id: id })
-      });
+        headers: {{'Content-Type': 'application/json'}},
+        body: JSON.stringify({{ product_id: id }})
+      }});
       const d = await res.json();
-      if(d.success) {
+      if(d.success) {{
         toast("Item added to basket!");
         refreshCounts();
-      }
-    }
+      }}
+    }}
 
-    async function toggleWishlist(id) {
-      if(!currentUser) { toast("Please Login first!"); openAuthModal(); return; }
-      const res = await fetch('/api/wishlist/toggle', {
+    async function toggleWishlist(id) {{
+      if(!currentUser) {{ toast("Please Login first!"); openAuthModal(); return; }}
+      const res = await fetch('/api/wishlist/toggle', {{
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ product_id: id })
-      });
+        headers: {{'Content-Type': 'application/json'}},
+        body: JSON.stringify({{ product_id: id }})
+      }});
       const d = await res.json();
       toast(d.message);
       refreshCounts();
-    }
+    }}
 
-    async function refreshCounts() {
-      if(!currentUser) {
+    async function refreshCounts() {{
+      if(!currentUser) {{
         document.getElementById('cartCount').innerText = '0';
         document.getElementById('wishCount').innerText = '0';
         return;
-      }
+      }}
       const [cRes, wRes] = await Promise.all([fetch('/api/cart'), fetch('/api/wishlist')]);
       const cData = await cRes.json();
       const wData = await wRes.json();
       document.getElementById('cartCount').innerText = cData.items ? cData.items.length : 0;
       document.getElementById('cartCountTitle').innerText = cData.items ? cData.items.length : 0;
       document.getElementById('wishCount').innerText = wData.items ? wData.items.length : 0;
-    }
+    }}
 
-    async function renderCart() {
-      if(!currentUser) {
+    async function renderCart() {{
+      if(!currentUser) {{
         document.getElementById('cartListHolder').innerHTML = '<p style="padding:20px 0; text-align:center;">Please login to view basket.</p>';
         return;
-      }
+      }}
       const res = await fetch('/api/cart');
       const d = await res.json();
       const items = d.items || [];
       const cont = document.getElementById('cartListHolder');
 
-      if(items.length === 0) {
+      if(items.length === 0) {{
         cont.innerHTML = '<p style="padding:20px 0; text-align:center; color:var(--muted);">Basket is empty!</p>';
         document.getElementById('cartSubtotal').innerText = '0';
         document.getElementById('cartDelivery').innerText = '0';
         document.getElementById('cartTotal').innerText = '0';
         return;
-      }
+      }}
 
       let subtotal = 0;
-      cont.innerHTML = items.map(i => {
+      cont.innerHTML = items.map(i => {{
         subtotal += i.price * i.quantity;
         return `
           <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);">
             <div>
-              <strong>${i.name}</strong><br>
-              <span style="color:var(--primary); font-weight:800;">₹${i.price} &times; ${i.quantity}</span>
+              <strong>${{i.name}}</strong><br>
+              <span style="color:var(--primary); font-weight:800;">₹${{i.price}} &times; ${{i.quantity}}</span>
             </div>
-            <button onclick="removeCart(${i.cart_id})" style="background:#fee2e2; color:#ef4444; border:none; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">Remove</button>
+            <button onclick="removeCart(${{i.cart_id}})" style="background:#fee2e2; color:#ef4444; border:none; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">Remove</button>
           </div>
         `;
-      }).join('');
+      }}).join('');
 
-      let delivery = (subtotal >= 500 || subtotal === 0) ? 0 : 40;
+      let delivery = 0;
+      if (subtotal > 0 && subtotal <= 50) {{
+        delivery = Math.round((subtotal / 10) * 3);
+      }} else if (subtotal > 50 && subtotal <= 100) {{
+        delivery = Math.round((subtotal / 10) * 2);
+      }} else if (subtotal > 100) {{
+        delivery = 30;
+      }}
+
       document.getElementById('cartSubtotal').innerText = subtotal.toLocaleString();
       document.getElementById('cartDelivery').innerText = delivery.toLocaleString();
       document.getElementById('cartTotal').innerText = (subtotal + delivery).toLocaleString();
-    }
+    }}
 
-    async function removeCart(id) {
-      await fetch('/api/cart/remove', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({cart_id:id}) });
+    async function removeCart(id) {{
+      await fetch('/api/cart/remove', {{ method:'POST', headers:{{'Content-Type':'application/json'}}, body:JSON.stringify({{cart_id:id}}) }});
       renderCart();
       refreshCounts();
-    }
+    }}
 
-    function goToCheckout() {
+    function goToCheckout() {{
       const total = parseFloat(document.getElementById('cartTotal').innerText.replace(/,/g,''));
       if(total <= 0) return toast("Your basket is empty!");
-      if(currentUser && currentUser.address) {
+      if(currentUser && currentUser.address) {{
         document.getElementById('chkName').value = currentUser.name || '';
         document.getElementById('chkPhone').value = currentUser.phone || '';
         document.getElementById('chkPincode').value = currentUser.pincode || '';
         document.getElementById('chkAddress').value = currentUser.address || '';
-      }
+      }}
       switchView('checkout');
-    }
+    }}
 
-    async function handlePlaceOrder(e) {
+    async function handlePlaceOrder(e) {{
       e.preventDefault();
-      const payload = {
+      const payload = {{
         name: document.getElementById('chkName').value,
         phone: document.getElementById('chkPhone').value,
         pincode: document.getElementById('chkPincode').value,
         address: document.getElementById('chkAddress').value
-      };
+      }};
 
-      const res = await fetch('/api/order/place', {
+      const res = await fetch('/api/order/place', {{
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {{'Content-Type': 'application/json'}},
         body: JSON.stringify(payload)
-      });
+      }});
       const d = await res.json();
-      if(d.success) {
+      if(d.success) {{
         document.getElementById('successOrderId').innerText = '#' + d.order_id;
+        const waMsg = encodeURIComponent(`Hi Supermart, I placed order #${{d.order_id}}. Receiver: ${{payload.name}}, Phone: ${{payload.phone}}`);
+        document.getElementById('waSupportLink').href = `https://wa.me/{ADMIN_WHATSAPP}?text=${{waMsg}}`;
         refreshCounts();
         switchView('orderSuccess');
-      } else {
+      }} else {{
         toast(d.message || "Failed to place order.");
-      }
-    }
+      }}
+    }}
 
-    async function loadOrders() {
-      if(!currentUser) {
+    async function loadOrders() {{
+      if(!currentUser) {{
         document.getElementById('ordersFeed').innerHTML = '<p style="padding:20px 0; text-align:center;">Login to view orders.</p>';
         return;
-      }
+      }}
       const res = await fetch('/api/orders');
       const orders = await res.json();
       const cont = document.getElementById('ordersFeed');
 
-      if(orders.length === 0) {
+      if(orders.length === 0) {{
         cont.innerHTML = '<p style="padding:20px 0; text-align:center; color:var(--muted);">No orders placed yet.</p>';
         return;
-      }
+      }}
 
       cont.innerHTML = orders.map(o => `
         <div style="border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:10px;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <strong>Order #${o.order_id}</strong>
-            <span style="color:var(--primary-dark); font-weight:800; font-size:12px;">${o.status}</span>
+            <strong>Order #${{o.order_id}}</strong>
+            <span style="color:var(--primary-dark); font-weight:800; font-size:12px;">${{o.status}}</span>
           </div>
-          <div style="font-size:13px; color:#475569; margin:6px 0;">Items: ${o.items}</div>
-          <div style="font-size:12px; color:var(--muted);">Delivery to: ${o.name} (${o.phone}), ${o.address} - PIN: ${o.pincode}</div>
+          <div style="font-size:13px; color:#475569; margin:6px 0;">Items: ${{o.items}}</div>
+          <div style="font-size:12px; color:var(--muted);">Delivery to: ${{o.name}} (${{o.phone}}), ${{o.address}} - PIN: ${{o.pincode}}</div>
           <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-            <strong style="font-size:15px;">Total: ₹${o.total.toLocaleString()}</strong>
-            ${o.status.includes('Confirmed') ? `<button onclick="cancelOrder(${o.id})" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">Cancel Order</button>` : ''}
+            <strong style="font-size:15px;">Total: ₹${{o.total.toLocaleString()}}</strong>
+            ${{o.status.includes('Confirmed') ? `<button onclick="cancelOrder(${{o.id}})" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">Cancel Order</button>` : ''}}
           </div>
         </div>
       `).join('');
-    }
+    }}
 
-    async function cancelOrder(id) {
+    async function cancelOrder(id) {{
       if(!confirm("Are you sure you want to cancel this order?")) return;
-      const res = await fetch('/api/order/cancel', {
+      const res = await fetch('/api/order/cancel', {{
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({order_id: id})
-      });
+        headers: {{'Content-Type': 'application/json'}},
+        body: JSON.stringify({{order_id: id}})
+      }});
       const d = await res.json();
       toast(d.message);
       loadOrders();
-    }
+    }}
 
-    async function renderWishlist() {
-      if(!currentUser) {
+    async function renderWishlist() {{
+      if(!currentUser) {{
         document.getElementById('wishlistFeed').innerHTML = '<p style="padding:20px 0; text-align:center;">Login to see wishlist.</p>';
         return;
-      }
+      }}
       const res = await fetch('/api/wishlist');
       const d = await res.json();
       const items = d.items || [];
       const cont = document.getElementById('wishlistFeed');
 
-      if(items.length === 0) {
+      if(items.length === 0) {{
         cont.innerHTML = '<p style="padding:20px 0; text-align:center; color:var(--muted);">Your wishlist is empty!</p>';
         return;
-      }
+      }}
 
       cont.innerHTML = items.map(i => `
         <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);">
           <div>
-            <strong>${i.name}</strong><br>
-            <span style="font-weight:bold; color:var(--primary);">₹${i.price}</span>
+            <strong>${{i.name}}</strong><br>
+            <span style="font-weight:bold; color:var(--primary);">₹${{i.price}}</span>
           </div>
-          <button onclick="addToCart(${i.id})" class="btn-big btn-primary" style="min-height:36px; padding:0 12px; font-size:12px; width:auto;">Move to Basket</button>
+          <button onclick="addToCart(${{i.id}})" class="btn-big btn-primary" style="min-height:36px; padding:0 12px; font-size:12px; width:auto;">Move to Basket</button>
         </div>
       `).join('');
-    }
+    }}
 
-    function renderProfile() {
+    function renderProfile() {{
       const cont = document.getElementById('profileDetails');
-      if(!currentUser) {
+      if(!currentUser) {{
         cont.innerHTML = '<p>You are not logged in. <a href="javascript:openAuthModal()" style="color:var(--primary); font-weight:bold;">Click here to Login</a></p>';
         return;
-      }
+      }}
       cont.innerHTML = `
         <div style="line-height: 1.8; font-size: 14px;">
-          <p><strong>Name:</strong> ${currentUser.name}</p>
-          <p><strong>Email:</strong> ${currentUser.email}</p>
-          <p><strong>Saved Phone:</strong> ${currentUser.phone || 'Not Saved'}</p>
-          <p><strong>Saved Address:</strong> ${currentUser.address ? (currentUser.address + ' - ' + currentUser.pincode) : 'No address saved yet. (Auto-saves on checkout)'}</p>
+          <p><strong>Name:</strong> ${{currentUser.name}}</p>
+          <p><strong>Email:</strong> ${{currentUser.email}}</p>
+          <p><strong>Saved Phone:</strong> ${{currentUser.phone || 'Not Saved'}}</p>
+          <p><strong>Saved Address:</strong> ${{currentUser.address ? (currentUser.address + ' - ' + currentUser.pincode) : 'No address saved yet. (Auto-saves on checkout)'}}</p>
         </div>
       `;
-    }
+    }}
 
-    /* Auth Handlers */
-    function handleAuthClick() {
+    function handleAuthClick() {{
       if(currentUser) switchView('profile');
       else openAuthModal();
-    }
-    function openAuthModal() { document.getElementById('authModal').style.display = 'flex'; }
-    function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
-    function toggleAuthMode() {
+    }}
+    function openAuthModal() {{ document.getElementById('authModal').style.display = 'flex'; }}
+    function closeAuthModal() {{ document.getElementById('authModal').style.display = 'none'; }}
+    function toggleAuthMode() {{
       isRegister = !isRegister;
       document.getElementById('nameInputGroup').style.display = isRegister ? 'block' : 'none';
       document.getElementById('authTitle').innerText = isRegister ? 'Create Supermart Account' : 'Customer Login';
       document.getElementById('authSubmitBtn').innerText = isRegister ? 'REGISTER & SIGN IN' : 'SIGN IN';
       document.getElementById('authSwitchLink').innerText = isRegister ? 'Already registered? Login here' : 'New here? Create an account';
-    }
+    }}
 
-    async function handleAuthSubmit(e) {
+    async function handleAuthSubmit(e) {{
       e.preventDefault();
       const endpoint = isRegister ? '/api/register' : '/api/login';
-      const payload = {
+      const payload = {{
         email: document.getElementById('authEmail').value,
         password: document.getElementById('authPassword').value,
         name: document.getElementById('authName').value
-      };
-      const res = await fetch(endpoint, {
+      }};
+      const res = await fetch(endpoint, {{
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {{'Content-Type': 'application/json'}},
         body: JSON.stringify(payload)
-      });
+      }});
       const d = await res.json();
-      if(d.success) {
+      if(d.success) {{
         toast("Welcome to Supermart!");
         closeAuthModal();
         checkUserSession();
-      } else {
+      }} else {{
         toast(d.message || "Authentication error.");
-      }
-    }
+      }}
+    }}
 
-    async function logout() {
-      await fetch('/api/logout', {method:'POST'});
+    async function logout() {{
+      await fetch('/api/logout', {{method:'POST'}});
       currentUser = null;
       checkUserSession();
       switchView('shop');
       toast("Logged out successfully.");
-    }
+    }}
 
     checkUserSession();
     loadCatalog();
@@ -742,10 +744,11 @@ SELLER_HTML = """
     .header-bar { background: #0f172a; color: #fff; padding: 14px 18px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
     .box { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin-bottom: 14px; }
     input, textarea, select { width: 100%; min-height: 46px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; margin-bottom: 10px; font-size: 14px; }
-    .btn { min-height: 48px; border: none; border-radius: 6px; font-weight: 800; cursor: pointer; width: 100%; font-size: 14px; }
+    .btn { min-height: 44px; border: none; border-radius: 6px; font-weight: 800; cursor: pointer; width: 100%; font-size: 13px; text-decoration: none; display: flex; align-items: center; justify-content: center; }
     .btn-blue { background: #2563eb; color: #fff; }
     .btn-green { background: #16a34a; color: #fff; flex: 1; }
     .btn-yellow { background: #d97706; color: #fff; flex: 1; }
+    .btn-whatsapp { background: #25d366; color: #fff; margin-top: 8px; font-weight: bold; }
     .order-card { background: #fff; border: 1px solid #cbd5e1; border-left: 6px solid #2563eb; border-radius: 6px; padding: 14px; margin-bottom: 12px; }
   </style>
 </head>
@@ -822,24 +825,36 @@ SELLER_HTML = """
         return;
       }
 
-      cont.innerHTML = orders.map(o => `
-        <div class="order-card">
-          <div style="display:flex; justify-content:space-between; font-weight:bold;">
-            <span>Order #${o.order_id}</span>
-            <span style="background:#e2e8f0; padding:2px 8px; border-radius:4px;">${o.status}</span>
+      cont.innerHTML = orders.map(o => {
+        const cleanPhone = (o.phone || '').replace(/[^0-9]/g, '');
+        const targetPhone = cleanPhone.length === 10 ? ('91' + cleanPhone) : cleanPhone;
+        const waMsg = encodeURIComponent(`Hi ${o.name}, update regarding your Supermart Order #${o.order_id}. Total: ₹${o.total}. Status: ${o.status}.`);
+        const waUrl = `https://wa.me/${targetPhone}?text=${waMsg}`;
+
+        return `
+          <div class="order-card">
+            <div style="display:flex; justify-content:space-between; font-weight:bold;">
+              <span>Order #${o.order_id}</span>
+              <span style="background:#e2e8f0; padding:2px 8px; border-radius:4px;">${o.status}</span>
+            </div>
+            <div style="margin: 10px 0; font-size:14px; line-height:1.5;">
+              <p><strong>Customer:</strong> ${o.name} (📞 <a href="tel:${o.phone}" style="color:#2563eb; font-weight:bold;">${o.phone}</a>)</p>
+              <p><strong>Address:</strong> ${o.address} - PIN: ${o.pincode}</p>
+              <p><strong>Items:</strong> ${o.items}</p>
+              <p style="font-weight:bold; font-size:15px; margin-top:6px; color:#16a34a;">Collect Cash: ₹${o.total.toLocaleString()} (incl. Delivery)</p>
+            </div>
+            
+            <a href="${waUrl}" target="_blank" class="btn btn-whatsapp">
+              💬 WhatsApp Customer (${o.phone})
+            </a>
+
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <button class="btn btn-yellow" onclick="updateStatus(${o.id}, 'Out for Delivery')">Mark Out for Delivery</button>
+              <button class="btn btn-green" onclick="updateStatus(${o.id}, 'Delivered Successfully')">Mark Delivered</button>
+            </div>
           </div>
-          <div style="margin: 10px 0; font-size:14px; line-height:1.5;">
-            <p><strong>Customer:</strong> ${o.name} (📞 <a href="tel:${o.phone}" style="color:#2563eb; font-weight:bold;">${o.phone}</a>)</p>
-            <p><strong>Address:</strong> ${o.address} - PIN: ${o.pincode}</p>
-            <p><strong>Items:</strong> ${o.items}</p>
-            <p style="font-weight:bold; font-size:15px; margin-top:6px; color:#16a34a;">Collect Cash: ₹${o.total.toLocaleString()} (incl. Delivery)</p>
-          </div>
-          <div style="display:flex; gap:8px; margin-top:8px;">
-            <button class="btn btn-yellow" onclick="updateStatus(${o.id}, 'Out for Delivery')">Mark Out for Delivery</button>
-            <button class="btn btn-green" onclick="updateStatus(${o.id}, 'Delivered Successfully')">Mark Delivered</button>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     async function updateStatus(id, st) {
@@ -1059,7 +1074,13 @@ class CustomerHandler(http.server.BaseHTTPRequestHandler):
                 return self._json({"success": False, "message": "Basket is empty"})
 
             subtotal = sum(r[1] * r[2] for r in items)
-            delivery_charge = 0.0 if subtotal >= 500 else 40.0
+            if subtotal <= 50:
+                delivery_charge = round((subtotal / 10.0) * 3.0, 2)
+            elif subtotal <= 100:
+                delivery_charge = round((subtotal / 10.0) * 2.0, 2)
+            else:
+                delivery_charge = 30.0
+
             total = subtotal + delivery_charge
             items_str = ", ".join([f"{r[0]} (x{r[2]})" for r in items])
             order_id = "SM" + str(uuid.uuid4().hex[:6]).upper()

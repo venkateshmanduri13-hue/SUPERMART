@@ -5,7 +5,7 @@ import json
 import urllib.parse
 import uuid
 import hashlib
-import threading
+import os
 from http import cookies
 
 DB_FILE = "supermart.db"
@@ -21,7 +21,6 @@ def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
 
-    # Users Table
     c.execute('''CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
@@ -33,7 +32,6 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
 
-    # Products Table
     c.execute('''CREATE TABLE IF NOT EXISTS products (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
@@ -47,7 +45,6 @@ def init_db():
         reviews_count INTEGER DEFAULT 85
     )''')
 
-    # Cart Table
     c.execute('''CREATE TABLE IF NOT EXISTS cart (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
@@ -56,7 +53,6 @@ def init_db():
         UNIQUE(user_id, product_id)
     )''')
 
-    # Wishlist Table
     c.execute('''CREATE TABLE IF NOT EXISTS wishlist (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
@@ -64,7 +60,6 @@ def init_db():
         UNIQUE(user_id, product_id)
     )''')
 
-    # Orders Table
     c.execute('''CREATE TABLE IF NOT EXISTS orders (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         order_id TEXT NOT NULL,
@@ -81,7 +76,6 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
 
-    # Seed Default Multi-Category Items
     c.execute("SELECT COUNT(*) FROM products")
     if c.fetchone()[0] == 0:
         samples = [
@@ -100,9 +94,6 @@ def init_db():
         conn.commit()
     conn.close()
 
-# ==============================================================================
-# 2. CUSTOMER FRONTEND (SUPERMART)
-# ==============================================================================
 CUSTOMER_HTML = f"""
 <!DOCTYPE html>
 <html lang="en">
@@ -319,7 +310,6 @@ CUSTOMER_HTML = f"""
     </div>
   </div>
 
-  <!-- AUTH (SIGN UP / SIGN IN) MODAL -->
   <div class="modal" id="authModal">
     <div class="modal-box" style="max-width: 380px;">
       <button class="modal-close" onclick="closeAuthModal()">&times;</button>
@@ -331,32 +321,12 @@ CUSTOMER_HTML = f"""
         </div>
         <input type="email" id="authEmail" placeholder="Email Address" required style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px;">
         <input type="password" id="authPassword" placeholder="Password" required style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px;">
-        
-        <div id="forgotPwdLinkHolder" style="text-align: right;">
-          <a href="javascript:void(0)" onclick="openForgotModal()" style="color:var(--muted); font-size:12px; text-decoration:none; font-weight:bold;">Forgot password?</a>
-        </div>
-
         <button type="submit" class="btn-big btn-primary" id="authSubmitBtn">SIGN IN</button>
       </form>
 
       <p style="margin-top: 14px; font-size: 13px; text-align: center; color: var(--muted);">
         <a href="javascript:void(0)" onclick="toggleAuthMode()" id="authSwitchLink" style="color: var(--primary); font-weight: bold; text-decoration:none;">New here? Create an account</a>
       </p>
-    </div>
-  </div>
-
-  <!-- FORGOT PASSWORD MODAL -->
-  <div class="modal" id="forgotModal">
-    <div class="modal-box" style="max-width: 380px;">
-      <button class="modal-close" onclick="closeForgotModal()">&times;</button>
-      <h2 style="margin-bottom: 8px;">Reset Password</h2>
-      <p style="font-size: 13px; color: var(--muted); margin-bottom: 14px;">Enter your registered email and choose a new password.</p>
-      
-      <form onsubmit="handleForgotPassword(event)" style="display:grid; gap:10px;">
-        <input type="email" id="fpEmail" placeholder="Registered Email" required style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px;">
-        <input type="password" id="fpNewPassword" placeholder="Enter New Password" required minlength="4" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px;">
-        <button type="submit" class="btn-big btn-orange">RESET & SAVE PASSWORD</button>
-      </form>
     </div>
   </div>
 
@@ -704,7 +674,6 @@ CUSTOMER_HTML = f"""
     function openAuthModal() {{ 
       isRegister = false;
       document.getElementById('nameInputGroup').style.display = 'none';
-      document.getElementById('forgotPwdLinkHolder').style.display = 'block';
       document.getElementById('authTitle').innerText = 'Customer Login';
       document.getElementById('authSubmitBtn').innerText = 'SIGN IN';
       document.getElementById('authSwitchLink').innerText = 'New here? Create an account';
@@ -714,37 +683,9 @@ CUSTOMER_HTML = f"""
     function toggleAuthMode() {{
       isRegister = !isRegister;
       document.getElementById('nameInputGroup').style.display = isRegister ? 'block' : 'none';
-      document.getElementById('forgotPwdLinkHolder').style.display = isRegister ? 'none' : 'block';
       document.getElementById('authTitle').innerText = isRegister ? 'Create Supermart Account' : 'Customer Login';
       document.getElementById('authSubmitBtn').innerText = isRegister ? 'REGISTER & SIGN IN' : 'SIGN IN';
       document.getElementById('authSwitchLink').innerText = isRegister ? 'Already registered? Login here' : 'New here? Create an account';
-    }}
-
-    function openForgotModal() {{
-      closeAuthModal();
-      document.getElementById('forgotModal').style.display = 'flex';
-    }}
-    function closeForgotModal() {{
-      document.getElementById('forgotModal').style.display = 'none';
-    }}
-
-    async function handleForgotPassword(e) {{
-      e.preventDefault();
-      const email = document.getElementById('fpEmail').value.trim();
-      const new_password = document.getElementById('fpNewPassword').value;
-      const res = await fetch('/api/forgot-password', {{
-        method: 'POST',
-        headers: {{'Content-Type': 'application/json'}},
-        body: JSON.stringify({{ email, new_password }})
-      }});
-      const d = await res.json();
-      if(d.success) {{
-        toast("Password updated successfully! Please Sign In.");
-        closeForgotModal();
-        openAuthModal();
-      }} else {{
-        toast(d.message || "Failed to reset password.");
-      }}
     }}
 
     async function handleAuthSubmit(e) {{
@@ -790,9 +731,6 @@ CUSTOMER_HTML = f"""
 </html>
 """
 
-# ==============================================================================
-# 3. SELLER / ADMIN FRONTEND (PORT 5001)
-# ==============================================================================
 SELLER_HTML = """
 <!DOCTYPE html>
 <html lang="en">
@@ -935,10 +873,7 @@ SELLER_HTML = """
 </html>
 """
 
-# ==============================================================================
-# 4. HTTP REQUEST HANDLERS & BACKEND APIS
-# ==============================================================================
-class CustomerHandler(http.server.BaseHTTPRequestHandler):
+class UnifiedHandler(http.server.BaseHTTPRequestHandler):
 
     def _get_user(self):
         cookie_header = self.headers.get('Cookie')
@@ -965,6 +900,13 @@ class CustomerHandler(http.server.BaseHTTPRequestHandler):
             self.send_header('Content-Type', 'text/html; charset=utf-8')
             self.end_headers()
             self.wfile.write(CUSTOMER_HTML.encode('utf-8'))
+            return
+
+        if url.path in ['/seller', '/admin', '/seller/']:
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+            self.end_headers()
+            self.wfile.write(SELLER_HTML.encode('utf-8'))
             return
 
         if url.path == '/api/me':
@@ -1023,6 +965,15 @@ class CustomerHandler(http.server.BaseHTTPRequestHandler):
             self._json([{"id": r[0], "order_id": r[1], "name": r[2], "phone": r[3], "pincode": r[4], "address": r[5], "total": r[6], "status": r[7], "items": r[8]} for r in rows])
             return
 
+        if url.path == '/api/seller/orders':
+            conn = sqlite3.connect(DB_FILE)
+            c = conn.cursor()
+            c.execute("SELECT id, order_id, name, phone, pincode, address, total, status, items FROM orders ORDER BY id DESC")
+            rows = c.fetchall()
+            conn.close()
+            self._json([{"id": r[0], "order_id": r[1], "name": r[2], "phone": r[3], "pincode": r[4], "address": r[5], "total": r[6], "status": r[7], "items": r[8]} for r in rows])
+            return
+
         self.send_error(404)
 
     def do_POST(self):
@@ -1032,7 +983,6 @@ class CustomerHandler(http.server.BaseHTTPRequestHandler):
         body = self.rfile.read(length)
         data = json.loads(body.decode('utf-8')) if length else {}
 
-        # 1. Register
         if url.path == '/api/register':
             email = data.get('email', '').strip().lower()
             name = data.get('name', '').strip()
@@ -1053,7 +1003,6 @@ class CustomerHandler(http.server.BaseHTTPRequestHandler):
                 self._json({"success": False, "message": "Email already registered."})
             return
 
-        # 2. Login
         if url.path == '/api/login':
             email = data.get('email', '').strip().lower()
             pw = hash_pw(data.get('password', ''))
@@ -1071,34 +1020,10 @@ class CustomerHandler(http.server.BaseHTTPRequestHandler):
                 self._json({"success": False, "message": "Invalid email or password."})
             return
 
-        # 3. Forgot Password
-        if url.path == '/api/forgot-password':
-            email = data.get('email', '').strip().lower()
-            new_pw = data.get('new_password', '')
-            if not email or not new_pw:
-                self._json({"success": False, "message": "Email and new password required."})
-                return
-            pw_hash = hash_pw(new_pw)
-            conn = sqlite3.connect(DB_FILE)
-            c = conn.cursor()
-            c.execute("SELECT id FROM users WHERE email = ?", (email,))
-            row = c.fetchone()
-            if row:
-                c.execute("UPDATE users SET password = ? WHERE email = ?", (pw_hash, email))
-                conn.commit()
-                conn.close()
-                self._json({"success": True})
-            else:
-                conn.close()
-                self._json({"success": False, "message": "No account found with this email."})
-            return
-
-        # 4. Logout
         if url.path == '/api/logout':
             self._json({"success": True}, set_cookie="sm_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT")
             return
 
-        # 5. Cart Add
         if url.path == '/api/cart/add':
             if not user: return self._json({"success": False, "message": "Login required"}, status=401)
             conn = sqlite3.connect(DB_FILE)
@@ -1112,7 +1037,6 @@ class CustomerHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
-        # 6. Cart Remove
         if url.path == '/api/cart/remove':
             if not user: return self._json({"success": False})
             conn = sqlite3.connect(DB_FILE)
@@ -1123,7 +1047,6 @@ class CustomerHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
-        # 7. Wishlist Toggle
         if url.path == '/api/wishlist/toggle':
             if not user: return self._json({"success": False, "message": "Login required"})
             pid = data.get('product_id')
@@ -1142,7 +1065,6 @@ class CustomerHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True, "message": msg})
             return
 
-        # 8. Place Order (Auto-saves Address)
         if url.path == '/api/order/place':
             if not user: return self._json({"success": False, "message": "Login required"})
             conn = sqlite3.connect(DB_FILE)
@@ -1186,7 +1108,6 @@ class CustomerHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True, "order_id": order_id})
             return
 
-        # 9. Cancel Order
         if url.path == '/api/order/cancel':
             if not user: return self._json({"success": False})
             conn = sqlite3.connect(DB_FILE)
@@ -1202,42 +1123,6 @@ class CustomerHandler(http.server.BaseHTTPRequestHandler):
                 conn.close()
                 self._json({"success": False, "message": "Order already processed / cannot cancel."})
             return
-
-        self.send_error(404)
-
-class SellerHandler(http.server.BaseHTTPRequestHandler):
-
-    def _json(self, data, status=200):
-        self.send_response(status)
-        self.send_header('Content-Type', 'application/json')
-        self.end_headers()
-        self.wfile.write(json.dumps(data).encode('utf-8'))
-
-    def do_GET(self):
-        url = urllib.parse.urlparse(self.path)
-        if url.path == '/':
-            self.send_response(200)
-            self.send_header('Content-Type', 'text/html; charset=utf-8')
-            self.end_headers()
-            self.wfile.write(SELLER_HTML.encode('utf-8'))
-            return
-
-        if url.path == '/api/seller/orders':
-            conn = sqlite3.connect(DB_FILE)
-            c = conn.cursor()
-            c.execute("SELECT id, order_id, name, phone, pincode, address, total, status, items FROM orders ORDER BY id DESC")
-            rows = c.fetchall()
-            conn.close()
-            self._json([{"id": r[0], "order_id": r[1], "name": r[2], "phone": r[3], "pincode": r[4], "address": r[5], "total": r[6], "status": r[7], "items": r[8]} for r in rows])
-            return
-
-        self.send_error(404)
-
-    def do_POST(self):
-        url = urllib.parse.urlparse(self.path)
-        length = int(self.headers.get('content-length', 0))
-        body = self.rfile.read(length)
-        data = json.loads(body.decode('utf-8')) if length else {}
 
         if url.path == '/api/seller/product/add':
             conn = sqlite3.connect(DB_FILE)
@@ -1262,19 +1147,9 @@ class SellerHandler(http.server.BaseHTTPRequestHandler):
 
         self.send_error(404)
 
-def run_customer():
-    with socketserver.TCPServer(("", 5000), CustomerHandler) as httpd:
-        httpd.serve_forever()
-
-def run_seller():
-    with socketserver.TCPServer(("", 5001), SellerHandler) as httpd:
-        httpd.serve_forever()
-
 if __name__ == '__main__':
     init_db()
-    print("=========================================================")
-    print(" 🛒 1. CUSTOMER STORE (PRO): http://localhost:5000")
-    print(" 💼 2. SELLER HUB (ADMIN):   http://localhost:5001")
-    print("=========================================================")
-    threading.Thread(target=run_customer, daemon=True).start()
-    run_seller()
+    port = int(os.environ.get("PORT", 5000))
+    print(f"🚀 Unified SUPERMART Server running on port {port}...")
+    with socketserver.TCPServer(("", port), UnifiedHandler) as httpd:
+        httpd.serve_forever()

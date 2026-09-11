@@ -94,6 +94,9 @@ def init_db():
         conn.commit()
     conn.close()
 
+# ==============================================================================
+# 2. CUSTOMER FRONTEND (SUPERMART)
+# ==============================================================================
 CUSTOMER_HTML = f"""
 <!DOCTYPE html>
 <html lang="en">
@@ -731,6 +734,9 @@ CUSTOMER_HTML = f"""
 </html>
 """
 
+# ==============================================================================
+# 3. SELLER / ADMIN FRONTEND WITH PRODUCT DELETE & ORDER EDIT
+# ==============================================================================
 SELLER_HTML = """
 <!DOCTYPE html>
 <html lang="en">
@@ -743,24 +749,31 @@ SELLER_HTML = """
     body { background: #f1f5f9; padding: 14px; color: #1e293b; padding-bottom: 50px; }
     .header-bar { background: #0f172a; color: #fff; padding: 14px 18px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
     .box { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin-bottom: 14px; }
-    input, textarea, select { width: 100%; min-height: 46px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; margin-bottom: 10px; font-size: 14px; }
-    .btn { min-height: 44px; border: none; border-radius: 6px; font-weight: 800; cursor: pointer; width: 100%; font-size: 13px; text-decoration: none; display: flex; align-items: center; justify-content: center; }
+    input, textarea, select { width: 100%; min-height: 44px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; margin-bottom: 10px; font-size: 14px; }
+    .btn { min-height: 42px; border: none; border-radius: 6px; font-weight: 800; cursor: pointer; width: 100%; font-size: 13px; text-decoration: none; display: flex; align-items: center; justify-content: center; }
     .btn-blue { background: #2563eb; color: #fff; }
     .btn-green { background: #16a34a; color: #fff; flex: 1; }
     .btn-yellow { background: #d97706; color: #fff; flex: 1; }
+    .btn-danger { background: #ef4444; color: #fff; width: auto; padding: 6px 12px; min-height: 34px; font-size: 12px; }
+    .btn-edit { background: #6366f1; color: #fff; margin-top: 6px; }
     .btn-whatsapp { background: #25d366; color: #fff; margin-top: 8px; font-weight: bold; }
     .order-card { background: #fff; border: 1px solid #cbd5e1; border-left: 6px solid #2563eb; border-radius: 6px; padding: 14px; margin-bottom: 12px; }
+    
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 14px; }
+    .modal-box { background: #fff; width: 100%; max-width: 480px; max-height: 90vh; border-radius: 12px; overflow-y: auto; padding: 20px; position: relative; }
+    .modal-close { position: absolute; top: 12px; right: 16px; font-size: 22px; font-weight: bold; cursor: pointer; border: none; background: transparent; }
   </style>
 </head>
 <body>
   <div class="header-bar">
     <div>
       <h2>SUPERMART SELLER HUB</h2>
-      <small style="color: #94a3b8;">Inventory & Live Orders Fulfillment</small>
+      <small style="color: #94a3b8;">Inventory, Product Control & Live Orders</small>
     </div>
-    <button onclick="loadOrders()" style="background:#334155; color:#fff; border:none; padding:8px 16px; border-radius:4px; font-weight:bold; cursor:pointer;">🔄 REFRESH</button>
+    <button onclick="refreshAll()" style="background:#334155; color:#fff; border:none; padding:8px 16px; border-radius:4px; font-weight:bold; cursor:pointer;">🔄 REFRESH</button>
   </div>
 
+  <!-- 1. ADD NEW PRODUCT -->
   <div class="box">
     <h3>+ Add New Product to Supermart</h3>
     <form onsubmit="handleUpload(event)" style="margin-top: 10px;">
@@ -785,12 +798,48 @@ SELLER_HTML = """
     </form>
   </div>
 
+  <!-- 2. LIVE INVENTORY & DELETE PRODUCT -->
+  <div class="box">
+    <h3>Live Products In Store (<span id="prodCount">0</span>)</h3>
+    <div id="productsHolder" style="margin-top: 12px; display: grid; gap: 10px;"></div>
+  </div>
+
+  <!-- 3. LIVE ORDERS & EDIT DETAILS -->
   <div class="box">
     <h3>Live Customer Orders Received</h3>
     <div id="ordersHolder" style="margin-top: 12px;"></div>
   </div>
 
+  <!-- EDIT ORDER MODAL -->
+  <div class="modal" id="editOrderModal">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeEditModal()">&times;</button>
+      <h3 style="margin-bottom: 12px;">Edit Order Details</h3>
+      <form onsubmit="saveOrderEdit(event)">
+        <input type="hidden" id="editOrderId">
+        <label style="font-size:12px; font-weight:bold;">Customer Name:</label>
+        <input type="text" id="editName" required>
+        <label style="font-size:12px; font-weight:bold;">Customer Phone:</label>
+        <input type="tel" id="editPhone" required>
+        <label style="font-size:12px; font-weight:bold;">Delivery Address:</label>
+        <textarea id="editAddress" style="height:60px;" required></textarea>
+        <label style="font-size:12px; font-weight:bold;">Ordered Items:</label>
+        <textarea id="editItems" style="height:60px;" required></textarea>
+        <label style="font-size:12px; font-weight:bold;">Total Amount to Collect (₹):</label>
+        <input type="number" step="any" id="editTotal" required>
+        <button type="submit" class="btn btn-blue" style="margin-top:8px;">SAVE CHANGES</button>
+      </form>
+    </div>
+  </div>
+
   <script>
+    let globalOrders = [];
+
+    function refreshAll() {
+      loadProducts();
+      loadOrders();
+    }
+
     async function handleUpload(e) {
       e.preventDefault();
       const payload = {
@@ -812,20 +861,58 @@ SELLER_HTML = """
       if(d.success) {
         alert("Product added live to Supermart customer app!");
         e.target.reset();
+        loadProducts();
+      }
+    }
+
+    async function loadProducts() {
+      const res = await fetch('/api/products');
+      const prods = await res.json();
+      document.getElementById('prodCount').innerText = prods.length;
+      const cont = document.getElementById('productsHolder');
+      if (prods.length === 0) {
+        cont.innerHTML = '<p style="color:#64748b;">No products available.</p>';
+        return;
+      }
+      cont.innerHTML = prods.map(p => `
+        <div style="display:flex; justify-content:space-between; align-items:center; border:1px solid #e2e8f0; padding:10px; border-radius:6px; background:#fafafa;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <img src="${p.image}" style="width:45px; height:45px; object-fit:contain; border-radius:4px; background:#fff;">
+            <div>
+              <strong>${p.name}</strong><br>
+              <small style="color:#64748b;">${p.category} | ₹${p.price}</small>
+            </div>
+          </div>
+          <button class="btn btn-danger" onclick="deleteProduct(${p.id})">🗑️ Delete</button>
+        </div>
+      `).join('');
+    }
+
+    async function deleteProduct(id) {
+      if(!confirm("Are you sure you want to permanently delete this product?")) return;
+      const res = await fetch('/api/seller/product/delete', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({product_id: id})
+      });
+      const d = await res.json();
+      if(d.success) {
+        alert("Product deleted successfully!");
+        loadProducts();
       }
     }
 
     async function loadOrders() {
       const res = await fetch('/api/seller/orders');
-      const orders = await res.json();
+      globalOrders = await res.json();
       const cont = document.getElementById('ordersHolder');
 
-      if(orders.length === 0) {
+      if(globalOrders.length === 0) {
         cont.innerHTML = '<p style="color:#64748b; padding:12px 0;">No active orders yet.</p>';
         return;
       }
 
-      cont.innerHTML = orders.map(o => {
+      cont.innerHTML = globalOrders.map(o => {
         const cleanPhone = (o.phone || '').replace(/[^0-9]/g, '');
         const targetPhone = cleanPhone.length === 10 ? ('91' + cleanPhone) : cleanPhone;
         const waMsg = encodeURIComponent(`Hi ${o.name}, update regarding your Supermart Order #${o.order_id}. Total: ₹${o.total}. Status: ${o.status}.`);
@@ -844,6 +931,8 @@ SELLER_HTML = """
               <p style="font-weight:bold; font-size:15px; margin-top:6px; color:#16a34a;">Collect Cash: ₹${o.total.toLocaleString()} (incl. Delivery)</p>
             </div>
             
+            <button class="btn btn-edit" onclick="openEditModal(${o.id})">✏️ Edit Order (Price / Details)</button>
+
             <a href="${waUrl}" target="_blank" class="btn btn-whatsapp">
               💬 WhatsApp Customer (${o.phone})
             </a>
@@ -857,6 +946,46 @@ SELLER_HTML = """
       }).join('');
     }
 
+    function openEditModal(id) {
+      const o = globalOrders.find(x => x.id === id);
+      if(!o) return;
+      document.getElementById('editOrderId').value = o.id;
+      document.getElementById('editName').value = o.name;
+      document.getElementById('editPhone').value = o.phone;
+      document.getElementById('editAddress').value = o.address;
+      document.getElementById('editItems').value = o.items;
+      document.getElementById('editTotal').value = o.total;
+      document.getElementById('editOrderModal').style.display = 'flex';
+    }
+
+    function closeEditModal() {
+      document.getElementById('editOrderModal').style.display = 'none';
+    }
+
+    async function saveOrderEdit(e) {
+      e.preventDefault();
+      const payload = {
+        order_id: parseInt(document.getElementById('editOrderId').value),
+        name: document.getElementById('editName').value,
+        phone: document.getElementById('editPhone').value,
+        address: document.getElementById('editAddress').value,
+        items: document.getElementById('editItems').value,
+        total: parseFloat(document.getElementById('editTotal').value)
+      };
+
+      const res = await fetch('/api/seller/order/edit', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const d = await res.json();
+      if(d.success) {
+        alert("Order details updated successfully!");
+        closeEditModal();
+        loadOrders();
+      }
+    }
+
     async function updateStatus(id, st) {
       await fetch('/api/seller/order/update', {
         method: 'POST',
@@ -867,12 +996,15 @@ SELLER_HTML = """
       loadOrders();
     }
 
-    loadOrders();
+    refreshAll();
   </script>
 </body>
 </html>
 """
 
+# ==============================================================================
+# 4. HTTP REQUEST HANDLERS & APIS
+# ==============================================================================
 class UnifiedHandler(http.server.BaseHTTPRequestHandler):
 
     def _get_user(self):
@@ -1124,6 +1256,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
                 self._json({"success": False, "message": "Order already processed / cannot cancel."})
             return
 
+        # SELLER: ADD PRODUCT
         if url.path == '/api/seller/product/add':
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()
@@ -1136,10 +1269,35 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
+        # SELLER: DELETE PRODUCT
+        if url.path == '/api/seller/product/delete':
+            conn = sqlite3.connect(DB_FILE)
+            c = conn.cursor()
+            c.execute("DELETE FROM products WHERE id = ?", (data['product_id'],))
+            conn.commit()
+            conn.close()
+            self._json({"success": True})
+            return
+
+        # SELLER: UPDATE ORDER STATUS
         if url.path == '/api/seller/order/update':
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()
             c.execute("UPDATE orders SET status = ? WHERE id = ?", (data['status'], data['order_id']))
+            conn.commit()
+            conn.close()
+            self._json({"success": True})
+            return
+
+        # SELLER: EDIT ORDER DETAILS & TOTAL PRICE
+        if url.path == '/api/seller/order/edit':
+            conn = sqlite3.connect(DB_FILE)
+            c = conn.cursor()
+            c.execute("""
+                UPDATE orders 
+                SET name = ?, phone = ?, address = ?, items = ?, total = ?
+                WHERE id = ?
+            """, (data['name'], data['phone'], data['address'], data['items'], data['total'], data['order_id']))
             conn.commit()
             conn.close()
             self._json({"success": True})

@@ -137,7 +137,7 @@ PWA_MANIFEST = {
 }
 
 PWA_SW_JS = """
-const CACHE_NAME = 'supermart-cache-v14';
+const CACHE_NAME = 'supermart-cache-v15';
 const ASSETS = ['/', '/manifest.json'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
@@ -853,7 +853,7 @@ CUSTOMER_HTML = f"""
     </div>
   </div>
 
-  <!-- AUTH MODAL WITH PURE SMS OTP (NO WHATSAPP) -->
+  <!-- AUTH MODAL WITH PURE SMS OTP -->
   <div class="modal" id="authModal">
     <div class="modal-box" style="max-width: 380px;">
       <button class="modal-close" onclick="closeAuthModal()">&times;</button>

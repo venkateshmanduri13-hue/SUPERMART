@@ -95,7 +95,7 @@ def init_db():
     conn.close()
 
 # ==============================================================================
-# 2. CUSTOMER FRONTEND (SUPERMART)
+# 2. CUSTOMER FRONTEND (MEESHO-STYLE GLASS TRANSPARENT UI)
 # ==============================================================================
 CUSTOMER_HTML = f"""
 <!DOCTYPE html>
@@ -103,127 +103,285 @@ CUSTOMER_HTML = f"""
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>SUPERMART - Online Grocery & Electronics</title>
+  <title>SUPERMART - Online Smart Shopping</title>
   <style>
     :root {{
-      --primary: #059669;
-      --primary-dark: #047857;
-      --accent: #f59e0b;
-      --accent-orange: #ea580c;
-      --bg: #f8fafc;
-      --card: #ffffff;
-      --text: #0f172a;
+      --primary: #9333ea;
+      --primary-dark: #7e22ce;
+      --accent: #ec4899;
+      --glass-bg: rgba(255, 255, 255, 0.82);
+      --glass-card: rgba(255, 255, 255, 0.88);
+      --glass-border: rgba(226, 232, 240, 0.8);
+      --text: #1e1b4b;
       --muted: #64748b;
-      --border: #e2e8f0;
-      --danger: #ef4444;
       --whatsapp: #25d366;
-      --shadow: 0 4px 6px -1px rgba(0,0,0,0.08);
+      --shadow: 0 8px 24px rgba(149, 157, 165, 0.12);
     }}
     * {{ box-sizing: border-box; margin: 0; padding: 0; font-family: Roboto, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }}
-    body {{ background: var(--bg); color: var(--text); padding-bottom: 75px; }}
-
-    .header {{ background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; position: sticky; top: 0; z-index: 1000; box-shadow: var(--shadow); padding: 12px 16px; }}
-    .header-top {{ display: flex; justify-content: space-between; align-items: center; }}
-    .brand-title {{ font-size: 22px; font-weight: 900; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; cursor: pointer; }}
-    .header-actions {{ display: flex; gap: 10px; align-items: center; }}
-    .icon-btn {{ background: rgba(255,255,255,0.2); color: #fff; border: none; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; }}
     
-    .search-box {{ margin-top: 10px; position: relative; }}
-    .search-box input {{ width: 100%; border: none; border-radius: 8px; padding: 12px 14px; font-size: 14px; outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); }}
+    body {{
+      background: linear-gradient(135deg, #f3e8ff 0%, #fdf2f8 50%, #f1f5f9 100%);
+      background-attachment: fixed;
+      color: var(--text);
+      padding-bottom: 75px;
+      min-height: 100vh;
+    }}
 
-    .category-strip {{ background: #fff; padding: 10px 14px; display: flex; gap: 10px; overflow-x: auto; border-bottom: 1px solid var(--border); }}
-    .category-strip::-webkit-scrollbar {{ display: none; }}
-    .cat-pill {{ border: none; background: #f1f5f9; color: var(--muted); font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 20px; cursor: pointer; white-space: nowrap; transition: 0.2s; }}
-    .cat-pill.active {{ background: var(--primary); color: #fff; }}
+    /* Transparent Sticky Header */
+    .top-bar {{
+      position: sticky; top: 0; z-index: 1000;
+      background: var(--glass-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--glass-border);
+      padding: 10px 14px;
+    }}
+    .header-row1 {{ display: flex; justify-content: space-between; align-items: center; }}
+    .brand-logo {{ font-size: 20px; font-weight: 900; color: var(--primary); display: flex; align-items: center; gap: 6px; cursor: pointer; }}
+    .brand-logo span {{ background: linear-gradient(135deg, #9333ea, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
+    .top-icons {{ display: flex; gap: 8px; align-items: center; }}
+    .icon-bubble {{
+      background: rgba(255,255,255,0.75); border: 1px solid var(--glass-border);
+      padding: 6px 10px; border-radius: 20px; font-size: 13px; font-weight: bold;
+      cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }}
 
+    /* Search Bar with Visual Camera / Mic Icons */
+    .search-container {{ margin-top: 8px; position: relative; }}
+    .search-input {{
+      width: 100%; height: 42px; border: 1px solid #cbd5e1;
+      border-radius: 24px; padding: 0 42px 0 38px; font-size: 13px;
+      outline: none; background: #ffffff; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }}
+    .search-left-icon {{ position: absolute; left: 14px; top: 11px; color: #94a3b8; font-size: 15px; }}
+    .search-right-icon {{ position: absolute; right: 14px; top: 10px; color: #94a3b8; font-size: 16px; cursor: pointer; }}
+
+    /* Delivering Address Strip */
+    .delivery-strip {{
+      background: rgba(243, 232, 255, 0.7); backdrop-filter: blur(6px);
+      padding: 7px 14px; font-size: 12px; font-weight: bold; color: #6b21a8;
+      display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(216, 180, 254, 0.5);
+      cursor: pointer;
+    }}
+
+    /* Meesho Circular Categories Strip */
+    .circles-strip {{
+      display: flex; gap: 14px; overflow-x: auto; padding: 12px 14px;
+      background: var(--glass-bg); backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--glass-border);
+    }}
+    .circles-strip::-webkit-scrollbar {{ display: none; }}
+    .circle-item {{
+      display: flex; flex-direction: column; align-items: center;
+      min-width: 64px; cursor: pointer; text-decoration: none;
+    }}
+    .circle-img {{
+      width: 54px; height: 54px; border-radius: 50%; object-fit: cover;
+      border: 2px solid #e9d5ff; box-shadow: 0 2px 6px rgba(147, 51, 234, 0.15);
+      transition: transform 0.2s;
+    }}
+    .circle-item.active .circle-img {{ border-color: var(--primary); transform: scale(1.08); box-shadow: 0 4px 10px rgba(147,51,234,0.3); }}
+    .circle-label {{ font-size: 11px; font-weight: bold; margin-top: 5px; color: var(--text); text-align: center; white-space: nowrap; }}
+
+    /* Real Sorting & Filter Bar */
+    .sort-filter-bar {{
+      display: flex; justify-content: space-between; align-items: center;
+      background: #ffffff; padding: 8px 14px; border-bottom: 1px solid var(--glass-border);
+      font-size: 13px; font-weight: 700; color: #475569;
+    }}
+    .sort-select {{
+      border: none; background: transparent; font-weight: bold; color: var(--primary);
+      outline: none; font-size: 13px; cursor: pointer;
+    }}
+
+    /* Product Grid & Glass Cards */
     .grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; }}
-    .card {{ background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; position: relative; cursor: pointer; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }}
-    .card:hover {{ transform: translateY(-2px); box-shadow: var(--shadow); }}
-    .wish-icon {{ position: absolute; top: 10px; right: 10px; background: #fff; border: 1px solid var(--border); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; cursor: pointer; z-index: 5; }}
+    .card {{
+      background: var(--glass-card); backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border); border-radius: 12px;
+      padding: 10px; display: flex; flex-direction: column; position: relative;
+      box-shadow: var(--shadow); transition: transform 0.2s;
+    }}
+    .card:active {{ transform: scale(0.98); }}
+    .card-heart {{
+      position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.85);
+      border: 1px solid #e2e8f0; width: 30px; height: 30px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; z-index: 2;
+    }}
     .card-img-wrap {{ width: 100%; height: 130px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }}
     .card-img-wrap img {{ max-width: 100%; max-height: 100%; object-fit: contain; }}
     
-    .card-title {{ font-size: 13px; font-weight: 700; height: 34px; overflow: hidden; line-height: 1.3; }}
-    .rating-badge {{ background: #ecfdf5; color: var(--primary-dark); font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 4px; width: fit-content; margin: 4px 0; }}
-    .price-row {{ display: flex; align-items: baseline; gap: 6px; margin: 4px 0 10px 0; }}
+    .mall-tag {{
+      display: inline-flex; align-items: center; gap: 3px; background: #6b21a8;
+      color: #fff; font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 4px; width: fit-content; margin-bottom: 4px;
+    }}
+    .card-name {{ font-size: 13px; font-weight: 700; height: 34px; overflow: hidden; line-height: 1.3; margin-bottom: 4px; }}
+    .price-row {{ display: flex; align-items: baseline; gap: 6px; }}
     .price-now {{ font-size: 16px; font-weight: 900; color: #000; }}
     .price-mrp {{ font-size: 12px; color: var(--muted); text-decoration: line-through; }}
+    .price-off {{ font-size: 12px; color: #16a34a; font-weight: 800; }}
+    
+    .rating-pill {{
+      background: #15803d; color: #fff; font-size: 11px; font-weight: 800;
+      padding: 1px 6px; border-radius: 12px; display: inline-flex; align-items: center; gap: 2px; width: fit-content; margin: 4px 0 8px 0;
+    }}
 
-    .btn-big {{ width: 100%; min-height: 48px; border: none; border-radius: 8px; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; }}
+    .btn-cart {{
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff; border: none; border-radius: 8px; padding: 10px 0;
+      font-size: 13px; font-weight: 800; cursor: pointer; width: 100%; margin-top: auto;
+    }}
+
+    /* Buttons & Modals */
+    .btn-big {{
+      width: 100%; min-height: 46px; border: none; border-radius: 8px;
+      font-size: 14px; font-weight: 800; cursor: pointer; display: flex;
+      align-items: center; justify-content: center; gap: 6px; text-decoration: none;
+    }}
     .btn-primary {{ background: var(--primary); color: #fff; }}
-    .btn-orange {{ background: var(--accent-orange); color: #fff; }}
-    .btn-outline-red {{ background: #fff; border: 1px solid var(--danger); color: var(--danger); }}
+    .btn-orange {{ background: #ea580c; color: #fff; }}
     .btn-whatsapp {{ background: var(--whatsapp); color: #fff; }}
-
-    .modal {{ position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 14px; }}
-    .modal-box {{ background: #fff; width: 100%; max-width: 480px; max-height: 90vh; border-radius: 12px; overflow-y: auto; padding: 20px; position: relative; }}
-    .modal-close {{ position: absolute; top: 12px; right: 16px; font-size: 24px; font-weight: bold; cursor: pointer; border: none; background: transparent; }}
+    .btn-outline-red {{ background: transparent; border: 1px solid #ef4444; color: #ef4444; }}
 
     .screen {{ display: none; padding: 12px; }}
     .screen.active {{ display: block; }}
-    .sheet {{ background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }}
+    .sheet {{
+      background: var(--glass-card); backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border); border-radius: 12px;
+      padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow);
+    }}
 
-    .celebration-box {{ text-align: center; padding: 30px 16px; background: #fff; border-radius: 12px; border: 2px solid var(--primary); margin: 20px auto; max-width: 450px; }}
-    .celebration-icon {{ font-size: 55px; margin-bottom: 12px; animation: bounce 1s infinite alternate; }}
-    @keyframes bounce {{ from {{ transform: translateY(0); }} to {{ transform: translateY(-10px); }} }}
+    .modal {{
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+      z-index: 2000; display: none; align-items: center; justify-content: center; padding: 14px;
+    }}
+    .modal-box {{
+      background: #ffffff; width: 100%; max-width: 440px; max-height: 90vh;
+      border-radius: 14px; overflow-y: auto; padding: 20px; position: relative;
+    }}
+    .modal-close {{ position: absolute; top: 12px; right: 16px; font-size: 24px; font-weight: bold; cursor: pointer; border: none; background: transparent; }}
 
-    .bottom-nav {{ position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: #fff; border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 1000; }}
-    .nav-btn {{ background: none; border: none; font-size: 11px; font-weight: 700; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; cursor: pointer; }}
+    /* Transparent Modern Bottom Bar */
+    .bottom-nav {{
+      position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
+      background: var(--glass-bg); backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px); border-top: 1px solid var(--glass-border);
+      display: flex; justify-content: space-around; align-items: center; z-index: 1000;
+    }}
+    .nav-btn {{
+      background: none; border: none; font-size: 11px; font-weight: 700;
+      color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; cursor: pointer;
+    }}
     .nav-btn.active {{ color: var(--primary); }}
 
-    .toast {{ position: fixed; top: 75px; left: 50%; transform: translateX(-50%); background: #1e293b; color: #fff; padding: 12px 22px; border-radius: 30px; font-size: 13px; font-weight: 700; z-index: 9999; display: none; box-shadow: var(--shadow); }}
+    .toast {{
+      position: fixed; top: 75px; left: 50%; transform: translateX(-50%);
+      background: #0f172a; color: #fff; padding: 10px 20px; border-radius: 30px;
+      font-size: 13px; font-weight: 700; z-index: 9999; display: none; box-shadow: var(--shadow);
+    }}
   </style>
 </head>
 <body>
 
   <div id="toast" class="toast"></div>
 
-  <header class="header">
-    <div class="header-top">
-      <div class="brand-title" onclick="switchView('shop')">
-        <span>🛒</span> SUPERMART
+  <!-- Transparent Header -->
+  <header class="top-bar">
+    <div class="header-row1">
+      <div class="brand-logo" onclick="switchView('shop')">
+        <span>🛍️ SUPERMART</span>
       </div>
-      <div class="header-actions">
-        <button class="icon-btn" onclick="switchView('wishlist')">❤️ <span id="wishCount">0</span></button>
-        <button class="icon-btn" onclick="switchView('cart')">🛍️ <span id="cartCount">0</span></button>
-        <button class="icon-btn" id="userAuthBtn" onclick="handleAuthClick()">👤 Login</button>
+      <div class="top-icons">
+        <div class="icon-bubble" onclick="switchView('wishlist')">❤️ <span id="wishCount">0</span></div>
+        <div class="icon-bubble" onclick="switchView('cart')">🛒 <span id="cartCount">0</span></div>
+        <div class="icon-bubble" id="userAuthBtn" onclick="handleAuthClick()">👤 Login</div>
       </div>
     </div>
-    <div class="search-box">
-      <input type="text" id="searchInput" placeholder="Search Atta, Oil, Fresh Vegetables, Phones..." onkeyup="filterItems()">
+    
+    <!-- Search Bar with Live Filter -->
+    <div class="search-container">
+      <span class="search-left-icon">🔍</span>
+      <input type="text" id="searchInput" class="search-input" placeholder="Search by Product Name, Atta, Oil, iPhone..." onkeyup="filterAndSortItems()">
+      <span class="search-right-icon" onclick="clearSearch()">✖</span>
     </div>
   </header>
 
-  <div class="category-strip">
-    <button class="cat-pill active" onclick="setCategory('All', this)">All Items</button>
-    <button class="cat-pill" onclick="setCategory('Groceries', this)">🌾 Groceries</button>
-    <button class="cat-pill" onclick="setCategory('Vegetables', this)">🥦 Fresh Vegetables</button>
-    <button class="cat-pill" onclick="setCategory('Dairy', this)">🥛 Dairy & Ghee</button>
-    <button class="cat-pill" onclick="setCategory('Electronics', this)">📱 Electronics</button>
-    <button class="cat-pill" onclick="setCategory('Household', this)">🧼 Household</button>
+  <!-- Live Delivery Pincode Strip -->
+  <div class="delivery-strip" onclick="switchView('profile')">
+    <div style="display:flex; align-items:center; gap:6px;">
+      <span>📍</span>
+      <span id="deliveringToText">Delivering to: Set Your Delivery Address</span>
+    </div>
+    <span>❯</span>
   </div>
 
-  <section id="shopScreen" class="screen active">
+  <!-- 1. PRODUCT STORE VIEW -->
+  <section id="shopScreen" class="screen active" style="padding:0;">
+    <!-- Circular Meesho-Style Categories -->
+    <div class="circles-strip">
+      <div class="circle-item active" onclick="selectCircleCategory('All', this)">
+        <img class="circle-img" src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=150&q=80">
+        <span class="circle-label">All Items</span>
+      </div>
+      <div class="circle-item" onclick="selectCircleCategory('Groceries', this)">
+        <img class="circle-img" src="https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=150&q=80">
+        <span class="circle-label">🌾 Groceries</span>
+      </div>
+      <div class="circle-item" onclick="selectCircleCategory('Vegetables', this)">
+        <img class="circle-img" src="https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=150&q=80">
+        <span class="circle-label">🥦 Veggies</span>
+      </div>
+      <div class="circle-item" onclick="selectCircleCategory('Dairy', this)">
+        <img class="circle-img" src="https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=150&q=80">
+        <span class="circle-label">🥛 Dairy</span>
+      </div>
+      <div class="circle-item" onclick="selectCircleCategory('Electronics', this)">
+        <img class="circle-img" src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=150&q=80">
+        <span class="circle-label">📱 Gadgets</span>
+      </div>
+      <div class="circle-item" onclick="selectCircleCategory('Household', this)">
+        <img class="circle-img" src="https://images.unsplash.com/photo-1584813470613-5b1c1cad3d69?auto=format&fit=crop&w=150&q=80">
+        <span class="circle-label">🧼 Home</span>
+      </div>
+    </div>
+
+    <!-- Active Filter & Real Sort Bar -->
+    <div class="sort-filter-bar">
+      <span>Showing: <strong id="currentCatLabel" style="color:var(--primary);">All Products</strong></span>
+      <div>
+        <span>Sort: </span>
+        <select id="sortSelect" class="sort-select" onchange="filterAndSortItems()">
+          <option value="default">Relevance</option>
+          <option value="low">Price: Low to High</option>
+          <option value="high">Price: High to Low</option>
+          <option value="rating">Top Rated</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Product Grid -->
     <div class="grid" id="productGrid"></div>
   </section>
 
+  <!-- 2. CART VIEW -->
   <section id="cartScreen" class="screen">
     <div class="sheet">
       <h3>Shopping Basket (<span id="cartCountTitle">0</span>)</h3>
       <div id="cartListHolder" style="margin: 14px 0;"></div>
 
-      <div style="border-top: 1px solid var(--border); padding-top: 12px; font-size: 14px;">
+      <div style="border-top: 1px solid var(--glass-border); padding-top: 12px; font-size: 14px;">
         <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
           <span>Items Subtotal:</span>
           <strong>₹<span id="cartSubtotal">0</span></strong>
         </div>
-        <div style="display:flex; justify-content:space-between; margin-bottom: 8px; color: var(--accent-orange);">
+        <div style="display:flex; justify-content:space-between; margin-bottom: 8px; color: #ea580c;">
           <span>Delivery Charges:</span>
           <strong>₹<span id="cartDelivery">0</span></strong>
         </div>
-        <div style="display:flex; justify-content:space-between; font-size: 18px; font-weight: 900; border-top: 1px dashed var(--border); padding-top: 8px;">
+        <div style="display:flex; justify-content:space-between; font-size: 18px; font-weight: 900; border-top: 1px dashed var(--glass-border); padding-top: 8px;">
           <span>Total Payable:</span>
-          <span style="color: var(--primary-dark);">₹<span id="cartTotal">0</span></span>
+          <span style="color: var(--primary);">₹<span id="cartTotal">0</span></span>
         </div>
       </div>
 
@@ -231,16 +389,17 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
+  <!-- 3. CHECKOUT VIEW -->
   <section id="checkoutScreen" class="screen">
     <div class="sheet">
       <h3>Confirm Delivery Address</h3>
       <form onsubmit="handlePlaceOrder(event)" style="display: grid; gap: 12px; margin-top: 14px;">
-        <input type="text" id="chkName" placeholder="Full Receiver Name" required style="padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px;">
-        <input type="tel" id="chkPhone" placeholder="10-digit Phone Number" pattern="[0-9]{{10}}" required style="padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px;">
-        <input type="text" id="chkPincode" placeholder="Postal Pincode" required style="padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px;">
-        <textarea id="chkAddress" placeholder="Complete Street, Flat/Door No, Landmark" required style="padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; height: 75px;"></textarea>
+        <input type="text" id="chkName" placeholder="Full Receiver Name" required style="padding: 12px; border: 1px solid var(--glass-border); border-radius: 6px; font-size: 14px;">
+        <input type="tel" id="chkPhone" placeholder="10-digit Phone Number" pattern="[0-9]{{10}}" required style="padding: 12px; border: 1px solid var(--glass-border); border-radius: 6px; font-size: 14px;">
+        <input type="text" id="chkPincode" placeholder="Postal Pincode" required style="padding: 12px; border: 1px solid var(--glass-border); border-radius: 6px; font-size: 14px;">
+        <textarea id="chkAddress" placeholder="Complete Street, Flat/Door No, Landmark" required style="padding: 12px; border: 1px solid var(--glass-border); border-radius: 6px; font-size: 14px; height: 75px;"></textarea>
 
-        <div style="background: #ecfdf5; border: 1px solid #a7f3d0; padding: 12px; border-radius: 6px; font-size: 13px; font-weight: 700; color: var(--primary-dark);">
+        <div style="background: #fdf2f8; border: 1px solid #fbcfe8; padding: 12px; border-radius: 6px; font-size: 13px; font-weight: 700; color: #9d174d;">
           💵 Cash / UPI On Delivery Available (Safe & Verified)
         </div>
 
@@ -249,12 +408,13 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
+  <!-- 4. ORDER SUCCESS CELEBRATION VIEW -->
   <section id="orderSuccessScreen" class="screen">
-    <div class="celebration-box">
-      <div class="celebration-icon">🎉</div>
+    <div class="sheet" style="text-align: center; padding: 30px 16px;">
+      <div style="font-size: 55px; margin-bottom: 12px;">🎉</div>
       <h2 style="color: var(--primary); margin-bottom: 6px;">Congrats!</h2>
-      <h3 style="margin-bottom: 12px;">Your item is ordered successfully!</h3>
-      <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">Order ID: <strong id="successOrderId">#</strong><br>Our partner will deliver to your doorstep shortly.</p>
+      <h3 style="margin-bottom: 12px;">Your order has been placed successfully!</h3>
+      <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">Order ID: <strong id="successOrderId">#</strong><br>Our delivery partner will reach you shortly.</p>
       
       <a id="waSupportLink" href="https://wa.me/{ADMIN_WHATSAPP}" target="_blank" class="btn-big btn-whatsapp" style="margin-bottom:10px;">
         💬 Chat on WhatsApp with Store
@@ -264,6 +424,7 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
+  <!-- 5. ORDERS VIEW -->
   <section id="ordersScreen" class="screen">
     <div class="sheet">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
@@ -274,6 +435,7 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
+  <!-- 6. WISHLIST VIEW -->
   <section id="wishlistScreen" class="screen">
     <div class="sheet">
       <h3>My Wishlist ❤️</h3>
@@ -281,19 +443,21 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
+  <!-- 7. PROFILE & ADDRESS VIEW -->
   <section id="profileScreen" class="screen">
     <div class="sheet">
       <h3>Customer Account</h3>
       <div id="profileDetails" style="margin-top: 14px;"></div>
       
       <a href="https://wa.me/{ADMIN_WHATSAPP}?text=Hello%20Supermart%20Support" target="_blank" class="btn-big btn-whatsapp" style="margin-top:14px;">
-        💬 Contact Store on WhatsApp
+        💬 WhatsApp Store Owner
       </a>
 
       <button class="btn-big btn-outline-red" style="margin-top: 14px;" onclick="logout()">LOGOUT ACCOUNT</button>
     </div>
   </section>
 
+  <!-- PRODUCT DETAILS MODAL -->
   <div class="modal" id="prodModal">
     <div class="modal-box">
       <button class="modal-close" onclick="closeModal()">&times;</button>
@@ -302,10 +466,11 @@ CUSTOMER_HTML = f"""
       </div>
       <span id="mBrand" style="color:var(--muted); font-size:12px; font-weight:800; text-transform:uppercase;"></span>
       <h2 id="mTitle" style="font-size:17px; margin:4px 0 8px 0;"></h2>
-      <div id="mRating" class="rating-badge"></div>
+      <div id="mRating" class="rating-pill"></div>
       <div class="price-row" style="margin: 10px 0;">
         <span id="mPrice" class="price-now" style="font-size:22px;"></span>
         <span id="mMvp" class="price-mrp" style="font-size:15px;"></span>
+        <span id="mOff" class="price-off"></span>
       </div>
       <h4 style="margin-top: 14px;">Product Specifications:</h4>
       <p id="mSpecs" style="color:#475569; font-size:13px; line-height:1.5; margin:6px 0 20px 0;"></p>
@@ -313,6 +478,7 @@ CUSTOMER_HTML = f"""
     </div>
   </div>
 
+  <!-- AUTH MODAL -->
   <div class="modal" id="authModal">
     <div class="modal-box" style="max-width: 380px;">
       <button class="modal-close" onclick="closeAuthModal()">&times;</button>
@@ -320,10 +486,10 @@ CUSTOMER_HTML = f"""
       
       <form onsubmit="handleAuthSubmit(event)" style="display:grid; gap:10px;">
         <div id="nameInputGroup" style="display:none;">
-          <input type="text" id="authName" placeholder="Your Full Name" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px;">
+          <input type="text" id="authName" placeholder="Your Full Name" style="width:100%; padding:10px; border:1px solid var(--glass-border); border-radius:6px;">
         </div>
-        <input type="email" id="authEmail" placeholder="Email Address" required style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px;">
-        <input type="password" id="authPassword" placeholder="Password" required style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px;">
+        <input type="email" id="authEmail" placeholder="Email Address" required style="width:100%; padding:10px; border:1px solid var(--glass-border); border-radius:6px;">
+        <input type="password" id="authPassword" placeholder="Password" required style="width:100%; padding:10px; border:1px solid var(--glass-border); border-radius:6px;">
         <button type="submit" class="btn-big btn-primary" id="authSubmitBtn">SIGN IN</button>
       </form>
 
@@ -333,22 +499,23 @@ CUSTOMER_HTML = f"""
     </div>
   </div>
 
+  <!-- Bottom Navigation -->
   <nav class="bottom-nav">
     <button class="nav-btn active" id="bShop" onclick="switchView('shop')">
-      <span style="font-size: 18px;">🏪</span>
-      <span>Shop</span>
+      <span style="font-size: 18px;">🏠</span>
+      <span>Home</span>
     </button>
     <button class="nav-btn" id="bCart" onclick="switchView('cart')">
-      <span style="font-size: 18px;">🛍️</span>
-      <span>Basket</span>
+      <span style="font-size: 18px;">🛒</span>
+      <span>Cart</span>
     </button>
     <button class="nav-btn" id="bOrders" onclick="switchView('orders')">
       <span style="font-size: 18px;">📦</span>
-      <span>Orders</span>
+      <span>My Orders</span>
     </button>
     <button class="nav-btn" id="bProfile" onclick="switchView('profile')">
       <span style="font-size: 18px;">👤</span>
-      <span>Profile</span>
+      <span>Account</span>
     </button>
   </nav>
 
@@ -362,7 +529,7 @@ CUSTOMER_HTML = f"""
       const t = document.getElementById('toast');
       t.innerText = msg;
       t.style.display = 'block';
-      setTimeout(() => {{ t.style.display = 'none'; }}, 2800);
+      setTimeout(() => {{ t.style.display = 'none'; }}, 2500);
     }}
 
     async function checkUserSession() {{
@@ -371,9 +538,13 @@ CUSTOMER_HTML = f"""
       if(data.authenticated) {{
         currentUser = data.user;
         document.getElementById('userAuthBtn').innerText = '👤 ' + currentUser.name.split(' ')[0];
+        if(currentUser.address && currentUser.pincode) {{
+          document.getElementById('deliveringToText').innerText = `Delivering to: ${{currentUser.address.slice(0, 18)}}... - ${{currentUser.pincode}}`;
+        }}
       }} else {{
         currentUser = null;
         document.getElementById('userAuthBtn').innerText = '👤 Login';
+        document.getElementById('deliveringToText').innerText = "Delivering to: Click to set address";
       }}
       refreshCounts();
     }}
@@ -381,47 +552,70 @@ CUSTOMER_HTML = f"""
     async function loadCatalog() {{
       const res = await fetch('/api/products');
       products = await res.json();
-      filterItems();
+      filterAndSortItems();
     }}
 
-    function filterItems() {{
-      const q = document.getElementById('searchInput').value.toLowerCase();
-      const filtered = products.filter(p => {{
+    function selectCircleCategory(cat, el) {{
+      currentCategory = cat;
+      document.querySelectorAll('.circle-item').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('currentCatLabel').innerText = cat === 'All' ? 'All Products' : cat;
+      filterAndSortItems();
+    }}
+
+    function clearSearch() {{
+      document.getElementById('searchInput').value = '';
+      filterAndSortItems();
+    }}
+
+    function filterAndSortItems() {{
+      const q = document.getElementById('searchInput').value.toLowerCase().trim();
+      const sortType = document.getElementById('sortSelect').value;
+
+      let filtered = products.filter(p => {{
         const catMatch = (currentCategory === 'All' || p.category === currentCategory);
         const textMatch = p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q);
         return catMatch && textMatch;
       }});
+
+      if (sortType === 'low') {{
+        filtered.sort((a, b) => a.price - b.price);
+      }} else if (sortType === 'high') {{
+        filtered.sort((a, b) => b.price - a.price);
+      }} else if (sortType === 'rating') {{
+        filtered.sort((a, b) => b.rating - a.rating);
+      }}
+
       renderFeed(filtered);
     }}
 
     function renderFeed(items) {{
       const grid = document.getElementById('productGrid');
       if (items.length === 0) {{
-        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:30px; color:var(--muted);">No matching products found.</div>';
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted);">No matching products found.</div>';
         return;
       }}
-      grid.innerHTML = items.map(p => `
-        <div class="card" onclick="openDetails(${{p.id}})">
-          <div class="wish-icon" onclick="event.stopPropagation(); toggleWishlist(${{p.id}})">❤️</div>
-          <div class="card-img-wrap">
-            <img src="${{p.image}}" onerror="this.src='https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400'">
-          </div>
-          <div class="card-title">${{p.name}}</div>
-          <div class="rating-badge">★ ${{p.rating}}</div>
-          <div class="price-row">
-            <span class="price-now">₹${{p.price.toLocaleString()}}</span>
-            <span class="price-mrp">₹${{p.orig_price.toLocaleString()}}</span>
-          </div>
-          <button class="btn-big btn-primary" onclick="event.stopPropagation(); addToCart(${{p.id}})">Add to Basket 🛍️</button>
-        </div>
-      `).join('');
-    }}
 
-    function setCategory(cat, btn) {{
-      currentCategory = cat;
-      document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      filterItems();
+      grid.innerHTML = items.map(p => {{
+        const discount = p.orig_price > p.price ? Math.round(((p.orig_price - p.price) / p.orig_price) * 100) : 0;
+        return `
+          <div class="card" onclick="openDetails(${{p.id}})">
+            <div class="card-heart" onclick="event.stopPropagation(); toggleWishlist(${{p.id}})">❤️</div>
+            <div class="card-img-wrap">
+              <img src="${{p.image}}" onerror="this.src='https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400'">
+            </div>
+            <div class="mall-tag">✓ Mall</div>
+            <div class="card-name">${{p.name}}</div>
+            <div class="price-row">
+              <span class="price-now">₹${{p.price.toLocaleString()}}</span>
+              <span class="price-mrp">₹${{p.orig_price.toLocaleString()}}</span>
+              ${{discount > 0 ? `<span class="price-off">${{discount}}% off</span>` : ''}}
+            </div>
+            <div class="rating-pill">★ ${{p.rating}}</div>
+            <button class="btn-cart" onclick="event.stopPropagation(); addToCart(${{p.id}})">+ Add to Cart</button>
+          </div>
+        `;
+      }}).join('');
     }}
 
     function switchView(name) {{
@@ -439,13 +633,15 @@ CUSTOMER_HTML = f"""
     function openDetails(id) {{
       const p = products.find(x => x.id === id);
       if(!p) return;
+      const discount = p.orig_price > p.price ? Math.round(((p.orig_price - p.price) / p.orig_price) * 100) : 0;
       document.getElementById('mImg').src = p.image;
       document.getElementById('mBrand').innerText = p.brand;
       document.getElementById('mTitle').innerText = p.name;
       document.getElementById('mRating').innerText = '★ ' + p.rating + ' (' + p.reviews_count + ' reviews)';
       document.getElementById('mPrice').innerText = '₹' + p.price.toLocaleString();
       document.getElementById('mMvp').innerText = '₹' + p.orig_price.toLocaleString();
-      document.getElementById('mSpecs').innerText = p.specs || 'Certified Premium Quality Product with Supermart Assured Freshness Guarantee.';
+      document.getElementById('mOff').innerText = discount > 0 ? (discount + '% off') : '';
+      document.getElementById('mSpecs').innerText = p.specs || 'Supermart Assured Genuine Quality Product with Fast Doorstep Delivery.';
       document.getElementById('mAddCartBtn').onclick = () => {{ addToCart(p.id); closeModal(); }};
       document.getElementById('prodModal').style.display = 'flex';
     }}
@@ -453,11 +649,7 @@ CUSTOMER_HTML = f"""
     function closeModal() {{ document.getElementById('prodModal').style.display = 'none'; }}
 
     async function addToCart(id) {{
-      if(!currentUser) {{
-        toast("Please Login to add items!");
-        openAuthModal();
-        return;
-      }}
+      if(!currentUser) {{ toast("Please Login to add items!"); openAuthModal(); return; }}
       const res = await fetch('/api/cart/add', {{
         method: 'POST',
         headers: {{'Content-Type': 'application/json'}},
@@ -465,7 +657,7 @@ CUSTOMER_HTML = f"""
       }});
       const d = await res.json();
       if(d.success) {{
-        toast("Item added to basket!");
+        toast("Added to Cart!");
         refreshCounts();
       }}
     }}
@@ -518,7 +710,7 @@ CUSTOMER_HTML = f"""
       cont.innerHTML = items.map(i => {{
         subtotal += i.price * i.quantity;
         return `
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--glass-border);">
             <div>
               <strong>${{i.name}}</strong><br>
               <span style="color:var(--primary); font-weight:800;">₹${{i.price}} &times; ${{i.quantity}}</span>
@@ -580,6 +772,7 @@ CUSTOMER_HTML = f"""
         const waMsg = encodeURIComponent(`Hi Supermart, I placed order #${{d.order_id}}. Receiver: ${{payload.name}}, Phone: ${{payload.phone}}`);
         document.getElementById('waSupportLink').href = `https://wa.me/{ADMIN_WHATSAPP}?text=${{waMsg}}`;
         refreshCounts();
+        checkUserSession();
         switchView('orderSuccess');
       }} else {{
         toast(d.message || "Failed to place order.");
@@ -601,13 +794,13 @@ CUSTOMER_HTML = f"""
       }}
 
       cont.innerHTML = orders.map(o => `
-        <div style="border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:10px;">
+        <div style="border:1px solid var(--glass-border); border-radius:8px; padding:12px; margin-bottom:10px; background:#fff;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <strong>Order #${{o.order_id}}</strong>
-            <span style="color:var(--primary-dark); font-weight:800; font-size:12px;">${{o.status}}</span>
+            <span style="color:var(--primary); font-weight:800; font-size:12px;">${{o.status}}</span>
           </div>
           <div style="font-size:13px; color:#475569; margin:6px 0;">Items: ${{o.items}}</div>
-          <div style="font-size:12px; color:var(--muted);">Delivery to: ${{o.name}} (${{o.phone}}), ${{o.address}} - PIN: ${{o.pincode}}</div>
+          <div style="font-size:12px; color:var(--muted);">Delivery: ${{o.name}} (${{o.phone}}), ${{o.address}} - PIN: ${{o.pincode}}</div>
           <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
             <strong style="font-size:15px;">Total: ₹${{o.total.toLocaleString()}}</strong>
             ${{o.status.includes('Confirmed') ? `<button onclick="cancelOrder(${{o.id}})" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">Cancel Order</button>` : ''}}
@@ -644,12 +837,12 @@ CUSTOMER_HTML = f"""
       }}
 
       cont.innerHTML = items.map(i => `
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--glass-border);">
           <div>
             <strong>${{i.name}}</strong><br>
             <span style="font-weight:bold; color:var(--primary);">₹${{i.price}}</span>
           </div>
-          <button onclick="addToCart(${{i.id}})" class="btn-big btn-primary" style="min-height:36px; padding:0 12px; font-size:12px; width:auto;">Move to Basket</button>
+          <button onclick="addToCart(${{i.id}})" class="btn-big btn-primary" style="min-height:36px; padding:0 12px; font-size:12px; width:auto;">Move to Cart</button>
         </div>
       `).join('');
     }}
@@ -665,7 +858,7 @@ CUSTOMER_HTML = f"""
           <p><strong>Name:</strong> ${{currentUser.name}}</p>
           <p><strong>Email:</strong> ${{currentUser.email}}</p>
           <p><strong>Saved Phone:</strong> ${{currentUser.phone || 'Not Saved'}}</p>
-          <p><strong>Saved Address:</strong> ${{currentUser.address ? (currentUser.address + ' - ' + currentUser.pincode) : 'No address saved yet. (Auto-saves on checkout)'}}</p>
+          <p><strong>Delivery Address:</strong> ${{currentUser.address ? (currentUser.address + ' - PIN: ' + currentUser.pincode) : 'No address saved yet. (Auto-saves upon checkout)'}}</p>
         </div>
       `;
     }}
@@ -761,7 +954,6 @@ SELLER_HTML = """
     .order-card, .prod-row { background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; margin-bottom: 10px; }
     .order-card { border-left: 6px solid #2563eb; }
 
-    /* Modal for Edit Product */
     .modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; z-index:9999; padding:12px; }
     .modal-box { background:#fff; width:100%; max-width:480px; border-radius:8px; padding:18px; max-height:90vh; overflow-y:auto; position:relative; }
   </style>
@@ -775,7 +967,6 @@ SELLER_HTML = """
     <button onclick="refreshAll()" style="background:#334155; color:#fff; border:none; padding:8px 16px; border-radius:4px; font-weight:bold; cursor:pointer;">🔄 REFRESH</button>
   </div>
 
-  <!-- 1. Add Product Box -->
   <div class="box">
     <h3>+ Add New Product to Supermart</h3>
     <form onsubmit="handleUpload(event)" style="margin-top: 10px;">
@@ -800,7 +991,6 @@ SELLER_HTML = """
     </form>
   </div>
 
-  <!-- 2. Manage Store Inventory Box (Edit / Delete) -->
   <div class="box">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
       <h3>Manage Inventory (<span id="prodCount">0</span> Items)</h3>
@@ -809,13 +999,11 @@ SELLER_HTML = """
     <div id="inventoryHolder">Loading inventory...</div>
   </div>
 
-  <!-- 3. Live Orders Box -->
   <div class="box">
     <h3>Live Customer Orders Received</h3>
     <div id="ordersHolder" style="margin-top: 12px;"></div>
   </div>
 
-  <!-- EDIT PRODUCT MODAL POPUP -->
   <div class="modal" id="editModal">
     <div class="modal-box">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">

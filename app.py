@@ -111,7 +111,7 @@ PWA_MANIFEST = {
 }
 
 PWA_SW_JS = """
-const CACHE_NAME = 'supermart-cache-v6';
+const CACHE_NAME = 'supermart-cache-v7';
 const ASSETS = ['/', '/manifest.json'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
@@ -126,9 +126,6 @@ self.addEventListener('fetch', (e) => {
 });
 """
 
-# ==============================================================================
-# 2. CUSTOMER FRONTEND
-# ==============================================================================
 CUSTOMER_HTML = f"""
 <!DOCTYPE html>
 <html lang="en">
@@ -178,7 +175,6 @@ CUSTOMER_HTML = f"""
     
     .top-icons {{ display: flex; gap: 10px; align-items: center; }}
     
-    /* 2D Circular Minimalist Icons */
     .icon-2d-btn {{
       width: 38px; height: 38px; border-radius: 50%;
       background: #ffffff; border: 1px solid #e2e8f0;
@@ -202,13 +198,13 @@ CUSTOMER_HTML = f"""
     .search-left-icon {{ position: absolute; left: 14px; top: 11px; color: #94a3b8; font-size: 15px; }}
     .search-right-icon {{ position: absolute; right: 14px; top: 10px; color: #94a3b8; font-size: 16px; cursor: pointer; }}
 
+    /* Location Strip: Displayed only on Orders and Profile */
     .delivery-strip {{
       background: #f1f5f9; padding: 9px 14px; font-size: 12px; font-weight: bold; color: #334155;
-      display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0;
+      display: none; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0;
       cursor: pointer;
     }}
 
-    /* 2D Minimalist Vector Categories Strip */
     .circles-strip {{
       display: flex; gap: 14px; overflow-x: auto; padding: 12px 14px;
       background: #ffffff; border-bottom: 1px solid var(--glass-border);
@@ -243,7 +239,6 @@ CUSTOMER_HTML = f"""
       display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2;
     }}
     
-    /* Optimized Zoomed Image View: No empty side gaps */
     .card-img-wrap {{
       width: 100%; height: 155px; border-radius: 8px; overflow: hidden;
       margin-bottom: 8px; background: #f8fafc;
@@ -274,7 +269,6 @@ CUSTOMER_HTML = f"""
       font-size: 13px; font-weight: 800; cursor: pointer; width: 100%; margin-top: auto;
     }}
 
-    /* PDP Full View */
     .product-view-sheet {{
       background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 75px; box-shadow: var(--shadow);
     }}
@@ -302,7 +296,6 @@ CUSTOMER_HTML = f"""
     .btn-pdp-cart {{ flex: 1; background: #fff; color: #000; border: none; font-weight: bold; font-size: 14px; cursor: pointer; }}
     .btn-pdp-buy {{ flex: 1; background: #ff9f00; color: #fff; border: none; font-weight: bold; font-size: 14px; cursor: pointer; }}
 
-    /* Timeline */
     .timeline {{ margin: 14px 0 10px 0; padding-left: 10px; border-left: 2px solid #e2e8f0; }}
     .timeline-step {{ position: relative; padding-bottom: 12px; padding-left: 16px; font-size: 12px; }}
     .timeline-step::before {{
@@ -314,7 +307,6 @@ CUSTOMER_HTML = f"""
     .timeline-step.current {{ color: #2563eb; font-weight: 900; }}
     .timeline-step.current::before {{ background: #2563eb; box-shadow: 0 0 0 3px #bfdbfe; }}
 
-    /* Meesho Style Menu Row Items */
     .meesho-item-row {{
       display: flex; justify-content: space-between; align-items: center;
       padding: 15px 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer;
@@ -322,14 +314,6 @@ CUSTOMER_HTML = f"""
     }}
     .meesho-item-row:active {{ background: #f8fafc; }}
     .meesho-item-left {{ display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; }}
-    .meesho-badge-box {{
-      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;
-      padding: 16px; display: flex; gap: 12px; margin-bottom: 14px;
-    }}
-    .meesho-badge-btn {{
-      flex: 1; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
-      padding: 12px; text-align: center; cursor: pointer;
-    }}
 
     .btn-big {{
       width: 100%; min-height: 46px; border: none; border-radius: 8px;
@@ -364,7 +348,6 @@ CUSTOMER_HTML = f"""
       border-radius: 16px 16px 0 0; padding: 20px 16px 30px 16px;
     }}
 
-    /* 2D Bottom Navigation Icons */
     .bottom-nav {{
       position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
       background: #ffffff; border-top: 1px solid var(--glass-border);
@@ -419,14 +402,12 @@ CUSTOMER_HTML = f"""
 
   <div id="toast" class="toast"></div>
 
-  <!-- Header -->
   <header class="top-bar" id="mainHeader">
     <div class="header-row1">
       <div class="brand-logo" onclick="switchView('shop')">
         <span>🛍️ SUPERMART</span>
       </div>
       <div class="top-icons">
-        <!-- 2D Wishlist -->
         <div class="icon-2d-btn" onclick="switchView('wishlist')" title="Wishlist">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1e1b4b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
@@ -434,7 +415,6 @@ CUSTOMER_HTML = f"""
           <span class="icon-badge-num" id="wishCount">0</span>
         </div>
 
-        <!-- 2D Cart (Last Image Style) -->
         <div class="icon-2d-btn" onclick="switchView('cart')" title="Cart">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="#1e1b4b">
             <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
@@ -442,7 +422,6 @@ CUSTOMER_HTML = f"""
           <span class="icon-badge-num" id="cartCount">0</span>
         </div>
 
-        <!-- 2D User Profile -->
         <div class="icon-2d-btn" id="userAuthBtn" onclick="handleAuthClick()" title="Profile" style="width:auto; padding:0 10px; border-radius:20px; font-size:12px; font-weight:bold;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e1b4b" stroke-width="2" style="margin-right:4px;">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -453,13 +432,15 @@ CUSTOMER_HTML = f"""
       </div>
     </div>
     
-    <div class="search-container">
+    <!-- Search Bar: Active strictly on Home / Shop screen -->
+    <div class="search-container" id="mainSearchBar">
       <span class="search-left-icon">🔍</span>
       <input type="text" id="searchInput" class="search-input" placeholder="Search Atta, Oil, Tomato, Phone..." onkeyup="filterAndSortItems()">
       <span class="search-right-icon" onclick="clearSearch()">✖</span>
     </div>
   </header>
 
+  <!-- Location Strip: Configured to show ONLY on Orders & Profile screen -->
   <div class="delivery-strip" id="pincodeStrip" onclick="openLocationModal()">
     <div style="display:flex; align-items:center; gap:6px;">
       <span>📍</span>
@@ -468,8 +449,8 @@ CUSTOMER_HTML = f"""
     <span>❯</span>
   </div>
 
+  <!-- SHOP / HOME SCREEN -->
   <section id="shopScreen" class="screen active" style="padding:0;">
-    <!-- 2D Vector Categories Strip -->
     <div class="circles-strip">
       <div class="circle-item active" onclick="selectCircleCategory('All', this)">
         <div class="circle-2d-box">
@@ -530,6 +511,7 @@ CUSTOMER_HTML = f"""
     <div class="grid" id="productGrid"></div>
   </section>
 
+  <!-- PDP SCREEN -->
   <section id="pdpScreen" class="screen" style="padding:10px;">
     <button onclick="switchView('shop')" style="background:none; border:none; color:var(--primary); font-size:14px; font-weight:bold; margin-bottom:10px; cursor:pointer;">
       ⬅ Back to Products
@@ -538,7 +520,9 @@ CUSTOMER_HTML = f"""
     <div class="product-view-sheet">
       <div class="pdp-img-box">
         <img id="pdpImg" src="">
-        <div class="card-heart" id="pdpHeart" style="top:10px; right:10px;">❤️</div>
+        <div class="card-heart" id="pdpHeart" style="top:10px; right:10px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+        </div>
       </div>
       
       <span id="pdpBrand" style="color:var(--muted); font-size:12px; font-weight:800; text-transform:uppercase;"></span>
@@ -581,6 +565,7 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
+  <!-- CART SCREEN -->
   <section id="cartScreen" class="screen">
     <div class="sheet">
       <h3>Shopping Basket (<span id="cartCountTitle">0</span>)</h3>
@@ -605,6 +590,7 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
+  <!-- CHECKOUT SCREEN -->
   <section id="checkoutScreen" class="screen">
     <div class="sheet">
       <h3>Confirm Delivery Address</h3>
@@ -634,6 +620,7 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
+  <!-- ORDER SUCCESS SCREEN -->
   <section id="orderSuccessScreen" class="screen">
     <div class="sheet" style="text-align: center; padding: 30px 16px;">
       <div style="font-size: 55px; margin-bottom: 12px;">🎉</div>
@@ -649,6 +636,7 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
+  <!-- ORDERS SCREEN (Shows Location Strip) -->
   <section id="ordersScreen" class="screen">
     <div class="sheet">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
@@ -659,6 +647,7 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
+  <!-- WISHLIST SCREEN -->
   <section id="wishlistScreen" class="screen">
     <div class="sheet">
       <h3>My Wishlist ❤️</h3>
@@ -666,9 +655,8 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- MEESHO STYLE ACCOUNT & SETTINGS SCREEN (2nd Image Replica) -->
+  <!-- MEESHO STYLE ACCOUNT & SETTINGS SCREEN (Shows Location Strip) -->
   <section id="profileScreen" class="screen" style="padding:10px 12px;">
-    <!-- Top Avatar Card -->
     <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:16px; border-radius:12px; margin-bottom:12px; box-shadow:var(--shadow);">
       <div style="display:flex; align-items:center; gap:12px;">
         <div style="width:50px; height:50px; border-radius:50%; background:#f3e8ff; border:2px solid #e9d5ff; display:flex; align-items:center; justify-content:center; font-size:24px;">
@@ -682,7 +670,7 @@ CUSTOMER_HTML = f"""
       <span style="color:#94a3b8; font-size:18px;">❯</span>
     </div>
 
-    <!-- Quick 2 Top Badges: Help Centre & Change Language -->
+    <!-- Quick Top Actions -->
     <div style="display:flex; gap:10px; margin-bottom:14px;">
       <a href="https://wa.me/{ADMIN_WHATSAPP}?text=Hello%20Supermart%20Support" target="_blank" style="flex:1; background:#fff; border:1px solid var(--glass-border); border-radius:10px; padding:14px; text-align:center; text-decoration:none; color:var(--text); box-shadow:0 1px 3px rgba(0,0,0,0.03);">
         <div style="font-size:20px; margin-bottom:4px;">📞</div>
@@ -694,7 +682,7 @@ CUSTOMER_HTML = f"""
       </div>
     </div>
 
-    <!-- Menu List Group (Settings, Password, Address, Wishlist, etc.) -->
+    <!-- Menu List -->
     <div style="background:#fff; border-radius:12px; overflow:hidden; box-shadow:var(--shadow); margin-bottom:14px;">
       <div style="padding:12px 14px 6px 14px; font-size:12px; font-weight:bold; color:var(--muted); text-transform:uppercase;">
         Account Settings & Activity
@@ -749,7 +737,6 @@ CUSTOMER_HTML = f"""
       </a>
     </div>
 
-    <!-- Logout -->
     <button class="btn-big btn-outline-red" style="border-radius:10px; background:#fff;" onclick="logout()">LOGOUT ACCOUNT</button>
   </section>
 
@@ -1010,7 +997,6 @@ CUSTOMER_HTML = f"""
             status.innerText = `✓ Verified: ${{details.Name}}, ${{details.District}}`;
             status.style.color = "#16a34a";
 
-            // If user is logged in, auto sync to profile database!
             if(currentUser) {{
               syncLocationToProfile(pin, `${{details.Name}}, ${{mandal}}, ${{dist}}`);
             }}
@@ -1046,7 +1032,6 @@ CUSTOMER_HTML = f"""
               document.getElementById('chkDistrict').value = `${{addr.state_district || ''}}, ${{addr.state || ''}}`;
             }}
 
-            // AUTO-SAVE GPS LOCATION DIRECTLY TO USER DATABASE PROFILE
             if(currentUser) {{
               const fullAddr = `${{place}}, ${{addr.state_district || ''}}, ${{addr.state || ''}}`;
               syncLocationToProfile(pin, fullAddr);
@@ -1059,7 +1044,6 @@ CUSTOMER_HTML = f"""
       }}, () => {{ toast("GPS Permission denied."); }});
     }}
 
-    /* Function to automatically sync captured location to profile database */
     async function syncLocationToProfile(pin, addressStr) {{
       await fetch('/api/user/update-profile', {{
         method: 'POST',
@@ -1132,7 +1116,6 @@ CUSTOMER_HTML = f"""
       if(data.authenticated) {{
         currentUser = data.user;
         document.getElementById('userAuthText').innerText = currentUser.name ? currentUser.name.split(' ')[0] : currentUser.phone;
-        
         document.getElementById('accUserName').innerText = currentUser.name || ("User: " + currentUser.phone);
         document.getElementById('accUserPhone').innerText = "+91 " + currentUser.phone;
 
@@ -1296,14 +1279,23 @@ CUSTOMER_HTML = f"""
       switchView('cart');
     }}
 
+    /* STRICT VISIBILITY ROUTING: Search only on Home, Location only on Orders/Profile */
     function switchView(name) {{
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
 
       const isPdp = (name === 'pdp');
+      const isHome = (name === 'shop');
+      const showLocation = (name === 'orders' || name === 'profile');
+
       document.getElementById('mainHeader').style.display = isPdp ? 'none' : 'block';
-      document.getElementById('pincodeStrip').style.display = isPdp ? 'none' : 'flex';
       document.getElementById('mainBottomNav').style.display = isPdp ? 'none' : 'flex';
+
+      // 1. Search Bar visible ONLY on Home / Shop
+      document.getElementById('mainSearchBar').style.display = isHome ? 'block' : 'none';
+
+      // 2. Location Strip visible ONLY on Orders or Profile
+      document.getElementById('pincodeStrip').style.display = showLocation ? 'flex' : 'none';
 
       document.getElementById(name + 'Screen').classList.add('active');
       if(name === 'shop') document.getElementById('bShop').classList.add('active');

@@ -113,7 +113,7 @@ PWA_MANIFEST = {
 }
 
 PWA_SW_JS = """
-const CACHE_NAME = 'supermart-cache-v3';
+const CACHE_NAME = 'supermart-cache-v4';
 const ASSETS = ['/', '/manifest.json'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
@@ -129,7 +129,7 @@ self.addEventListener('fetch', (e) => {
 """
 
 # ==============================================================================
-# 2. CUSTOMER FRONTEND (MOBILE NUMBER + WHATSAPP VERIFICATION)
+# 2. CUSTOMER FRONTEND (WITH FLIPKART STYLE LIVE LOCATION SHEET & PINCODE AUTOFILL)
 # ==============================================================================
 CUSTOMER_HTML = f"""
 <!DOCTYPE html>
@@ -194,9 +194,10 @@ CUSTOMER_HTML = f"""
     .search-left-icon {{ position: absolute; left: 14px; top: 11px; color: #94a3b8; font-size: 15px; }}
     .search-right-icon {{ position: absolute; right: 14px; top: 10px; color: #94a3b8; font-size: 16px; cursor: pointer; }}
 
+    /* Delivering Address Strip */
     .delivery-strip {{
-      background: rgba(243, 232, 255, 0.7); backdrop-filter: blur(6px);
-      padding: 7px 14px; font-size: 12px; font-weight: bold; color: #6b21a8;
+      background: rgba(243, 232, 255, 0.75); backdrop-filter: blur(6px);
+      padding: 8px 14px; font-size: 12px; font-weight: bold; color: #6b21a8;
       display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(216, 180, 254, 0.5);
       cursor: pointer;
     }}
@@ -326,6 +327,14 @@ CUSTOMER_HTML = f"""
     }}
     .modal-close {{ position: absolute; top: 12px; right: 16px; font-size: 24px; font-weight: bold; cursor: pointer; border: none; background: transparent; }}
 
+    /* Bottom Sheet Style Modal for Location (Flipkart Style) */
+    #locationModal .modal-box {{
+      position: fixed; bottom: 0; left: 0; right: 0; max-width: 100%;
+      border-radius: 16px 16px 0 0; padding: 20px 16px 30px 16px;
+      animation: slideUp 0.3s ease;
+    }}
+    @keyframes slideUp {{ from {{ transform: translateY(100%); }} to {{ transform: translateY(0); }} }}
+
     .bottom-nav {{
       position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
       background: var(--glass-bg); backdrop-filter: blur(14px);
@@ -399,10 +408,11 @@ CUSTOMER_HTML = f"""
     </div>
   </header>
 
-  <div class="delivery-strip" id="pincodeStrip" onclick="switchView('profile')">
+  <!-- Delivering Strip that triggers Flipkart Style Location Sheet -->
+  <div class="delivery-strip" id="pincodeStrip" onclick="openLocationModal()">
     <div style="display:flex; align-items:center; gap:6px;">
       <span>📍</span>
-      <span id="deliveringToText">Delivering to: Click to set address</span>
+      <span id="deliveringToText">Delivering to: Select delivery location</span>
     </div>
     <span>❯</span>
   </div>
@@ -526,14 +536,26 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
+  <!-- CHECKOUT WITH AUTOMATIC DISTRICT, MANDAL, POST OFFICE AUTO-FILL -->
   <section id="checkoutScreen" class="screen">
     <div class="sheet">
       <h3>Confirm Delivery Address</h3>
-      <form onsubmit="handlePlaceOrder(event)" style="display: grid; gap: 12px; margin-top: 14px;">
-        <input type="text" id="chkName" placeholder="Full Receiver Name" required style="padding: 12px; border: 1px solid var(--glass-border); border-radius: 6px; font-size: 14px;">
-        <input type="tel" id="chkPhone" placeholder="10-digit Phone Number" pattern="[0-9]{{10}}" required style="padding: 12px; border: 1px solid var(--glass-border); border-radius: 6px; font-size: 14px;">
-        <input type="text" id="chkPincode" placeholder="Postal Pincode" required style="padding: 12px; border: 1px solid var(--glass-border); border-radius: 6px; font-size: 14px;">
-        <textarea id="chkAddress" placeholder="Complete Street, Flat/Door No, Landmark" required style="padding: 12px; border: 1px solid var(--glass-border); border-radius: 6px; font-size: 14px; height: 75px;"></textarea>
+      <form onsubmit="handlePlaceOrder(event)" style="display: grid; gap: 10px; margin-top: 14px;">
+        <input type="text" id="chkName" placeholder="Full Receiver Name" required style="padding: 10px; border: 1px solid var(--glass-border); border-radius: 6px; font-size: 14px;">
+        <input type="tel" id="chkPhone" placeholder="10-digit Phone Number" pattern="[0-9]{{10}}" required style="padding: 10px; border: 1px solid var(--glass-border); border-radius: 6px; font-size: 14px;">
+        
+        <div style="display:grid; grid-template-columns: 1fr auto; gap: 8px; align-items:center;">
+          <input type="text" id="chkPincode" placeholder="6-digit Pincode (e.g. 532427)" pattern="[0-9]{{6}}" required oninput="handlePincodeLookup(this.value)" style="padding: 10px; border: 1px solid var(--glass-border); border-radius: 6px; font-size: 14px;">
+          <button type="button" onclick="detectGPSLocation()" style="background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; padding:10px; border-radius:6px; font-size:12px; font-weight:bold; cursor:pointer;">🎯 Auto GPS</button>
+        </div>
+        <div id="pincodeStatus" style="font-size:11px; color:var(--muted); font-weight:bold;"></div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <input type="text" id="chkMandal" placeholder="Mandal / City" required style="padding: 10px; border: 1px solid var(--glass-border); border-radius: 6px; font-size: 13px; background:#f8fafc;">
+          <input type="text" id="chkDistrict" placeholder="District & State" required style="padding: 10px; border: 1px solid var(--glass-border); border-radius: 6px; font-size: 13px; background:#f8fafc;">
+        </div>
+
+        <textarea id="chkAddress" placeholder="Complete Street, Flat/Door No, Landmark" required style="padding: 10px; border: 1px solid var(--glass-border); border-radius: 6px; font-size: 14px; height: 65px;"></textarea>
 
         <div style="background: #fdf2f8; border: 1px solid #fbcfe8; padding: 12px; border-radius: 6px; font-size: 13px; font-weight: 700; color: #9d174d;">
           💵 Cash / UPI On Delivery Available (Safe & Verified)
@@ -597,13 +619,43 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- AUTH MODAL: MOBILE NUMBER + PASSWORD + CONFIRM PASSWORD + WHATSAPP OTP -->
+  <!-- FLIPKART STYLE 'SELECT DELIVERY ADDRESS' BOTTOM SHEET MODAL -->
+  <div class="modal" id="locationModal">
+    <div class="modal-box">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <h3 style="font-size:16px;">Select delivery address</h3>
+        <button class="modal-close" onclick="closeLocationModal()" style="position:static; font-size:20px;">&times;</button>
+      </div>
+
+      <div style="position:relative; margin-bottom:14px;">
+        <span style="position:absolute; left:12px; top:11px; color:#94a3b8;">🔍</span>
+        <input type="text" id="locSearchPincode" placeholder="Search by pincode (e.g. 532427)" onkeyup="if(event.key==='Enter') quickSetPincode(this.value)" style="width:100%; padding:10px 10px 10px 34px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px;">
+      </div>
+
+      <!-- Real GPS Current Location Button -->
+      <div onclick="detectGPSLocation()" style="display:flex; gap:12px; align-items:center; padding:12px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; cursor:pointer; margin-bottom:14px;">
+        <div style="background:#22c55e; color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px;">🎯</div>
+        <div>
+          <strong style="color:#15803d; font-size:13px;">Use my current location</strong><br>
+          <small style="color:var(--muted); font-size:11px;">Tap to fetch GPS location automatically</small>
+        </div>
+      </div>
+
+      <hr style="border:none; border-top:1px dashed #cbd5e1; margin:14px 0;">
+      
+      <div style="font-size:12px; font-weight:bold; color:var(--muted); margin-bottom:8px;">Saved Address:</div>
+      <div id="savedAddressInModal" style="font-size:13px; color:#334155; line-height:1.4;">
+        No address saved yet. Sign In or enter pincode above.
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTH MODAL -->
   <div class="modal" id="authModal">
     <div class="modal-box" style="max-width: 380px;">
       <button class="modal-close" onclick="closeAuthModal()">&times;</button>
       <h2 id="authTitle" style="margin-bottom: 14px;">Sign In with Mobile</h2>
       
-      <!-- Stage 1: Mobile Form -->
       <form id="authMainForm" onsubmit="handleAuthSubmit(event)" style="display:grid; gap:10px;">
         <input type="tel" id="authPhone" placeholder="10-digit Mobile Number" pattern="[0-9]{{10}}" required style="width:100%; padding:10px; border:1px solid var(--glass-border); border-radius:6px; font-size:14px;">
         <input type="password" id="authPassword" placeholder="Enter Password" required style="width:100%; padding:10px; border:1px solid var(--glass-border); border-radius:6px; font-size:14px;">
@@ -619,10 +671,9 @@ CUSTOMER_HTML = f"""
         <button type="submit" class="btn-big btn-primary" id="authSubmitBtn">SIGN IN</button>
       </form>
 
-      <!-- Stage 2: WhatsApp OTP Verification Box -->
       <div id="otpBox" style="display:none; text-align:center; margin-top:14px;">
         <p style="font-size:13px; color:var(--muted); margin-bottom:8px;">
-          💬 WhatsApp opened! Send the verification message on WhatsApp, then enter the 4-digit code below:
+          💬 WhatsApp opened! Send the verification message, then enter the 4-digit code below:
         </p>
         <a id="waDirectBtn" href="#" target="_blank" class="btn-big btn-whatsapp" style="margin-bottom:12px; font-size:13px;">
           📲 Click here if WhatsApp didn't open
@@ -732,6 +783,92 @@ CUSTOMER_HTML = f"""
       setTimeout(() => {{ t.style.display = 'none'; }}, 2800);
     }}
 
+    /* REAL INDIA POST PINCODE AUTO-LOOKUP */
+    async function handlePincodeLookup(pin) {{
+      pin = pin.trim();
+      const status = document.getElementById('pincodeStatus');
+      if(pin.length === 6 && /^[0-9]+$/.test(pin)) {{
+        status.innerText = "🔍 Checking Post Office & Mandal...";
+        try {{
+          const res = await fetch(`https://api.postalpincode.in/pincode/${{pin}}`);
+          const data = await res.json();
+          if(data && data[0].Status === "Success") {{
+            const details = data[0].PostOffice[0];
+            document.getElementById('chkMandal').value = details.Taluk || details.Block || details.Name;
+            document.getElementById('chkDistrict').value = `${{details.District}}, ${{details.State}}`;
+            status.innerText = `✓ Verified: ${{details.Name}}, ${{details.District}}`;
+            status.style.color = "#16a34a";
+          }} else {{
+            status.innerText = "Pincode not found. Please enter city manually.";
+            status.style.color = "#ea580c";
+          }}
+        }} catch(e) {{
+          status.innerText = "";
+        }}
+      }} else {{
+        status.innerText = "";
+      }}
+    }}
+
+    /* REAL GPS CURRENT LOCATION DETECTOR */
+    function detectGPSLocation() {{
+      if(!navigator.geolocation) {{
+        return toast("Geolocation not supported by browser.");
+      }}
+      toast("Fetching live GPS coordinates...");
+      navigator.geolocation.getCurrentPosition(async (pos) => {{
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        try {{
+          // Reverse geocoding via OpenStreetMap Nominatim
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${{lat}}&lon=${{lon}}`);
+          const data = await res.json();
+          if(data && data.address) {{
+            const addr = data.address;
+            const place = addr.suburb || addr.town || addr.village || addr.city || "My Location";
+            const pin = addr.postcode || "";
+
+            const fullLoc = `Delivering to: ${{place}} ${{pin ? ('- ' + pin) : ''}}`;
+            document.getElementById('deliveringToText').innerText = fullLoc;
+
+            // Pre-fill checkout form if open
+            if(document.getElementById('chkPincode')) {{
+              document.getElementById('chkPincode').value = pin;
+              document.getElementById('chkMandal').value = place;
+              document.getElementById('chkDistrict').value = `${{addr.state_district || addr.county || ''}}, ${{addr.state || ''}}`;
+            }}
+
+            toast(`Location set: ${{place}}`);
+            closeLocationModal();
+          }}
+        }} catch(err) {{
+          toast("GPS fetched, but reverse address timed out.");
+        }}
+      }}, (err) => {{
+        toast("GPS Permission denied or unavailable.");
+      }});
+    }}
+
+    function openLocationModal() {{
+      if(currentUser && currentUser.address) {{
+        document.getElementById('savedAddressInModal').innerText = `${{currentUser.name ? (currentUser.name + ' - ') : ''}}${{currentUser.address}} - PIN: ${{currentUser.pincode}}`;
+      }}
+      document.getElementById('locationModal').style.display = 'flex';
+    }}
+    function closeLocationModal() {{ document.getElementById('locationModal').style.display = 'none'; }}
+
+    function quickSetPincode(pin) {{
+      pin = pin.trim();
+      if(pin.length === 6) {{
+        document.getElementById('deliveringToText').innerText = `Delivering to: PIN - ${{pin}}`;
+        handlePincodeLookup(pin);
+        closeLocationModal();
+        toast("Delivery location updated!");
+      }} else {{
+        toast("Enter 6-digit valid pincode.");
+      }}
+    }}
+
     async function checkUserSession() {{
       const res = await fetch('/api/me');
       const data = await res.json();
@@ -744,7 +881,7 @@ CUSTOMER_HTML = f"""
       }} else {{
         currentUser = null;
         document.getElementById('userAuthBtn').innerText = '👤 Login';
-        document.getElementById('deliveringToText').innerText = "Delivering to: Click to set address";
+        document.getElementById('deliveringToText').innerText = "Delivering to: Select delivery location";
       }}
       refreshCounts();
     }}
@@ -1002,10 +1139,13 @@ CUSTOMER_HTML = f"""
     function goToCheckout() {{
       const total = parseFloat(document.getElementById('cartTotal').innerText.replace(/,/g,''));
       if(total <= 0) return toast("Your basket is empty!");
-      if(currentUser && currentUser.address) {{
+      if(currentUser) {{
         document.getElementById('chkName').value = currentUser.name || '';
         document.getElementById('chkPhone').value = currentUser.phone || '';
-        document.getElementById('chkPincode').value = currentUser.pincode || '';
+        if(currentUser.pincode) {{
+          document.getElementById('chkPincode').value = currentUser.pincode;
+          handlePincodeLookup(currentUser.pincode);
+        }}
         document.getElementById('chkAddress').value = currentUser.address || '';
       }}
       switchView('checkout');
@@ -1013,11 +1153,17 @@ CUSTOMER_HTML = f"""
 
     async function handlePlaceOrder(e) {{
       e.preventDefault();
+      const mandal = document.getElementById('chkMandal').value.trim();
+      const district = document.getElementById('chkDistrict').value.trim();
+      const street = document.getElementById('chkAddress').value.trim();
+
+      const combinedAddress = `${{street}}, ${{mandal}}, ${{district}}`;
+
       const payload = {{
         name: document.getElementById('chkName').value,
         phone: document.getElementById('chkPhone').value,
         pincode: document.getElementById('chkPincode').value,
-        address: document.getElementById('chkAddress').value
+        address: combinedAddress
       }};
 
       const res = await fetch('/api/order/place', {{
@@ -1028,7 +1174,7 @@ CUSTOMER_HTML = f"""
       const d = await res.json();
       if(d.success) {{
         document.getElementById('successOrderId').innerText = '#' + d.order_id;
-        const waMsg = encodeURIComponent(`Hi Supermart, I placed order #${{d.order_id}}. Receiver: ${{payload.name}}, Phone: ${{payload.phone}}`);
+        const waMsg = encodeURIComponent(`Hi Supermart, I placed order #${{d.order_id}}. Receiver: ${{payload.name}}, Phone: ${{payload.phone}}, Address: ${{payload.address}}`);
         document.getElementById('waSupportLink').href = `https://wa.me/{ADMIN_WHATSAPP}?text=${{waMsg}}`;
         refreshCounts();
         checkUserSession();
@@ -1198,11 +1344,8 @@ CUSTOMER_HTML = f"""
 
       if(isRegister) {{
         const confirmPw = document.getElementById('authConfirmPassword').value;
-        if(password !== confirmPw) {{
-          return toast("Passwords do not match!");
-        }}
+        if(password !== confirmPw) return toast("Passwords do not match!");
 
-        // Request WhatsApp OTP Verification
         const res = await fetch('/api/register/request-otp', {{
           method: 'POST',
           headers: {{'Content-Type': 'application/json'}},
@@ -1214,15 +1357,12 @@ CUSTOMER_HTML = f"""
           document.getElementById('authMainForm').style.display = 'none';
           document.getElementById('waDirectBtn').href = d.wa_link;
           document.getElementById('otpBox').style.display = 'block';
-          
-          // Open WhatsApp automatically
           window.open(d.wa_link, '_blank');
           toast("WhatsApp opened! Send code and verify here.");
         }} else {{
           toast(d.message || "Registration error.");
         }}
       }} else {{
-        // Direct Login with Phone + Password
         const res = await fetch('/api/login', {{
           method: 'POST',
           headers: {{'Content-Type': 'application/json'}},
@@ -1274,7 +1414,7 @@ CUSTOMER_HTML = f"""
 """
 
 # ==============================================================================
-# 3. SELLER / ADMIN FRONTEND WITH TIMELINE SELECTOR & PIN LOCK
+# 3. SELLER / ADMIN FRONTEND WITH PIN LOCK
 # ==============================================================================
 SELLER_HTML = """
 <!DOCTYPE html>
@@ -1612,7 +1752,7 @@ SELLER_HTML = """
 """
 
 # ==============================================================================
-# 4. HTTP REQUEST HANDLERS & BACKEND APIS (WITH WHATSAPP VERIFICATION)
+# 4. HTTP REQUEST HANDLERS & BACKEND APIS
 # ==============================================================================
 class UnifiedHandler(http.server.BaseHTTPRequestHandler):
 
@@ -1738,7 +1878,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
         body = self.rfile.read(length)
         data = json.loads(body.decode('utf-8')) if length else {}
 
-        # 1. Request WhatsApp Verification Code
+        # 1. Request WhatsApp OTP
         if url.path == '/api/register/request-otp':
             phone = data.get('phone', '').strip().replace(' ', '')
             password = data.get('password', '')
@@ -1755,24 +1895,18 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             if exists:
                 return self._json({"success": False, "message": "This mobile number is already registered! Please Sign In."})
 
-            # Generate 4-digit code
             generated_otp = str(random.randint(1000, 9999))
             PENDING_REGISTRATIONS[phone] = {
                 "password": hash_pw(password),
                 "otp": generated_otp
             }
 
-            # WhatsApp message format
             wa_msg = urllib.parse.quote(f"Supermart Account Verification Code: {generated_otp} for Mobile: +91 {phone}")
             wa_link = f"https://wa.me/{ADMIN_WHATSAPP}?text={wa_msg}"
 
-            return self._json({
-                "success": True,
-                "wa_link": wa_link,
-                "message": "WhatsApp verification opened."
-            })
+            return self._json({"success": True, "wa_link": wa_link, "message": "WhatsApp verification opened."})
 
-        # 2. Verify WhatsApp Code and Complete Registration
+        # 2. Verify WhatsApp OTP
         if url.path == '/api/register/verify-otp':
             phone = data.get('phone', '').strip()
             user_otp = data.get('otp', '').strip()
@@ -1799,7 +1933,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
                 self._json({"success": False, "message": "Mobile number already registered."})
             return
 
-        # 3. Direct Login with Phone + Password
+        # 3. Login with Mobile + Password
         if url.path == '/api/login':
             phone = data.get('phone', '').strip()
             pw = hash_pw(data.get('password', ''))

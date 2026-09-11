@@ -22,7 +22,6 @@ def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
 
-    # Users: Strictly UNIQUE email and UNIQUE name
     c.execute('''CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT UNIQUE NOT NULL,
@@ -96,8 +95,66 @@ def init_db():
         conn.commit()
     conn.close()
 
+# PWA MANIFEST JSON
+PWA_MANIFEST = {
+    "name": "Supermart Online Store",
+    "short_name": "Supermart",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#f3e8ff",
+    "theme_color": "#9333ea",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "https://cdn-icons-png.flaticon.com/512/3081/3081840.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "https://cdn-icons-png.flaticon.com/512/3081/3081840.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
+
+# PWA SERVICE WORKER
+PWA_SW_JS = """
+const CACHE_NAME = 'supermart-cache-v1';
+const ASSETS = [
+  '/',
+  '/manifest.json'
+];
+
+self.addEventListener('install', (e) => {
+  e.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) return caches.delete(key);
+        })
+      );
+    })
+  );
+  return self.clients.claim();
+});
+
+self.addEventListener('fetch', (e) => {
+  e.respondWith(
+    fetch(e.request).catch(() => caches.match(e.request))
+  );
+});
+"""
+
 # ==============================================================================
-# 2. CUSTOMER FRONTEND
+# 2. CUSTOMER FRONTEND (WITH PWA SUPPORT)
 # ==============================================================================
 CUSTOMER_HTML = f"""
 <!DOCTYPE html>
@@ -106,6 +163,14 @@ CUSTOMER_HTML = f"""
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>SUPERMART - Online Smart Shopping</title>
+  
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#9333ea">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3081/3081840.png">
+
   <style>
     :root {{
       --primary: #9333ea;
@@ -219,7 +284,7 @@ CUSTOMER_HTML = f"""
       font-size: 13px; font-weight: 800; cursor: pointer; width: 100%; margin-top: auto;
     }}
 
-    /* Flipkart Style PDP */
+    /* PDP */
     .product-view-sheet {{
       background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 75px; box-shadow: var(--shadow);
     }}
@@ -247,7 +312,7 @@ CUSTOMER_HTML = f"""
     .btn-pdp-cart {{ flex: 1; background: #fff; color: #000; border: none; font-weight: bold; font-size: 14px; cursor: pointer; }}
     .btn-pdp-buy {{ flex: 1; background: #ff9f00; color: #fff; border: none; font-weight: bold; font-size: 14px; cursor: pointer; }}
 
-    /* Step Tracking Timeline */
+    /* Timeline */
     .timeline {{ margin: 14px 0 10px 0; padding-left: 10px; border-left: 2px solid #e2e8f0; }}
     .timeline-step {{ position: relative; padding-bottom: 12px; padding-left: 16px; font-size: 12px; }}
     .timeline-step::before {{
@@ -315,11 +380,24 @@ CUSTOMER_HTML = f"""
       width: 220px; height: 220px; border-radius: 20px; object-fit: cover;
       box-shadow: 0 10px 25px rgba(0,0,0,0.15); margin-bottom: 20px; border: 3px solid #e9d5ff;
     }}
+
+    /* PWA Install Banner */
+    #pwaInstallBanner {{
+      background: linear-gradient(135deg, #1e1b4b, #312e81); color: #fff;
+      padding: 10px 14px; display: none; justify-content: space-between; align-items: center;
+      font-size: 13px; font-weight: bold;
+    }}
   </style>
 </head>
 <body>
 
-  <!-- Dog Screen -->
+  <!-- PWA Install Ribbon Banner -->
+  <div id="pwaInstallBanner">
+    <span>📲 Install Supermart App for faster shopping!</span>
+    <button onclick="triggerPWAInstall()" style="background:#22c55e; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-weight:bold; cursor:pointer;">INSTALL</button>
+  </div>
+
+  <!-- Offline Dog Screen -->
   <div id="offlineOverlay">
     <img class="offline-dog-img" src="https://cdn.phototourl.com/free/2026-09-11-91ddede7-9160-4e0a-885b-2f1f0256fb17.jpg" alt="No Connection Dog">
     <h2 style="color:var(--text); font-size: 20px; margin-bottom: 8px;">Waiting for Connection...</h2>
@@ -337,6 +415,7 @@ CUSTOMER_HTML = f"""
         <span>🛍️ SUPERMART</span>
       </div>
       <div class="top-icons">
+        <div class="icon-bubble" id="pwaNavBtn" onclick="triggerPWAInstall()" style="display:none; color:var(--primary);">📲 Install</div>
         <div class="icon-bubble" onclick="switchView('wishlist')">❤️ <span id="wishCount">0</span></div>
         <div class="icon-bubble" onclick="switchView('cart')">🛒 <span id="cartCount">0</span></div>
         <div class="icon-bubble" id="userAuthBtn" onclick="handleAuthClick()">👤 Login</div>
@@ -358,7 +437,6 @@ CUSTOMER_HTML = f"""
     <span>❯</span>
   </div>
 
-  <!-- Store View -->
   <section id="shopScreen" class="screen active" style="padding:0;">
     <div class="circles-strip">
       <div class="circle-item active" onclick="selectCircleCategory('All', this)">
@@ -403,7 +481,6 @@ CUSTOMER_HTML = f"""
     <div class="grid" id="productGrid"></div>
   </section>
 
-  <!-- PDP Full View -->
   <section id="pdpScreen" class="screen" style="padding:10px;">
     <button onclick="switchView('shop')" style="background:none; border:none; color:var(--primary); font-size:14px; font-weight:bold; margin-bottom:10px; cursor:pointer;">
       ⬅ Back to Products
@@ -431,7 +508,7 @@ CUSTOMER_HTML = f"""
 
       <div class="offer-box">
         <div style="font-weight:bold; color:#1e40af; font-size:13px; margin-bottom:4px;">🏷️ Special Delivery Timeline</div>
-        <p style="font-size:12px; color:#3b82f6;">Standard items: Fast delivery | Electronics & special combos: 3-4 days procurement to doorstep.</p>
+        <p style="font-size:12px; color:#3b82f6;">Standard items: Fast delivery | Electronics & combos: 3-4 days procurement to doorstep.</p>
       </div>
 
       <div class="trust-badges">
@@ -455,7 +532,6 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- Cart View -->
   <section id="cartScreen" class="screen">
     <div class="sheet">
       <h3>Shopping Basket (<span id="cartCountTitle">0</span>)</h3>
@@ -480,7 +556,6 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- Checkout View -->
   <section id="checkoutScreen" class="screen">
     <div class="sheet">
       <h3>Confirm Delivery Address</h3>
@@ -499,7 +574,6 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- Order Success View -->
   <section id="orderSuccessScreen" class="screen">
     <div class="sheet" style="text-align: center; padding: 30px 16px;">
       <div style="font-size: 55px; margin-bottom: 12px;">🎉</div>
@@ -515,7 +589,6 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- Orders View with Flipkart / Meesho Step Tracking -->
   <section id="ordersScreen" class="screen">
     <div class="sheet">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
@@ -526,7 +599,6 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- Wishlist View -->
   <section id="wishlistScreen" class="screen">
     <div class="sheet">
       <h3>My Wishlist ❤️</h3>
@@ -534,7 +606,6 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- Profile View with In-App Password Change -->
   <section id="profileScreen" class="screen">
     <div class="sheet">
       <h3>Customer Account</h3>
@@ -556,7 +627,6 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- Auth Modal -->
   <div class="modal" id="authModal">
     <div class="modal-box" style="max-width: 380px;">
       <button class="modal-close" onclick="closeAuthModal()">&times;</button>
@@ -607,6 +677,36 @@ CUSTOMER_HTML = f"""
     let currentUser = null;
     let isRegister = false;
     let activeProduct = null;
+
+    /* PWA SERVICE WORKER & INSTALL PROMPT */
+    let deferredPrompt;
+    if ('serviceWorker' in navigator) {{
+      navigator.serviceWorker.register('/sw.js').then(() => {{
+        console.log("PWA Service Worker Registered Successfully");
+      }});
+    }}
+
+    window.addEventListener('beforeinstallprompt', (e) => {{
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('pwaInstallBanner').style.display = 'flex';
+      document.getElementById('pwaNavBtn').style.display = 'flex';
+    }});
+
+    function triggerPWAInstall() {{
+      if (deferredPrompt) {{
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {{
+          if (choiceResult.outcome === 'accepted') {{
+            document.getElementById('pwaInstallBanner').style.display = 'none';
+            document.getElementById('pwaNavBtn').style.display = 'none';
+          }}
+          deferredPrompt = null;
+        }});
+      }} else {{
+        alert("To install, tap Chrome browser menu (⋮) and select 'Add to Home screen' / 'Install App'.");
+      }}
+    }}
 
     let audioCtx = null;
     function playTouchSound() {{
@@ -955,7 +1055,6 @@ CUSTOMER_HTML = f"""
       }}
     }}
 
-    /* Flipkart/Meesho Step Timeline Generator */
     function getTimelineHTML(status) {{
       const steps = [
         "Day 1: Packed & Ready",
@@ -1004,7 +1103,6 @@ CUSTOMER_HTML = f"""
           <div style="font-size:13px; color:#475569; margin:6px 0;">Items: ${{o.items}}</div>
           <div style="font-size:12px; color:var(--muted);">Delivery: ${{o.name}} (${{o.phone}}), ${{o.address}} - PIN: ${{o.pincode}}</div>
           
-          <!-- Live Timeline -->
           ${{getTimelineHTML(o.status)}}
 
           <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
@@ -1191,7 +1289,6 @@ SELLER_HTML = """
 </head>
 <body>
 
-  <!-- ADMIN PIN LOCK -->
   <div id="adminLockOverlay">
     <div style="background:#fff; padding:24px; border-radius:10px; width:100%; max-width:340px; text-align:center;">
       <h3 style="margin-bottom:8px;">🔒 Seller Hub Login</h3>
@@ -1493,7 +1590,7 @@ SELLER_HTML = """
 """
 
 # ==============================================================================
-# 4. HTTP REQUEST HANDLERS & BACKEND APIS
+# 4. HTTP REQUEST HANDLERS & BACKEND APIS (WITH PWA ROUTING)
 # ==============================================================================
 class UnifiedHandler(http.server.BaseHTTPRequestHandler):
 
@@ -1516,6 +1613,22 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         url = urllib.parse.urlparse(self.path)
         user = self._get_user()
+
+        # PWA Manifest Route
+        if url.path == '/manifest.json':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/manifest+json')
+            self.end_headers()
+            self.wfile.write(json.dumps(PWA_MANIFEST).encode('utf-8'))
+            return
+
+        # PWA Service Worker Route
+        if url.path == '/sw.js':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/javascript')
+            self.end_headers()
+            self.wfile.write(PWA_SW_JS.encode('utf-8'))
+            return
 
         if url.path in ['/', '/shop']:
             self.send_response(200)
@@ -1709,7 +1822,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True, "message": msg})
             return
 
-        # 8. Order Placement with Initial Day 1 Status
+        # 8. Order Placement
         if url.path == '/api/order/place':
             if not user: return self._json({"success": False, "message": "Login required"})
             conn = sqlite3.connect(DB_FILE)
@@ -1767,7 +1880,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
                 self._json({"success": False, "message": "Order already in transit / cannot cancel."})
             return
 
-        # 10. Product Management
+        # 10. Product Add
         if url.path == '/api/seller/product/add':
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()
@@ -1780,6 +1893,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
+        # 11. Product Update
         if url.path == '/api/seller/product/update':
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()
@@ -1792,6 +1906,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
+        # 12. Product Delete
         if url.path == '/api/seller/product/delete':
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()
@@ -1801,6 +1916,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
+        # 13. Seller Order Stage Update
         if url.path == '/api/seller/order/update':
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()

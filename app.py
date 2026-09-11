@@ -11,6 +11,7 @@ from http import cookies
 DB_FILE = "supermart.db"
 SECRET_KEY = "SUPERMART_SECRET_KEY_PRO_2026"
 ADMIN_WHATSAPP = "917670912836"
+ADMIN_PIN = "1234"
 
 SESSIONS = {}
 
@@ -21,6 +22,7 @@ def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
 
+    # Users: Strictly UNIQUE email and UNIQUE name
     c.execute('''CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT UNIQUE NOT NULL,
@@ -71,7 +73,7 @@ def init_db():
         subtotal REAL NOT NULL,
         delivery_charge REAL NOT NULL,
         total REAL NOT NULL,
-        status TEXT DEFAULT 'Confirmed (Packing)',
+        status TEXT DEFAULT 'Day 1: Packed & Ready',
         items TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
@@ -95,7 +97,7 @@ def init_db():
     conn.close()
 
 # ==============================================================================
-# 2. CUSTOMER FRONTEND (WITH SMART FUZZY SEARCH)
+# 2. CUSTOMER FRONTEND
 # ==============================================================================
 CUSTOMER_HTML = f"""
 <!DOCTYPE html>
@@ -167,16 +169,12 @@ CUSTOMER_HTML = f"""
       border-bottom: 1px solid var(--glass-border);
     }}
     .circles-strip::-webkit-scrollbar {{ display: none; }}
-    .circle-item {{
-      display: flex; flex-direction: column; align-items: center;
-      min-width: 64px; cursor: pointer; text-decoration: none;
-    }}
+    .circle-item {{ display: flex; flex-direction: column; align-items: center; min-width: 64px; cursor: pointer; }}
     .circle-img {{
       width: 54px; height: 54px; border-radius: 50%; object-fit: cover;
       border: 2px solid #e9d5ff; box-shadow: 0 2px 6px rgba(147, 51, 234, 0.15);
-      transition: transform 0.2s;
     }}
-    .circle-item.active .circle-img {{ border-color: var(--primary); transform: scale(1.08); box-shadow: 0 4px 10px rgba(147,51,234,0.3); }}
+    .circle-item.active .circle-img {{ border-color: var(--primary); transform: scale(1.08); }}
     .circle-label {{ font-size: 11px; font-weight: bold; margin-top: 5px; color: var(--text); text-align: center; white-space: nowrap; }}
 
     .sort-filter-bar {{
@@ -184,19 +182,15 @@ CUSTOMER_HTML = f"""
       background: #ffffff; padding: 8px 14px; border-bottom: 1px solid var(--glass-border);
       font-size: 13px; font-weight: 700; color: #475569;
     }}
-    .sort-select {{
-      border: none; background: transparent; font-weight: bold; color: var(--primary);
-      outline: none; font-size: 13px; cursor: pointer;
-    }}
+    .sort-select {{ border: none; background: transparent; font-weight: bold; color: var(--primary); outline: none; font-size: 13px; cursor: pointer; }}
 
     .grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; }}
     .card {{
       background: var(--glass-card); backdrop-filter: blur(10px);
       border: 1px solid var(--glass-border); border-radius: 12px;
       padding: 10px; display: flex; flex-direction: column; position: relative;
-      box-shadow: var(--shadow); transition: transform 0.2s; cursor: pointer;
+      box-shadow: var(--shadow); cursor: pointer;
     }}
-    .card:active {{ transform: scale(0.98); }}
     .card-heart {{
       position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.85);
       border: 1px solid #e2e8f0; width: 30px; height: 30px; border-radius: 50%;
@@ -206,8 +200,7 @@ CUSTOMER_HTML = f"""
     .card-img-wrap img {{ max-width: 100%; max-height: 100%; object-fit: contain; }}
     
     .mall-tag {{
-      display: inline-flex; align-items: center; gap: 3px; background: #6b21a8;
-      color: #fff; font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 4px; width: fit-content; margin-bottom: 4px;
+      background: #6b21a8; color: #fff; font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 4px; width: fit-content; margin-bottom: 4px;
     }}
     .card-name {{ font-size: 13px; font-weight: 700; height: 34px; overflow: hidden; line-height: 1.3; margin-bottom: 4px; }}
     .price-row {{ display: flex; align-items: baseline; gap: 6px; }}
@@ -226,6 +219,7 @@ CUSTOMER_HTML = f"""
       font-size: 13px; font-weight: 800; cursor: pointer; width: 100%; margin-top: auto;
     }}
 
+    /* Flipkart Style PDP */
     .product-view-sheet {{
       background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 75px; box-shadow: var(--shadow);
     }}
@@ -234,9 +228,7 @@ CUSTOMER_HTML = f"""
       background: #fafafa; border-radius: 10px; margin-bottom: 14px;
     }}
     .pdp-img-box img {{ max-width: 90%; max-height: 240px; object-fit: contain; }}
-    .offer-box {{
-      background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px; margin: 14px 0;
-    }}
+    .offer-box {{ background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px; margin: 14px 0; }}
     .trust-badges {{
       display: flex; justify-content: space-around; background: #f8fafc; border: 1px solid #e2e8f0;
       border-radius: 8px; padding: 12px; margin: 14px 0; text-align: center; font-size: 11px; font-weight: bold;
@@ -254,6 +246,18 @@ CUSTOMER_HTML = f"""
     }}
     .btn-pdp-cart {{ flex: 1; background: #fff; color: #000; border: none; font-weight: bold; font-size: 14px; cursor: pointer; }}
     .btn-pdp-buy {{ flex: 1; background: #ff9f00; color: #fff; border: none; font-weight: bold; font-size: 14px; cursor: pointer; }}
+
+    /* Step Tracking Timeline */
+    .timeline {{ margin: 14px 0 10px 0; padding-left: 10px; border-left: 2px solid #e2e8f0; }}
+    .timeline-step {{ position: relative; padding-bottom: 12px; padding-left: 16px; font-size: 12px; }}
+    .timeline-step::before {{
+      content: ''; position: absolute; left: -6px; top: 2px; width: 10px; height: 10px;
+      border-radius: 50%; background: #cbd5e1;
+    }}
+    .timeline-step.done {{ color: #16a34a; font-weight: bold; }}
+    .timeline-step.done::before {{ background: #16a34a; }}
+    .timeline-step.current {{ color: #2563eb; font-weight: 900; }}
+    .timeline-step.current::before {{ background: #2563eb; box-shadow: 0 0 0 3px #bfdbfe; }}
 
     .btn-big {{
       width: 100%; min-height: 46px; border: none; border-radius: 8px;
@@ -287,8 +291,7 @@ CUSTOMER_HTML = f"""
     .bottom-nav {{
       position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
       background: var(--glass-bg); backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px); border-top: 1px solid var(--glass-border);
-      display: flex; justify-content: space-around; align-items: center; z-index: 1000;
+      border-top: 1px solid var(--glass-border); display: flex; justify-content: space-around; align-items: center; z-index: 1000;
     }}
     .nav-btn {{
       background: none; border: none; font-size: 11px; font-weight: 700;
@@ -310,18 +313,18 @@ CUSTOMER_HTML = f"""
     }}
     .offline-dog-img {{
       width: 220px; height: 220px; border-radius: 20px; object-fit: cover;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.15); margin-bottom: 20px;
-      border: 3px solid #e9d5ff;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15); margin-bottom: 20px; border: 3px solid #e9d5ff;
     }}
   </style>
 </head>
 <body>
 
+  <!-- Dog Screen -->
   <div id="offlineOverlay">
     <img class="offline-dog-img" src="https://cdn.phototourl.com/free/2026-09-11-91ddede7-9160-4e0a-885b-2f1f0256fb17.jpg" alt="No Connection Dog">
     <h2 style="color:var(--text); font-size: 20px; margin-bottom: 8px;">Waiting for Connection...</h2>
     <p style="color:var(--muted); font-size: 14px; max-width: 280px; line-height: 1.4; margin-bottom: 20px;">
-      Looks like your internet connection took a little walk! Please turn on Wi-Fi or Mobile Data.
+      Looks like your internet connection took a walk! Please turn on Wi-Fi or Mobile Data.
     </p>
     <button class="btn-big btn-primary" onclick="window.location.reload()" style="max-width:200px;">🔄 Try Reconnecting</button>
   </div>
@@ -355,6 +358,7 @@ CUSTOMER_HTML = f"""
     <span>❯</span>
   </div>
 
+  <!-- Store View -->
   <section id="shopScreen" class="screen active" style="padding:0;">
     <div class="circles-strip">
       <div class="circle-item active" onclick="selectCircleCategory('All', this)">
@@ -399,6 +403,7 @@ CUSTOMER_HTML = f"""
     <div class="grid" id="productGrid"></div>
   </section>
 
+  <!-- PDP Full View -->
   <section id="pdpScreen" class="screen" style="padding:10px;">
     <button onclick="switchView('shop')" style="background:none; border:none; color:var(--primary); font-size:14px; font-weight:bold; margin-bottom:10px; cursor:pointer;">
       ⬅ Back to Products
@@ -425,12 +430,12 @@ CUSTOMER_HTML = f"""
       </div>
 
       <div class="offer-box">
-        <div style="font-weight:bold; color:#1e40af; font-size:13px; margin-bottom:4px;">🏷️ Special Offers Available</div>
-        <p style="font-size:12px; color:#3b82f6;">Get tiered delivery charges & UPI discounts on final checkout.</p>
+        <div style="font-weight:bold; color:#1e40af; font-size:13px; margin-bottom:4px;">🏷️ Special Delivery Timeline</div>
+        <p style="font-size:12px; color:#3b82f6;">Standard items: Fast delivery | Electronics & special combos: 3-4 days procurement to doorstep.</p>
       </div>
 
       <div class="trust-badges">
-        <div>🚚<br>Fast Delivery</div>
+        <div>🚚<br>Doorstep Delivery</div>
         <div>💵<br>Cash on Delivery</div>
         <div>🛡️<br>Supermart Assured</div>
       </div>
@@ -450,6 +455,7 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
+  <!-- Cart View -->
   <section id="cartScreen" class="screen">
     <div class="sheet">
       <h3>Shopping Basket (<span id="cartCountTitle">0</span>)</h3>
@@ -474,6 +480,7 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
+  <!-- Checkout View -->
   <section id="checkoutScreen" class="screen">
     <div class="sheet">
       <h3>Confirm Delivery Address</h3>
@@ -492,31 +499,34 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
+  <!-- Order Success View -->
   <section id="orderSuccessScreen" class="screen">
     <div class="sheet" style="text-align: center; padding: 30px 16px;">
       <div style="font-size: 55px; margin-bottom: 12px;">🎉</div>
       <h2 style="color: var(--primary); margin-bottom: 6px;">Congrats!</h2>
       <h3 style="margin-bottom: 12px;">Your order has been placed successfully!</h3>
-      <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">Order ID: <strong id="successOrderId">#</strong><br>Our delivery partner will reach you shortly.</p>
+      <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">Order ID: <strong id="successOrderId">#</strong><br>Our partner will deliver to your doorstep as per the live timeline.</p>
       
       <a id="waSupportLink" href="https://wa.me/{ADMIN_WHATSAPP}" target="_blank" class="btn-big btn-whatsapp" style="margin-bottom:10px;">
         💬 Chat on WhatsApp with Store
       </a>
 
-      <button class="btn-big btn-primary" onclick="switchView('orders')">TRACK MY ORDER 📦</button>
+      <button class="btn-big btn-primary" onclick="switchView('orders')">TRACK MY LIVE ORDER 📦</button>
     </div>
   </section>
 
+  <!-- Orders View with Flipkart / Meesho Step Tracking -->
   <section id="ordersScreen" class="screen">
     <div class="sheet">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
-        <h3>My Orders & Live Delivery</h3>
+        <h3>My Orders & Live Timeline</h3>
         <button onclick="loadOrders()" style="background:#f1f5f9; border:none; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">🔄 Refresh</button>
       </div>
       <div id="ordersFeed"></div>
     </div>
   </section>
 
+  <!-- Wishlist View -->
   <section id="wishlistScreen" class="screen">
     <div class="sheet">
       <h3>My Wishlist ❤️</h3>
@@ -524,11 +534,20 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
+  <!-- Profile View with In-App Password Change -->
   <section id="profileScreen" class="screen">
     <div class="sheet">
       <h3>Customer Account</h3>
       <div id="profileDetails" style="margin-top: 14px;"></div>
       
+      <div style="margin-top: 16px; border-top: 1px solid var(--glass-border); padding-top: 14px;">
+        <h4 style="font-size: 14px; margin-bottom: 8px;">🔐 Change Account Password:</h4>
+        <form onsubmit="handleChangePassword(event)" style="display:grid; gap:8px;">
+          <input type="password" id="newPassInput" placeholder="Enter New Password" required style="padding:10px; border:1px solid var(--glass-border); border-radius:6px; font-size:13px;">
+          <button type="submit" class="btn-big btn-primary" style="min-height:38px; font-size:13px;">UPDATE PASSWORD</button>
+        </form>
+      </div>
+
       <a href="https://wa.me/{ADMIN_WHATSAPP}?text=Hello%20Supermart%20Support" target="_blank" class="btn-big btn-whatsapp" style="margin-top:14px;">
         💬 WhatsApp Store Owner
       </a>
@@ -537,6 +556,7 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
+  <!-- Auth Modal -->
   <div class="modal" id="authModal">
     <div class="modal-box" style="max-width: 380px;">
       <button class="modal-close" onclick="closeAuthModal()">&times;</button>
@@ -615,11 +635,8 @@ CUSTOMER_HTML = f"""
 
     function checkNetworkStatus() {{
       const overlay = document.getElementById('offlineOverlay');
-      if (!navigator.onLine) {{
-        overlay.style.display = 'flex';
-      }} else {{
-        overlay.style.display = 'none';
-      }}
+      if (!navigator.onLine) overlay.style.display = 'flex';
+      else overlay.style.display = 'none';
     }}
     window.addEventListener('online', checkNetworkStatus);
     window.addEventListener('offline', checkNetworkStatus);
@@ -668,7 +685,6 @@ CUSTOMER_HTML = f"""
       filterAndSortItems();
     }}
 
-    /* SMART LEVENSHTEIN FUZZY MATCH ALGORITHM */
     function calcLevenshtein(a, b) {{
       const m = a.length, n = b.length;
       const dp = Array.from({{ length: m + 1 }}, () => Array(n + 1).fill(0));
@@ -688,10 +704,8 @@ CUSTOMER_HTML = f"""
       targetText = targetText.toLowerCase();
       query = query.toLowerCase();
 
-      // 1. Direct contains check
       if (targetText.includes(query)) return true;
 
-      // 2. Tokenized word-by-word fuzzy comparison
       const targetWords = targetText.split(/\\s+/);
       const queryWords = query.split(/\\s+/);
 
@@ -717,13 +731,9 @@ CUSTOMER_HTML = f"""
         return catMatch && textMatch;
       }});
 
-      if (sortType === 'low') {{
-        filtered.sort((a, b) => a.price - b.price);
-      }} else if (sortType === 'high') {{
-        filtered.sort((a, b) => b.price - a.price);
-      }} else if (sortType === 'rating') {{
-        filtered.sort((a, b) => b.rating - a.rating);
-      }}
+      if (sortType === 'low') filtered.sort((a, b) => a.price - b.price);
+      else if (sortType === 'high') filtered.sort((a, b) => b.price - a.price);
+      else if (sortType === 'rating') filtered.sort((a, b) => b.rating - a.rating);
 
       renderFeed(filtered);
     }}
@@ -731,7 +741,7 @@ CUSTOMER_HTML = f"""
     function renderFeed(items) {{
       const grid = document.getElementById('productGrid');
       if (items.length === 0) {{
-        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted);">No matching products found. Try searching with a general word!</div>';
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted);">No matching products found.</div>';
         return;
       }}
 
@@ -891,13 +901,9 @@ CUSTOMER_HTML = f"""
       }}).join('');
 
       let delivery = 0;
-      if (subtotal > 0 && subtotal <= 50) {{
-        delivery = Math.round((subtotal / 10) * 3);
-      }} else if (subtotal > 50 && subtotal <= 100) {{
-        delivery = Math.round((subtotal / 10) * 2);
-      }} else if (subtotal > 100) {{
-        delivery = 30;
-      }}
+      if (subtotal > 0 && subtotal <= 50) delivery = Math.round((subtotal / 10) * 3);
+      else if (subtotal > 50 && subtotal <= 100) delivery = Math.round((subtotal / 10) * 2);
+      else if (subtotal > 100) delivery = 30;
 
       document.getElementById('cartSubtotal').innerText = subtotal.toLocaleString();
       document.getElementById('cartDelivery').innerText = delivery.toLocaleString();
@@ -949,6 +955,32 @@ CUSTOMER_HTML = f"""
       }}
     }}
 
+    /* Flipkart/Meesho Step Timeline Generator */
+    function getTimelineHTML(status) {{
+      const steps = [
+        "Day 1: Packed & Ready",
+        "Day 2: In Transit",
+        "Day 3: Reached Srikakulam Store",
+        "Day 4: Reached Komanapalli Store",
+        "Out for Delivery (Arriving Today)",
+        "Delivered Successfully"
+      ];
+
+      let currentIndex = steps.findIndex(s => s.toLowerCase() === status.toLowerCase());
+      if (currentIndex === -1) currentIndex = 0;
+
+      return `
+        <div class="timeline">
+          ${{steps.map((step, idx) => {{
+            let cls = '';
+            if (idx < currentIndex) cls = 'done';
+            else if (idx === currentIndex) cls = 'current';
+            return `<div class="timeline-step ${{cls}}">${{step}}</div>`;
+          }}).join('')}}
+        </div>
+      `;
+    }}
+
     async function loadOrders() {{
       if(!currentUser) {{
         document.getElementById('ordersFeed').innerHTML = '<p style="padding:20px 0; text-align:center;">Login to view orders.</p>';
@@ -964,16 +996,20 @@ CUSTOMER_HTML = f"""
       }}
 
       cont.innerHTML = orders.map(o => `
-        <div style="border:1px solid var(--glass-border); border-radius:8px; padding:12px; margin-bottom:10px; background:#fff;">
+        <div style="border:1px solid var(--glass-border); border-radius:8px; padding:12px; margin-bottom:12px; background:#fff;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <strong>Order #${{o.order_id}}</strong>
             <span style="color:var(--primary); font-weight:800; font-size:12px;">${{o.status}}</span>
           </div>
           <div style="font-size:13px; color:#475569; margin:6px 0;">Items: ${{o.items}}</div>
           <div style="font-size:12px; color:var(--muted);">Delivery: ${{o.name}} (${{o.phone}}), ${{o.address}} - PIN: ${{o.pincode}}</div>
+          
+          <!-- Live Timeline -->
+          ${{getTimelineHTML(o.status)}}
+
           <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
             <strong style="font-size:15px;">Total: ₹${{o.total.toLocaleString()}}</strong>
-            ${{o.status.includes('Confirmed') ? `<button onclick="cancelOrder(${{o.id}})" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">Cancel Order</button>` : ''}}
+            ${{o.status.includes('Day 1') ? `<button onclick="cancelOrder(${{o.id}})" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">Cancel Order</button>` : ''}}
           </div>
         </div>
       `).join('');
@@ -1025,12 +1061,29 @@ CUSTOMER_HTML = f"""
       }}
       cont.innerHTML = `
         <div style="line-height: 1.8; font-size: 14px;">
-          <p><strong>Name:</strong> ${{currentUser.name}}</p>
+          <p><strong>Username:</strong> ${{currentUser.name}} (Permanent)</p>
           <p><strong>Email:</strong> ${{currentUser.email}}</p>
           <p><strong>Saved Phone:</strong> ${{currentUser.phone || 'Not Saved'}}</p>
           <p><strong>Delivery Address:</strong> ${{currentUser.address ? (currentUser.address + ' - PIN: ' + currentUser.pincode) : 'No address saved yet. (Auto-saves upon checkout)'}}</p>
         </div>
       `;
+    }}
+
+    async function handleChangePassword(e) {{
+      e.preventDefault();
+      const newPw = document.getElementById('newPassInput').value;
+      const res = await fetch('/api/user/change-password', {{
+        method: 'POST',
+        headers: {{'Content-Type': 'application/json'}},
+        body: JSON.stringify({{ password: newPw }})
+      }});
+      const d = await res.json();
+      if(d.success) {{
+        toast("Password updated successfully!");
+        document.getElementById('newPassInput').value = '';
+      }} else {{
+        toast(d.message || "Failed to update password.");
+      }}
     }}
 
     function handleAuthClick() {{
@@ -1076,8 +1129,8 @@ CUSTOMER_HTML = f"""
         closeAuthModal();
         checkUserSession();
       }} else {{
-        if(isRegister && d.message && d.message.includes("already registered")) {{
-          toast("Account with this Name or Email exists! Please Sign In.");
+        if(isRegister && d.message && (d.message.includes("already registered") || d.message.includes("exists"))) {{
+          toast("An account with this Email or Username already exists! Switched to Login.");
           toggleAuthMode();
         }} else {{
           toast(d.message || "Authentication error.");
@@ -1101,7 +1154,7 @@ CUSTOMER_HTML = f"""
 """
 
 # ==============================================================================
-# 3. SELLER / ADMIN FRONTEND
+# 3. SELLER / ADMIN FRONTEND WITH TIMELINE SELECTOR & PIN LOCK
 # ==============================================================================
 SELLER_HTML = """
 <!DOCTYPE html>
@@ -1129,9 +1182,25 @@ SELLER_HTML = """
 
     .modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; z-index:9999; padding:12px; }
     .modal-box { background:#fff; width:100%; max-width:480px; border-radius:8px; padding:18px; max-height:90vh; overflow-y:auto; position:relative; }
+    
+    #adminLockOverlay {
+      position: fixed; top:0; left:0; width:100%; height:100%; background:#0f172a; z-index:10000;
+      display: flex; align-items: center; justify-content: center; padding: 16px;
+    }
   </style>
 </head>
 <body>
+
+  <!-- ADMIN PIN LOCK -->
+  <div id="adminLockOverlay">
+    <div style="background:#fff; padding:24px; border-radius:10px; width:100%; max-width:340px; text-align:center;">
+      <h3 style="margin-bottom:8px;">🔒 Seller Hub Login</h3>
+      <p style="color:#64748b; font-size:12px; margin-bottom:14px;">Enter your 4-digit Master Admin PIN</p>
+      <input type="password" id="pinInput" placeholder="Enter PIN (Default: 1234)" style="text-align:center; letter-spacing:4px; font-size:18px;">
+      <button class="btn btn-blue" onclick="checkPin()">UNLOCK DASHBOARD</button>
+    </div>
+  </div>
+
   <div class="header-bar">
     <div>
       <h2>SUPERMART SELLER HUB</h2>
@@ -1173,7 +1242,7 @@ SELLER_HTML = """
   </div>
 
   <div class="box">
-    <h3>Live Customer Orders Received</h3>
+    <h3>Live Customer Orders & Timeline Updates</h3>
     <div id="ordersHolder" style="margin-top: 12px;"></div>
   </div>
 
@@ -1233,6 +1302,16 @@ SELLER_HTML = """
   <script>
     let currentProducts = [];
 
+    function checkPin() {
+      const pin = document.getElementById('pinInput').value;
+      if (pin === "1234") {
+        document.getElementById('adminLockOverlay').style.display = 'none';
+        refreshAll();
+      } else {
+        alert("Invalid PIN! Access Denied.");
+      }
+    }
+
     function refreshAll() {
       loadOrders();
       loadInventory();
@@ -1280,9 +1359,7 @@ SELLER_HTML = """
       document.getElementById('editModal').style.display = 'flex';
     }
 
-    function closeEditModal() {
-      document.getElementById('editModal').style.display = 'none';
-    }
+    function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
 
     async function handleSaveEdit(e) {
       e.preventDefault();
@@ -1364,14 +1441,14 @@ SELLER_HTML = """
       cont.innerHTML = orders.map(o => {
         const cleanPhone = (o.phone || '').replace(/[^0-9]/g, '');
         const targetPhone = cleanPhone.length === 10 ? ('91' + cleanPhone) : cleanPhone;
-        const waMsg = encodeURIComponent(`Hi ${o.name}, update regarding your Supermart Order #${o.order_id}. Total: ₹${o.total}. Status: ${o.status}.`);
+        const waMsg = encodeURIComponent(`Hi ${o.name}, update on your Supermart Order #${o.order_id}. Total: ₹${o.total}. Current Stage: ${o.status}.`);
         const waUrl = `https://wa.me/${targetPhone}?text=${waMsg}`;
 
         return `
           <div class="order-card">
             <div style="display:flex; justify-content:space-between; font-weight:bold;">
               <span>Order #${o.order_id}</span>
-              <span style="background:#e2e8f0; padding:2px 8px; border-radius:4px;">${o.status}</span>
+              <span style="background:#e0e7ff; color:#3730a3; padding:3px 8px; border-radius:4px; font-size:12px;">${o.status}</span>
             </div>
             <div style="margin: 10px 0; font-size:14px; line-height:1.5;">
               <p><strong>Customer:</strong> ${o.name} (📞 <a href="tel:${o.phone}" style="color:#2563eb; font-weight:bold;">${o.phone}</a>)</p>
@@ -1384,9 +1461,17 @@ SELLER_HTML = """
               💬 WhatsApp Customer (${o.phone})
             </a>
 
-            <div style="display:flex; gap:8px; margin-top:8px;">
-              <button class="btn btn-yellow" onclick="updateStatus(${o.id}, 'Out for Delivery')">Mark Out for Delivery</button>
-              <button class="btn btn-green" onclick="updateStatus(${o.id}, 'Delivered Successfully')">Mark Delivered</button>
+            <div style="margin-top: 10px; background:#f8fafc; padding:8px; border-radius:6px;">
+              <label style="font-size:12px; font-weight:bold;">Update Delivery Step Timeline:</label>
+              <select onchange="updateStatus(${o.id}, this.value)" style="margin-top:4px; margin-bottom:0;">
+                <option value="" disabled selected>-- Change Order Stage --</option>
+                <option value="Day 1: Packed & Ready">Day 1: Packed & Ready</option>
+                <option value="Day 2: In Transit">Day 2: In Transit</option>
+                <option value="Day 3: Reached Srikakulam Store">Day 3: Reached Srikakulam Store</option>
+                <option value="Day 4: Reached Komanapalli Store">Day 4: Reached Komanapalli Store</option>
+                <option value="Out for Delivery (Arriving Today)">Out for Delivery (Arriving Today)</option>
+                <option value="Delivered Successfully">Delivered Successfully</option>
+              </select>
             </div>
           </div>
         `;
@@ -1399,11 +1484,9 @@ SELLER_HTML = """
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({order_id: id, status: st})
       });
-      alert('Status updated to: ' + st);
+      alert('Updated Order Stage: ' + st);
       loadOrders();
     }
-
-    refreshAll();
   </script>
 </body>
 </html>
@@ -1522,10 +1605,15 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
         body = self.rfile.read(length)
         data = json.loads(body.decode('utf-8')) if length else {}
 
+        # 1. Register with strict UNIQUE check for name & email
         if url.path == '/api/register':
             email = data.get('email', '').strip().lower()
             name = data.get('name', '').strip()
             pw = hash_pw(data.get('password', ''))
+
+            if not email or not name:
+                return self._json({"success": False, "message": "Email and Name are required."})
+
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()
             try:
@@ -1539,9 +1627,10 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
                 self._json({"success": True}, set_cookie=f"sm_session={token}; Path=/; HttpOnly")
             except sqlite3.IntegrityError:
                 conn.close()
-                self._json({"success": False, "message": "Account with this Name or Email already registered."})
+                self._json({"success": False, "message": "An account with this Email or Username already exists. Please Sign In."})
             return
 
+        # 2. Login
         if url.path == '/api/login':
             email = data.get('email', '').strip().lower()
             pw = hash_pw(data.get('password', ''))
@@ -1559,10 +1648,24 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
                 self._json({"success": False, "message": "Invalid email or password."})
             return
 
+        # 3. Change Password
+        if url.path == '/api/user/change-password':
+            if not user: return self._json({"success": False, "message": "Login required"})
+            new_pw = hash_pw(data.get('password', ''))
+            conn = sqlite3.connect(DB_FILE)
+            c = conn.cursor()
+            c.execute("UPDATE users SET password = ? WHERE id = ?", (new_pw, user['id']))
+            conn.commit()
+            conn.close()
+            self._json({"success": True})
+            return
+
+        # 4. Logout
         if url.path == '/api/logout':
             self._json({"success": True}, set_cookie="sm_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT")
             return
 
+        # 5. Cart Add
         if url.path == '/api/cart/add':
             if not user: return self._json({"success": False, "message": "Login required"}, status=401)
             conn = sqlite3.connect(DB_FILE)
@@ -1576,6 +1679,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
+        # 6. Cart Remove
         if url.path == '/api/cart/remove':
             if not user: return self._json({"success": False})
             conn = sqlite3.connect(DB_FILE)
@@ -1586,6 +1690,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
+        # 7. Wishlist Toggle
         if url.path == '/api/wishlist/toggle':
             if not user: return self._json({"success": False, "message": "Login required"})
             pid = data.get('product_id')
@@ -1604,6 +1709,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True, "message": msg})
             return
 
+        # 8. Order Placement with Initial Day 1 Status
         if url.path == '/api/order/place':
             if not user: return self._json({"success": False, "message": "Login required"})
             conn = sqlite3.connect(DB_FILE)
@@ -1619,12 +1725,9 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
                 return self._json({"success": False, "message": "Basket is empty"})
 
             subtotal = sum(r[1] * r[2] for r in items)
-            if subtotal <= 50:
-                delivery_charge = round((subtotal / 10.0) * 3.0, 2)
-            elif subtotal <= 100:
-                delivery_charge = round((subtotal / 10.0) * 2.0, 2)
-            else:
-                delivery_charge = 30.0
+            if subtotal <= 50: delivery_charge = round((subtotal / 10.0) * 3.0, 2)
+            elif subtotal <= 100: delivery_charge = round((subtotal / 10.0) * 2.0, 2)
+            else: delivery_charge = 30.0
 
             total = subtotal + delivery_charge
             items_str = ", ".join([f"{r[0]} (x{r[2]})" for r in items])
@@ -1637,8 +1740,8 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             user['pincode'] = data['pincode']
 
             c.execute("""
-                INSERT INTO orders (order_id, user_id, name, phone, pincode, address, subtotal, delivery_charge, total, items)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO orders (order_id, user_id, name, phone, pincode, address, subtotal, delivery_charge, total, status, items)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Day 1: Packed & Ready', ?)
             """, (order_id, user['id'], data['name'], data['phone'], data['pincode'], data['address'], subtotal, delivery_charge, total, items_str))
 
             c.execute("DELETE FROM cart WHERE user_id = ?", (user['id'],))
@@ -1647,22 +1750,24 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True, "order_id": order_id})
             return
 
+        # 9. Cancel Order
         if url.path == '/api/order/cancel':
             if not user: return self._json({"success": False})
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()
             c.execute("SELECT status FROM orders WHERE id = ? AND user_id = ?", (data['order_id'], user['id']))
             od = c.fetchone()
-            if od and 'Confirmed' in od[0]:
+            if od and 'Day 1' in od[0]:
                 c.execute("UPDATE orders SET status = 'Cancelled by Customer' WHERE id = ?", (data['order_id'],))
                 conn.commit()
                 conn.close()
                 self._json({"success": True, "message": "Order cancelled successfully."})
             else:
                 conn.close()
-                self._json({"success": False, "message": "Order already processed / cannot cancel."})
+                self._json({"success": False, "message": "Order already in transit / cannot cancel."})
             return
 
+        # 10. Product Management
         if url.path == '/api/seller/product/add':
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()

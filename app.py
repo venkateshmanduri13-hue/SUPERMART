@@ -137,7 +137,7 @@ PWA_MANIFEST = {
 }
 
 PWA_SW_JS = """
-const CACHE_NAME = 'supermart-cache-v13';
+const CACHE_NAME = 'supermart-cache-v14';
 const ASSETS = ['/', '/manifest.json'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
@@ -474,7 +474,6 @@ CUSTOMER_HTML = f"""
       </div>
     </div>
     
-    <!-- Search Bar: Visible ONLY on Home / Shop -->
     <div class="search-container" id="mainSearchBar">
       <span class="search-left-icon">🔍</span>
       <input type="text" id="searchInput" class="search-input" placeholder="Search Atta, Oil, Tomato, Phone..." onkeyup="filterAndSortItems()">
@@ -482,7 +481,6 @@ CUSTOMER_HTML = f"""
     </div>
   </header>
 
-  <!-- Location Strip: Visible ONLY on Orders and Profile screens -->
   <div class="delivery-strip" id="pincodeStrip" onclick="openLocationModal()">
     <div style="display:flex; align-items:center; gap:6px;">
       <span>📍</span>
@@ -491,7 +489,6 @@ CUSTOMER_HTML = f"""
     <span>❯</span>
   </div>
 
-  <!-- SHOP / HOME SCREEN -->
   <section id="shopScreen" class="screen active" style="padding:0;">
     <div class="circles-strip">
       <div class="circle-item active" onclick="selectCircleCategory('All', this)">
@@ -553,7 +550,6 @@ CUSTOMER_HTML = f"""
     <div class="grid" id="productGrid"></div>
   </section>
 
-  <!-- PDP SCREEN -->
   <section id="pdpScreen" class="screen" style="padding:10px;">
     <button onclick="switchView('shop')" style="background:none; border:none; color:var(--primary); font-size:14px; font-weight:bold; margin-bottom:10px; cursor:pointer;">
       ⬅ Back to Products
@@ -607,7 +603,6 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- CART SCREEN -->
   <section id="cartScreen" class="screen">
     <div class="sheet">
       <h3>Shopping Basket (<span id="cartCountTitle">0</span>)</h3>
@@ -632,7 +627,6 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- CHECKOUT SCREEN -->
   <section id="checkoutScreen" class="screen">
     <div class="sheet">
       <h3>Confirm Delivery Address</h3>
@@ -662,7 +656,6 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- ORDER SUCCESS SCREEN -->
   <section id="orderSuccessScreen" class="screen">
     <div class="sheet" style="text-align: center; padding: 30px 16px;">
       <div style="font-size: 55px; margin-bottom: 12px;">🎉</div>
@@ -678,7 +671,6 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- ORDERS SCREEN -->
   <section id="ordersScreen" class="screen">
     <div class="sheet">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
@@ -689,7 +681,6 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- WISHLIST SCREEN -->
   <section id="wishlistScreen" class="screen">
     <div class="sheet">
       <h3>My Wishlist ❤️</h3>
@@ -697,7 +688,6 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- MEESHO STYLE ACCOUNT & SETTINGS SCREEN -->
   <section id="profileScreen" class="screen" style="padding:10px 12px;">
     <div style="display:flex; justify-content:space-between; align-items:center; background:var(--card-bg); padding:16px; border-radius:12px; margin-bottom:12px; box-shadow:var(--shadow); border:1px solid var(--border);">
       <div style="display:flex; align-items:center; gap:12px;">
@@ -712,7 +702,6 @@ CUSTOMER_HTML = f"""
       <span style="color:var(--muted); font-size:18px;">❯</span>
     </div>
 
-    <!-- Quick Top Actions -->
     <div style="display:flex; gap:10px; margin-bottom:14px;">
       <a href="https://wa.me/{ADMIN_WHATSAPP}?text=Hello%20Supermart%20Support" target="_blank" style="flex:1; background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:14px; text-align:center; text-decoration:none; color:var(--text); box-shadow:0 1px 3px rgba(0,0,0,0.03);">
         <div style="font-size:20px; margin-bottom:4px;">📞</div>
@@ -724,7 +713,6 @@ CUSTOMER_HTML = f"""
       </div>
     </div>
 
-    <!-- Menu List -->
     <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:var(--shadow); margin-bottom:14px;">
       <div style="padding:12px 14px 6px 14px; font-size:12px; font-weight:bold; color:var(--muted); text-transform:uppercase;">
         Account Settings & Activity
@@ -865,7 +853,7 @@ CUSTOMER_HTML = f"""
     </div>
   </div>
 
-  <!-- AUTH MODAL WITH AUTOMATIC REAL SMS OTP -->
+  <!-- AUTH MODAL WITH PURE SMS OTP (NO WHATSAPP) -->
   <div class="modal" id="authModal">
     <div class="modal-box" style="max-width: 380px;">
       <button class="modal-close" onclick="closeAuthModal()">&times;</button>
@@ -1488,7 +1476,7 @@ CUSTOMER_HTML = f"""
 
       const res = await fetch('/api/order/place', {{
         method: 'POST',
-        headers: {{'Content-Type': 'application/json'}},
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(payload)
       }});
       const d = await res.json();
@@ -1565,7 +1553,7 @@ CUSTOMER_HTML = f"""
       if(!confirm("Are you sure you want to cancel this order?")) return;
       const res = await fetch('/api/order/cancel', {{
         method: 'POST',
-        headers: {{'Content-Type': 'application/json'}},
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({order_id: id})
       }});
       const d = await res.json();
@@ -1604,7 +1592,7 @@ CUSTOMER_HTML = f"""
       const newPw = document.getElementById('newPassInput').value;
       const res = await fetch('/api/user/change-password', {{
         method: 'POST',
-        headers: {{'Content-Type': 'application/json'}},
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ password: newPw })
       }});
       const d = await res.json();
@@ -1655,7 +1643,7 @@ CUSTOMER_HTML = f"""
 
         const res = await fetch('/api/register/request-otp', {{
           method: 'POST',
-          headers: {{'Content-Type': 'application/json'}},
+          headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ phone: phone, password: password })
         }});
         const d = await res.json();
@@ -1663,14 +1651,14 @@ CUSTOMER_HTML = f"""
           currentRegPhone = phone;
           document.getElementById('authMainForm').style.display = 'none';
           document.getElementById('otpBox').style.display = 'block';
-          toast("SMS OTP sent to mobile phone!");
+          toast("SMS OTP dispatched to your mobile!");
         }} else {{
           toast(d.message || "Registration error.");
         }}
       }} else {{
         const res = await fetch('/api/login', {{
           method: 'POST',
-          headers: {{'Content-Type': 'application/json'}},
+          headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ phone: phone, password: password })
         }});
         const d = await res.json();
@@ -1690,7 +1678,7 @@ CUSTOMER_HTML = f"""
 
       const res = await fetch('/api/register/verify-otp', {{
         method: 'POST',
-        headers: {{'Content-Type': 'application/json'}},
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ phone: currentRegPhone, otp: otp })
       }});
       const d = await res.json();

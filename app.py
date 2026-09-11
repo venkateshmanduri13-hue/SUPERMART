@@ -21,7 +21,6 @@ def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
 
-    # Users Table with UNIQUE Name & UNIQUE Email
     c.execute('''CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT UNIQUE NOT NULL,
@@ -95,6 +94,9 @@ def init_db():
         conn.commit()
     conn.close()
 
+# ==============================================================================
+# 2. CUSTOMER FRONTEND (WITH SMART FUZZY SEARCH)
+# ==============================================================================
 CUSTOMER_HTML = f"""
 <!DOCTYPE html>
 <html lang="en">
@@ -224,7 +226,6 @@ CUSTOMER_HTML = f"""
       font-size: 13px; font-weight: 800; cursor: pointer; width: 100%; margin-top: auto;
     }}
 
-    /* Flipkart Style Product View */
     .product-view-sheet {{
       background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 75px; box-shadow: var(--shadow);
     }}
@@ -301,7 +302,6 @@ CUSTOMER_HTML = f"""
       font-size: 13px; font-weight: 700; z-index: 9999; display: none; box-shadow: var(--shadow);
     }}
 
-    /* OFFLINE DOG SCREEN OVERLAY */
     #offlineOverlay {{
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(12px);
@@ -317,7 +317,6 @@ CUSTOMER_HTML = f"""
 </head>
 <body>
 
-  <!-- OFFLINE DOG SCREEN -->
   <div id="offlineOverlay">
     <img class="offline-dog-img" src="https://cdn.phototourl.com/free/2026-09-11-91ddede7-9160-4e0a-885b-2f1f0256fb17.jpg" alt="No Connection Dog">
     <h2 style="color:var(--text); font-size: 20px; margin-bottom: 8px;">Waiting for Connection...</h2>
@@ -343,7 +342,7 @@ CUSTOMER_HTML = f"""
     
     <div class="search-container">
       <span class="search-left-icon">🔍</span>
-      <input type="text" id="searchInput" class="search-input" placeholder="Search by Product Name, Atta, Oil, iPhone..." onkeyup="filterAndSortItems()">
+      <input type="text" id="searchInput" class="search-input" placeholder="Search Atta, Oil, Tomato, Phone..." onkeyup="filterAndSortItems()">
       <span class="search-right-icon" onclick="clearSearch()">✖</span>
     </div>
   </header>
@@ -356,7 +355,6 @@ CUSTOMER_HTML = f"""
     <span>❯</span>
   </div>
 
-  <!-- 1. PRODUCT STORE VIEW -->
   <section id="shopScreen" class="screen active" style="padding:0;">
     <div class="circles-strip">
       <div class="circle-item active" onclick="selectCircleCategory('All', this)">
@@ -401,7 +399,6 @@ CUSTOMER_HTML = f"""
     <div class="grid" id="productGrid"></div>
   </section>
 
-  <!-- 2. FLIPKART STYLE PRODUCT DETAILS SCREEN WITH RELATED PRODUCTS -->
   <section id="pdpScreen" class="screen" style="padding:10px;">
     <button onclick="switchView('shop')" style="background:none; border:none; color:var(--primary); font-size:14px; font-weight:bold; margin-bottom:10px; cursor:pointer;">
       ⬅ Back to Products
@@ -453,7 +450,6 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- 3. CART VIEW -->
   <section id="cartScreen" class="screen">
     <div class="sheet">
       <h3>Shopping Basket (<span id="cartCountTitle">0</span>)</h3>
@@ -478,7 +474,6 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- 4. CHECKOUT VIEW -->
   <section id="checkoutScreen" class="screen">
     <div class="sheet">
       <h3>Confirm Delivery Address</h3>
@@ -497,7 +492,6 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- 5. ORDER SUCCESS VIEW -->
   <section id="orderSuccessScreen" class="screen">
     <div class="sheet" style="text-align: center; padding: 30px 16px;">
       <div style="font-size: 55px; margin-bottom: 12px;">🎉</div>
@@ -513,7 +507,6 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- 6. ORDERS VIEW -->
   <section id="ordersScreen" class="screen">
     <div class="sheet">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
@@ -524,7 +517,6 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- 7. WISHLIST VIEW -->
   <section id="wishlistScreen" class="screen">
     <div class="sheet">
       <h3>My Wishlist ❤️</h3>
@@ -532,7 +524,6 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- 8. PROFILE & ADDRESS VIEW -->
   <section id="profileScreen" class="screen">
     <div class="sheet">
       <h3>Customer Account</h3>
@@ -546,7 +537,6 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- AUTH MODAL WITH FORGOT PASSWORD & UNIQUE NAME CHECK -->
   <div class="modal" id="authModal">
     <div class="modal-box" style="max-width: 380px;">
       <button class="modal-close" onclick="closeAuthModal()">&times;</button>
@@ -572,7 +562,6 @@ CUSTOMER_HTML = f"""
     </div>
   </div>
 
-  <!-- Bottom Navigation -->
   <nav class="bottom-nav" id="mainBottomNav">
     <button class="nav-btn active" id="bShop" onclick="switchView('shop')">
       <span style="font-size: 18px;">🏠</span>
@@ -599,16 +588,11 @@ CUSTOMER_HTML = f"""
     let isRegister = false;
     let activeProduct = null;
 
-    /* PROFESSIONAL AUDIOCONTEXT TOUCH SOUND */
     let audioCtx = null;
     function playTouchSound() {{
       try {{
-        if (!audioCtx) {{
-          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }}
-        if (audioCtx.state === 'suspended') {{
-          audioCtx.resume();
-        }}
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'sine';
@@ -623,14 +607,12 @@ CUSTOMER_HTML = f"""
       }} catch(e) {{}}
     }}
 
-    // Global listener for touch click feedback
     document.addEventListener('click', function(e) {{
       if (e.target.closest('button') || e.target.closest('.card') || e.target.closest('.circle-item') || e.target.closest('.nav-btn') || e.target.closest('.icon-bubble')) {{
         playTouchSound();
       }}
     }}, true);
 
-    /* LIVE NETWORK / OFFLINE DETECTOR */
     function checkNetworkStatus() {{
       const overlay = document.getElementById('offlineOverlay');
       if (!navigator.onLine) {{
@@ -686,13 +668,52 @@ CUSTOMER_HTML = f"""
       filterAndSortItems();
     }}
 
+    /* SMART LEVENSHTEIN FUZZY MATCH ALGORITHM */
+    function calcLevenshtein(a, b) {{
+      const m = a.length, n = b.length;
+      const dp = Array.from({{ length: m + 1 }}, () => Array(n + 1).fill(0));
+      for (let i = 0; i <= m; i++) dp[i][0] = i;
+      for (let j = 0; j <= n; j++) dp[0][j] = j;
+      for (let i = 1; i <= m; i++) {{
+        for (let j = 1; j <= n; j++) {{
+          if (a[i - 1] === b[j - 1]) dp[i][j] = dp[i - 1][j - 1];
+          else dp[i][j] = 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+        }}
+      }}
+      return dp[m][n];
+    }}
+
+    function isFuzzyMatch(targetText, query) {{
+      if (!query) return true;
+      targetText = targetText.toLowerCase();
+      query = query.toLowerCase();
+
+      // 1. Direct contains check
+      if (targetText.includes(query)) return true;
+
+      // 2. Tokenized word-by-word fuzzy comparison
+      const targetWords = targetText.split(/\\s+/);
+      const queryWords = query.split(/\\s+/);
+
+      return queryWords.every(qWord => {{
+        if (qWord.length <= 2) return targetText.includes(qWord);
+        return targetWords.some(tWord => {{
+          if (tWord.includes(qWord) || qWord.includes(tWord)) return true;
+          const maxAllowedErrors = qWord.length <= 4 ? 1 : 2;
+          const dist = calcLevenshtein(qWord, tWord.slice(0, qWord.length + 1));
+          return dist <= maxAllowedErrors;
+        }});
+      }});
+    }}
+
     function filterAndSortItems() {{
-      const q = document.getElementById('searchInput').value.toLowerCase().trim();
+      const q = document.getElementById('searchInput').value.trim();
       const sortType = document.getElementById('sortSelect').value;
 
       let filtered = products.filter(p => {{
         const catMatch = (currentCategory === 'All' || p.category === currentCategory);
-        const textMatch = p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q);
+        const searchPool = `${{p.name}} ${{p.brand}} ${{p.category}} ${{p.specs || ''}}`;
+        const textMatch = isFuzzyMatch(searchPool, q);
         return catMatch && textMatch;
       }});
 
@@ -710,7 +731,7 @@ CUSTOMER_HTML = f"""
     function renderFeed(items) {{
       const grid = document.getElementById('productGrid');
       if (items.length === 0) {{
-        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted);">No matching products found.</div>';
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted);">No matching products found. Try searching with a general word!</div>';
         return;
       }}
 

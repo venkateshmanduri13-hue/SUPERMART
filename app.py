@@ -111,7 +111,7 @@ PWA_MANIFEST = {
 }
 
 PWA_SW_JS = """
-const CACHE_NAME = 'supermart-cache-v7';
+const CACHE_NAME = 'supermart-cache-v8';
 const ASSETS = ['/', '/manifest.json'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
@@ -145,29 +145,42 @@ CUSTOMER_HTML = f"""
       --primary: #9333ea;
       --primary-dark: #7e22ce;
       --accent: #ec4899;
-      --glass-bg: rgba(255, 255, 255, 0.95);
-      --glass-card: #ffffff;
-      --glass-border: #e2e8f0;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
       --text: #0f172a;
       --muted: #64748b;
       --whatsapp: #25d366;
       --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }}
+
+    /* Dark Mode Theme Variables */
+    body.dark-mode {{
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }}
+
     * {{ box-sizing: border-box; margin: 0; padding: 0; font-family: Roboto, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }}
     
     body {{
-      background: #f8fafc;
+      background: var(--bg);
       color: var(--text);
       padding-bottom: 75px;
       min-height: 100vh;
+      transition: background 0.3s ease, color 0.3s ease;
     }}
 
     .top-bar {{
       position: sticky; top: 0; z-index: 1000;
-      background: var(--glass-bg);
+      background: var(--card-bg);
       backdrop-filter: blur(14px);
-      border-bottom: 1px solid var(--glass-border);
+      border-bottom: 1px solid var(--border);
       padding: 10px 14px;
+      transition: background 0.3s ease;
     }}
     .header-row1 {{ display: flex; justify-content: space-between; align-items: center; }}
     .brand-logo {{ font-size: 20px; font-weight: 900; color: var(--primary); display: flex; align-items: center; gap: 6px; cursor: pointer; }}
@@ -177,12 +190,14 @@ CUSTOMER_HTML = f"""
     
     .icon-2d-btn {{
       width: 38px; height: 38px; border-radius: 50%;
-      background: #ffffff; border: 1px solid #e2e8f0;
+      background: var(--card-bg); border: 1px solid var(--border);
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 2px 5px rgba(0,0,0,0.04); position: relative; cursor: pointer;
       transition: transform 0.15s ease;
     }}
     .icon-2d-btn:active {{ transform: scale(0.92); }}
+    body.dark-mode .icon-2d-btn svg {{ stroke: #f8fafc; fill: #f8fafc; }}
+    
     .icon-badge-num {{
       position: absolute; top: -3px; right: -3px;
       background: #ef4444; color: #fff; font-size: 10px; font-weight: bold;
@@ -191,57 +206,58 @@ CUSTOMER_HTML = f"""
     
     .search-container {{ margin-top: 8px; position: relative; }}
     .search-input {{
-      width: 100%; height: 42px; border: 1px solid #cbd5e1;
+      width: 100%; height: 42px; border: 1px solid var(--border);
       border-radius: 24px; padding: 0 42px 0 38px; font-size: 13px;
-      outline: none; background: #ffffff; box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+      outline: none; background: var(--card-bg); color: var(--text);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
     }}
-    .search-left-icon {{ position: absolute; left: 14px; top: 11px; color: #94a3b8; font-size: 15px; }}
-    .search-right-icon {{ position: absolute; right: 14px; top: 10px; color: #94a3b8; font-size: 16px; cursor: pointer; }}
+    .search-left-icon {{ position: absolute; left: 14px; top: 11px; color: var(--muted); font-size: 15px; }}
+    .search-right-icon {{ position: absolute; right: 14px; top: 10px; color: var(--muted); font-size: 16px; cursor: pointer; }}
 
-    /* Location Strip: Displayed only on Orders and Profile */
     .delivery-strip {{
-      background: #f1f5f9; padding: 9px 14px; font-size: 12px; font-weight: bold; color: #334155;
-      display: none; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0;
+      background: var(--card-bg); padding: 9px 14px; font-size: 12px; font-weight: bold; color: var(--text);
+      display: none; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border);
       cursor: pointer;
     }}
 
     .circles-strip {{
       display: flex; gap: 14px; overflow-x: auto; padding: 12px 14px;
-      background: #ffffff; border-bottom: 1px solid var(--glass-border);
+      background: var(--card-bg); border-bottom: 1px solid var(--border);
     }}
     .circles-strip::-webkit-scrollbar {{ display: none; }}
     .circle-item {{ display: flex; flex-direction: column; align-items: center; min-width: 66px; cursor: pointer; }}
     .circle-2d-box {{
       width: 52px; height: 52px; border-radius: 50%;
-      background: #f8fafc; border: 1.5px solid #e2e8f0;
+      background: var(--bg); border: 1.5px solid var(--border);
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 2px 5px rgba(0,0,0,0.03); transition: transform 0.15s, border-color 0.15s;
     }}
+    body.dark-mode .circle-2d-box svg {{ stroke: #cbd5e1; }}
     .circle-item.active .circle-2d-box {{ border-color: var(--primary); background: #fdf4ff; transform: scale(1.06); }}
     .circle-label {{ font-size: 11px; font-weight: bold; margin-top: 5px; color: var(--text); text-align: center; white-space: nowrap; }}
 
     .sort-filter-bar {{
       display: flex; justify-content: space-between; align-items: center;
-      background: #ffffff; padding: 8px 14px; border-bottom: 1px solid var(--glass-border);
-      font-size: 13px; font-weight: 700; color: #475569;
+      background: var(--card-bg); padding: 8px 14px; border-bottom: 1px solid var(--border);
+      font-size: 13px; font-weight: 700; color: var(--muted);
     }}
     .sort-select {{ border: none; background: transparent; font-weight: bold; color: var(--primary); outline: none; font-size: 13px; cursor: pointer; }}
 
     .grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; }}
     .card {{
-      background: #ffffff; border: 1px solid var(--glass-border); border-radius: 12px;
+      background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
       padding: 10px; display: flex; flex-direction: column; position: relative;
       box-shadow: var(--shadow); cursor: pointer;
     }}
     .card-heart {{
-      position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.92);
-      border: 1px solid #e2e8f0; width: 30px; height: 30px; border-radius: 50%;
+      position: absolute; top: 8px; right: 8px; background: var(--card-bg);
+      border: 1px solid var(--border); width: 30px; height: 30px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2;
     }}
     
     .card-img-wrap {{
       width: 100%; height: 155px; border-radius: 8px; overflow: hidden;
-      margin-bottom: 8px; background: #f8fafc;
+      margin-bottom: 8px; background: var(--bg);
     }}
     .card-img-wrap img {{
       width: 100%; height: 100%; object-fit: cover; object-position: center;
@@ -252,9 +268,9 @@ CUSTOMER_HTML = f"""
     .mall-tag {{
       background: #6b21a8; color: #fff; font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 4px; width: fit-content; margin-bottom: 4px;
     }}
-    .card-name {{ font-size: 13px; font-weight: 700; height: 34px; overflow: hidden; line-height: 1.3; margin-bottom: 4px; }}
+    .card-name {{ font-size: 13px; font-weight: 700; height: 34px; overflow: hidden; line-height: 1.3; margin-bottom: 4px; color: var(--text); }}
     .price-row {{ display: flex; align-items: baseline; gap: 6px; }}
-    .price-now {{ font-size: 16px; font-weight: 900; color: #000; }}
+    .price-now {{ font-size: 16px; font-weight: 900; color: var(--text); }}
     .price-mrp {{ font-size: 12px; color: var(--muted); text-decoration: line-through; }}
     .price-off {{ font-size: 12px; color: #16a34a; font-weight: 800; }}
     
@@ -270,37 +286,37 @@ CUSTOMER_HTML = f"""
     }}
 
     .product-view-sheet {{
-      background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 75px; box-shadow: var(--shadow);
+      background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 75px; box-shadow: var(--shadow);
     }}
     .pdp-img-box {{
       width: 100%; height: 260px; display: flex; align-items: center; justify-content: center; position: relative;
-      background: #fafafa; border-radius: 10px; margin-bottom: 14px; overflow:hidden;
+      background: var(--bg); border-radius: 10px; margin-bottom: 14px; overflow:hidden;
     }}
     .pdp-img-box img {{ width: 100%; height: 100%; object-fit: contain; }}
-    .offer-box {{ background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px; margin: 14px 0; }}
+    .offer-box {{ background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); border-radius: 8px; padding: 12px; margin: 14px 0; }}
     .trust-badges {{
-      display: flex; justify-content: space-around; background: #f8fafc; border: 1px solid #e2e8f0;
+      display: flex; justify-content: space-around; background: var(--bg); border: 1px solid var(--border);
       border-radius: 8px; padding: 12px; margin: 14px 0; text-align: center; font-size: 11px; font-weight: bold;
     }}
     .related-scroll {{ display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; }}
     .related-scroll::-webkit-scrollbar {{ display: none; }}
     .related-card {{
-      min-width: 140px; max-width: 140px; background: #fff; border: 1px solid #e2e8f0;
+      min-width: 140px; max-width: 140px; background: var(--card-bg); border: 1px solid var(--border);
       border-radius: 8px; padding: 8px; cursor: pointer; flex-shrink: 0;
     }}
 
     .pdp-bottom-bar {{
       position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
-      background: #fff; border-top: 1px solid #e2e8f0; display: flex; z-index: 1000;
+      background: var(--card-bg); border-top: 1px solid var(--border); display: flex; z-index: 1000;
     }}
-    .btn-pdp-cart {{ flex: 1; background: #fff; color: #000; border: none; font-weight: bold; font-size: 14px; cursor: pointer; }}
+    .btn-pdp-cart {{ flex: 1; background: var(--card-bg); color: var(--text); border: none; font-weight: bold; font-size: 14px; cursor: pointer; }}
     .btn-pdp-buy {{ flex: 1; background: #ff9f00; color: #fff; border: none; font-weight: bold; font-size: 14px; cursor: pointer; }}
 
-    .timeline {{ margin: 14px 0 10px 0; padding-left: 10px; border-left: 2px solid #e2e8f0; }}
+    .timeline {{ margin: 14px 0 10px 0; padding-left: 10px; border-left: 2px solid var(--border); }}
     .timeline-step {{ position: relative; padding-bottom: 12px; padding-left: 16px; font-size: 12px; }}
     .timeline-step::before {{
       content: ''; position: absolute; left: -6px; top: 2px; width: 10px; height: 10px;
-      border-radius: 50%; background: #cbd5e1;
+      border-radius: 50%; background: var(--muted);
     }}
     .timeline-step.done {{ color: #16a34a; font-weight: bold; }}
     .timeline-step.done::before {{ background: #16a34a; }}
@@ -309,10 +325,10 @@ CUSTOMER_HTML = f"""
 
     .meesho-item-row {{
       display: flex; justify-content: space-between; align-items: center;
-      padding: 15px 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer;
-      background: #fff; text-decoration: none; color: var(--text);
+      padding: 15px 12px; border-bottom: 1px solid var(--border); cursor: pointer;
+      background: var(--card-bg); text-decoration: none; color: var(--text);
     }}
-    .meesho-item-row:active {{ background: #f8fafc; }}
+    .meesho-item-row:active {{ background: var(--bg); }}
     .meesho-item-left {{ display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; }}
 
     .btn-big {{
@@ -328,7 +344,7 @@ CUSTOMER_HTML = f"""
     .screen {{ display: none; padding: 12px; }}
     .screen.active {{ display: block; }}
     .sheet {{
-      background: #ffffff; border: 1px solid var(--glass-border); border-radius: 12px;
+      background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
       padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow);
     }}
 
@@ -338,10 +354,10 @@ CUSTOMER_HTML = f"""
       z-index: 2000; display: none; align-items: center; justify-content: center; padding: 14px;
     }}
     .modal-box {{
-      background: #ffffff; width: 100%; max-width: 440px; max-height: 90vh;
+      background: var(--card-bg); color: var(--text); width: 100%; max-width: 440px; max-height: 90vh;
       border-radius: 14px; overflow-y: auto; padding: 20px; position: relative;
     }}
-    .modal-close {{ position: absolute; top: 12px; right: 16px; font-size: 24px; font-weight: bold; cursor: pointer; border: none; background: transparent; }}
+    .modal-close {{ position: absolute; top: 12px; right: 16px; font-size: 24px; font-weight: bold; cursor: pointer; border: none; background: transparent; color: var(--text); }}
 
     #locationModal .modal-box {{
       position: fixed; bottom: 0; left: 0; right: 0; max-width: 100%;
@@ -350,8 +366,9 @@ CUSTOMER_HTML = f"""
 
     .bottom-nav {{
       position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
-      background: #ffffff; border-top: 1px solid var(--glass-border);
+      background: var(--card-bg); border-top: 1px solid var(--border);
       display: flex; justify-content: space-around; align-items: center; z-index: 1000;
+      transition: background 0.3s ease;
     }}
     .nav-btn {{
       background: none; border: none; font-size: 11px; font-weight: 700;
@@ -359,7 +376,7 @@ CUSTOMER_HTML = f"""
     }}
     .nav-btn.active {{ color: var(--primary); }}
     .nav-btn svg {{ stroke: var(--muted); }}
-    .nav-btn.active svg {{ stroke: var(--primary); fill: rgba(147,51,234,0.08); }}
+    .nav-btn.active svg {{ stroke: var(--primary); fill: rgba(147,51,234,0.12); }}
 
     .toast {{
       position: fixed; top: 75px; left: 50%; transform: translateX(-50%);
@@ -432,7 +449,7 @@ CUSTOMER_HTML = f"""
       </div>
     </div>
     
-    <!-- Search Bar: Active strictly on Home / Shop screen -->
+    <!-- Search Bar: Visible ONLY on Home / Shop -->
     <div class="search-container" id="mainSearchBar">
       <span class="search-left-icon">🔍</span>
       <input type="text" id="searchInput" class="search-input" placeholder="Search Atta, Oil, Tomato, Phone..." onkeyup="filterAndSortItems()">
@@ -440,7 +457,7 @@ CUSTOMER_HTML = f"""
     </div>
   </header>
 
-  <!-- Location Strip: Configured to show ONLY on Orders & Profile screen -->
+  <!-- Location Strip: Visible ONLY on Orders and Profile screens -->
   <div class="delivery-strip" id="pincodeStrip" onclick="openLocationModal()">
     <div style="display:flex; align-items:center; gap:6px;">
       <span>📍</span>
@@ -571,7 +588,7 @@ CUSTOMER_HTML = f"""
       <h3>Shopping Basket (<span id="cartCountTitle">0</span>)</h3>
       <div id="cartListHolder" style="margin: 14px 0;"></div>
 
-      <div style="border-top: 1px solid var(--glass-border); padding-top: 12px; font-size: 14px;">
+      <div style="border-top: 1px solid var(--border); padding-top: 12px; font-size: 14px;">
         <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
           <span>Items Subtotal:</span>
           <strong>₹<span id="cartSubtotal">0</span></strong>
@@ -580,7 +597,7 @@ CUSTOMER_HTML = f"""
           <span>Delivery Charges:</span>
           <strong>₹<span id="cartDelivery">0</span></strong>
         </div>
-        <div style="display:flex; justify-content:space-between; font-size: 18px; font-weight: 900; border-top: 1px dashed var(--glass-border); padding-top: 8px;">
+        <div style="display:flex; justify-content:space-between; font-size: 18px; font-weight: 900; border-top: 1px dashed var(--border); padding-top: 8px;">
           <span>Total Payable:</span>
           <span style="color: var(--primary);">₹<span id="cartTotal">0</span></span>
         </div>
@@ -595,23 +612,23 @@ CUSTOMER_HTML = f"""
     <div class="sheet">
       <h3>Confirm Delivery Address</h3>
       <form onsubmit="handlePlaceOrder(event)" style="display: grid; gap: 10px; margin-top: 14px;">
-        <input type="text" id="chkName" placeholder="Full Receiver Name" required style="padding: 10px; border: 1px solid var(--glass-border); border-radius: 6px; font-size: 14px;">
-        <input type="tel" id="chkPhone" placeholder="10-digit Phone Number" pattern="[0-9]{{10}}" required style="padding: 10px; border: 1px solid var(--glass-border); border-radius: 6px; font-size: 14px;">
+        <input type="text" id="chkName" placeholder="Full Receiver Name" required style="padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; background:var(--card-bg); color:var(--text);">
+        <input type="tel" id="chkPhone" placeholder="10-digit Phone Number" pattern="[0-9]{{10}}" required style="padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; background:var(--card-bg); color:var(--text);">
         
         <div style="display:grid; grid-template-columns: 1fr auto; gap: 8px; align-items:center;">
-          <input type="text" id="chkPincode" placeholder="6-digit Pincode" pattern="[0-9]{{6}}" required oninput="handlePincodeLookup(this.value)" style="padding: 10px; border: 1px solid var(--glass-border); border-radius: 6px; font-size: 14px;">
+          <input type="text" id="chkPincode" placeholder="6-digit Pincode" pattern="[0-9]{{6}}" required oninput="handlePincodeLookup(this.value)" style="padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; background:var(--card-bg); color:var(--text);">
           <button type="button" onclick="detectGPSLocation()" style="background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; padding:10px; border-radius:6px; font-size:12px; font-weight:bold; cursor:pointer;">🎯 Auto GPS</button>
         </div>
         <div id="pincodeStatus" style="font-size:11px; color:var(--muted); font-weight:bold;"></div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-          <input type="text" id="chkMandal" placeholder="Mandal / City" required style="padding: 10px; border: 1px solid var(--glass-border); border-radius: 6px; font-size: 13px; background:#f8fafc;">
-          <input type="text" id="chkDistrict" placeholder="District & State" required style="padding: 10px; border: 1px solid var(--glass-border); border-radius: 6px; font-size: 13px; background:#f8fafc;">
+          <input type="text" id="chkMandal" placeholder="Mandal / City" required style="padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background:var(--bg); color:var(--text);">
+          <input type="text" id="chkDistrict" placeholder="District & State" required style="padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background:var(--bg); color:var(--text);">
         </div>
 
-        <textarea id="chkAddress" placeholder="Complete Street, Flat/Door No, Landmark" required style="padding: 10px; border: 1px solid var(--glass-border); border-radius: 6px; font-size: 14px; height: 65px;"></textarea>
+        <textarea id="chkAddress" placeholder="Complete Street, Flat/Door No, Landmark" required style="padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; height: 65px; background:var(--card-bg); color:var(--text);"></textarea>
 
-        <div style="background: #fdf2f8; border: 1px solid #fbcfe8; padding: 12px; border-radius: 6px; font-size: 13px; font-weight: 700; color: #9d174d;">
+        <div style="background: rgba(236,72,153,0.1); border: 1px solid rgba(236,72,153,0.3); padding: 12px; border-radius: 6px; font-size: 13px; font-weight: 700; color: #db2777;">
           💵 Cash / UPI On Delivery Available (Safe & Verified)
         </div>
 
@@ -636,12 +653,12 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- ORDERS SCREEN (Shows Location Strip) -->
+  <!-- ORDERS SCREEN -->
   <section id="ordersScreen" class="screen">
     <div class="sheet">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
         <h3>My Orders & Live Timeline</h3>
-        <button onclick="loadOrders()" style="background:#f1f5f9; border:none; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">🔄 Refresh</button>
+        <button onclick="loadOrders()" style="background:var(--bg); border:1px solid var(--border); color:var(--text); padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">🔄 Refresh</button>
       </div>
       <div id="ordersFeed"></div>
     </div>
@@ -655,9 +672,9 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- MEESHO STYLE ACCOUNT & SETTINGS SCREEN (Shows Location Strip) -->
+  <!-- MEESHO STYLE ACCOUNT & SETTINGS SCREEN (2nd Image Replica with Day/Night Mode) -->
   <section id="profileScreen" class="screen" style="padding:10px 12px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:16px; border-radius:12px; margin-bottom:12px; box-shadow:var(--shadow);">
+    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--card-bg); padding:16px; border-radius:12px; margin-bottom:12px; box-shadow:var(--shadow); border:1px solid var(--border);">
       <div style="display:flex; align-items:center; gap:12px;">
         <div style="width:50px; height:50px; border-radius:50%; background:#f3e8ff; border:2px solid #e9d5ff; display:flex; align-items:center; justify-content:center; font-size:24px;">
           🧑‍💼
@@ -667,25 +684,34 @@ CUSTOMER_HTML = f"""
           <span style="font-size:12px; color:var(--muted);" id="accUserPhone">Supermart Member</span>
         </div>
       </div>
-      <span style="color:#94a3b8; font-size:18px;">❯</span>
+      <span style="color:var(--muted); font-size:18px;">❯</span>
     </div>
 
     <!-- Quick Top Actions -->
     <div style="display:flex; gap:10px; margin-bottom:14px;">
-      <a href="https://wa.me/{ADMIN_WHATSAPP}?text=Hello%20Supermart%20Support" target="_blank" style="flex:1; background:#fff; border:1px solid var(--glass-border); border-radius:10px; padding:14px; text-align:center; text-decoration:none; color:var(--text); box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+      <a href="https://wa.me/{ADMIN_WHATSAPP}?text=Hello%20Supermart%20Support" target="_blank" style="flex:1; background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:14px; text-align:center; text-decoration:none; color:var(--text); box-shadow:0 1px 3px rgba(0,0,0,0.03);">
         <div style="font-size:20px; margin-bottom:4px;">📞</div>
         <strong style="font-size:13px;">Help Centre</strong>
       </a>
-      <div onclick="openLangModal()" style="flex:1; background:#fff; border:1px solid var(--glass-border); border-radius:10px; padding:14px; text-align:center; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+      <div onclick="openLangModal()" style="flex:1; background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:14px; text-align:center; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
         <div style="font-size:20px; margin-bottom:4px;">🌐</div>
         <strong style="font-size:13px;">Change Language</strong>
       </div>
     </div>
 
     <!-- Menu List -->
-    <div style="background:#fff; border-radius:12px; overflow:hidden; box-shadow:var(--shadow); margin-bottom:14px;">
+    <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:var(--shadow); margin-bottom:14px;">
       <div style="padding:12px 14px 6px 14px; font-size:12px; font-weight:bold; color:var(--muted); text-transform:uppercase;">
         Account Settings & Activity
+      </div>
+
+      <!-- Day / Night Mode Toggle Row -->
+      <div class="meesho-item-row" onclick="toggleDarkMode()">
+        <div class="meesho-item-left">
+          <span id="darkModeIcon">🌙</span>
+          <span id="darkModeText">Switch to Dark / Light Mode</span>
+        </div>
+        <span style="font-size:12px; font-weight:bold; background:var(--bg); padding:4px 8px; border-radius:6px; border:1px solid var(--border);" id="darkModeStatus">Auto</span>
       </div>
 
       <div class="meesho-item-row" onclick="openEditProfileModal()">
@@ -693,7 +719,7 @@ CUSTOMER_HTML = f"""
           <span>📍</span>
           <span>Delivery Address & Profile Details</span>
         </div>
-        <span style="color:#94a3b8;">❯</span>
+        <span style="color:var(--muted);">❯</span>
       </div>
 
       <div class="meesho-item-row" onclick="openPasswordModal()">
@@ -701,7 +727,7 @@ CUSTOMER_HTML = f"""
           <span>🔐</span>
           <span>Update Account Password</span>
         </div>
-        <span style="color:#94a3b8;">❯</span>
+        <span style="color:var(--muted);">❯</span>
       </div>
 
       <div class="meesho-item-row" onclick="switchView('orders')">
@@ -709,7 +735,7 @@ CUSTOMER_HTML = f"""
           <span>📦</span>
           <span>My Orders & Live Timeline</span>
         </div>
-        <span style="color:#94a3b8;">❯</span>
+        <span style="color:var(--muted);">❯</span>
       </div>
 
       <div class="meesho-item-row" onclick="switchView('wishlist')">
@@ -717,7 +743,7 @@ CUSTOMER_HTML = f"""
           <span>❤️</span>
           <span>Wishlisted Products</span>
         </div>
-        <span style="color:#94a3b8;">❯</span>
+        <span style="color:var(--muted);">❯</span>
       </div>
 
       <div class="meesho-item-row" onclick="openLangModal()">
@@ -725,7 +751,7 @@ CUSTOMER_HTML = f"""
           <span>🌐</span>
           <span>Change App Language</span>
         </div>
-        <span style="color:#94a3b8;">❯</span>
+        <span style="color:var(--muted);">❯</span>
       </div>
 
       <a href="https://wa.me/{ADMIN_WHATSAPP}?text=Hello%20Supermart%20Support" target="_blank" class="meesho-item-row">
@@ -733,11 +759,11 @@ CUSTOMER_HTML = f"""
           <span>💬</span>
           <span>WhatsApp Customer Support</span>
         </div>
-        <span style="color:#94a3b8;">❯</span>
+        <span style="color:var(--muted);">❯</span>
       </a>
     </div>
 
-    <button class="btn-big btn-outline-red" style="border-radius:10px; background:#fff;" onclick="logout()">LOGOUT ACCOUNT</button>
+    <button class="btn-big btn-outline-red" style="border-radius:10px; background:var(--card-bg);" onclick="logout()">LOGOUT ACCOUNT</button>
   </section>
 
   <!-- PASSWORD MODAL -->
@@ -746,7 +772,7 @@ CUSTOMER_HTML = f"""
       <button class="modal-close" onclick="closePasswordModal()">&times;</button>
       <h3 style="margin-bottom: 14px;">🔐 Update Account Password</h3>
       <form onsubmit="handleChangePassword(event)" style="display:grid; gap:10px;">
-        <input type="password" id="newPassInput" placeholder="Enter New Password" required style="padding:10px; border:1px solid var(--glass-border); border-radius:6px; font-size:14px;">
+        <input type="password" id="newPassInput" placeholder="Enter New Password" required style="padding:10px; border:1px solid var(--border); border-radius:6px; font-size:14px; background:var(--bg); color:var(--text);">
         <button type="submit" class="btn-big btn-primary">SAVE NEW PASSWORD</button>
       </form>
     </div>
@@ -758,27 +784,27 @@ CUSTOMER_HTML = f"""
       <button class="modal-close" onclick="closeLangModal()">&times;</button>
       <h3 style="margin-bottom: 14px;">🌐 Select App Language</h3>
       <div style="display:grid; gap:10px;">
-        <button class="btn-big" style="background:#f8fafc; border:1px solid #e2e8f0; color:#000;" onclick="changeLanguage('en'); closeLangModal();">English (Default)</button>
+        <button class="btn-big" style="background:var(--bg); border:1px solid var(--border); color:var(--text);" onclick="changeLanguage('en'); closeLangModal();">English (Default)</button>
         <button class="btn-big" style="background:#fdf4ff; border:1px solid #e9d5ff; color:#9333ea; font-weight:bold;" onclick="changeLanguage('te'); closeLangModal();">తెలుగు (Telugu)</button>
         <button class="btn-big" style="background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a; font-weight:bold;" onclick="changeLanguage('hi'); closeLangModal();">हिन्दी (Hindi)</button>
       </div>
     </div>
   </div>
 
-  <!-- EDIT PROFILE / DELIVERY ADDRESS MODAL -->
+  <!-- EDIT PROFILE MODAL -->
   <div class="modal" id="editProfileModal">
     <div class="modal-box">
       <button class="modal-close" onclick="closeEditProfileModal()">&times;</button>
       <h3 style="margin-bottom: 14px;">✏️ Edit Delivery Address</h3>
       <form onsubmit="handleSaveProfile(event)" style="display:grid; gap:10px;">
         <label style="font-size:12px; font-weight:bold;">Your Name:</label>
-        <input type="text" id="epName" placeholder="Full Name" required style="padding:10px; border:1px solid var(--glass-border); border-radius:6px; font-size:14px;">
+        <input type="text" id="epName" placeholder="Full Name" required style="padding:10px; border:1px solid var(--border); border-radius:6px; font-size:14px; background:var(--bg); color:var(--text);">
         
         <label style="font-size:12px; font-weight:bold;">Postal Pincode:</label>
-        <input type="text" id="epPincode" placeholder="6-digit Pincode" pattern="[0-9]{{6}}" required style="padding:10px; border:1px solid var(--glass-border); border-radius:6px; font-size:14px;">
+        <input type="text" id="epPincode" placeholder="6-digit Pincode" pattern="[0-9]{{6}}" required style="padding:10px; border:1px solid var(--border); border-radius:6px; font-size:14px; background:var(--bg); color:var(--text);">
         
         <label style="font-size:12px; font-weight:bold;">Complete Address (Door No, Street, Village/City):</label>
-        <textarea id="epAddress" placeholder="Street, Flat/Door No, Landmark" required style="padding:10px; border:1px solid var(--glass-border); border-radius:6px; font-size:14px; height:75px;"></textarea>
+        <textarea id="epAddress" placeholder="Street, Flat/Door No, Landmark" required style="padding:10px; border:1px solid var(--border); border-radius:6px; font-size:14px; height:75px; background:var(--bg); color:var(--text);"></textarea>
 
         <button type="submit" class="btn-big btn-primary" style="margin-top:6px;">SAVE ADDRESS</button>
       </form>
@@ -794,11 +820,11 @@ CUSTOMER_HTML = f"""
       </div>
 
       <div style="position:relative; margin-bottom:14px;">
-        <span style="position:absolute; left:12px; top:11px; color:#94a3b8;">🔍</span>
-        <input type="text" id="locSearchPincode" placeholder="Search by pincode (e.g. 532427)" onkeyup="if(event.key==='Enter') quickSetPincode(this.value)" style="width:100%; padding:10px 10px 10px 34px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px;">
+        <span style="position:absolute; left:12px; top:11px; color:var(--muted);">🔍</span>
+        <input type="text" id="locSearchPincode" placeholder="Search by pincode (e.g. 532427)" onkeyup="if(event.key==='Enter') quickSetPincode(this.value)" style="width:100%; padding:10px 10px 10px 34px; border:1px solid var(--border); border-radius:8px; font-size:13px; background:var(--bg); color:var(--text);">
       </div>
 
-      <div onclick="detectGPSLocation()" style="display:flex; gap:12px; align-items:center; padding:12px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; cursor:pointer; margin-bottom:14px;">
+      <div onclick="detectGPSLocation()" style="display:flex; gap:12px; align-items:center; padding:12px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); border-radius:8px; cursor:pointer; margin-bottom:14px;">
         <div style="background:#22c55e; color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px;">🎯</div>
         <div>
           <strong style="color:#15803d; font-size:13px;">Use my current location</strong><br>
@@ -806,27 +832,27 @@ CUSTOMER_HTML = f"""
         </div>
       </div>
 
-      <hr style="border:none; border-top:1px dashed #cbd5e1; margin:14px 0;">
+      <hr style="border:none; border-top:1px dashed var(--border); margin:14px 0;">
       
       <div style="font-size:12px; font-weight:bold; color:var(--muted); margin-bottom:8px;">Saved Address:</div>
-      <div id="savedAddressInModal" style="font-size:13px; color:#334155; line-height:1.4;">
+      <div id="savedAddressInModal" style="font-size:13px; color:var(--text); line-height:1.4;">
         No address saved yet. Sign In or enter pincode above.
       </div>
     </div>
   </div>
 
-  <!-- AUTH MODAL -->
+  <!-- AUTH MODAL WITH AUTOMATIC WHATSAPP BOT API OTP -->
   <div class="modal" id="authModal">
     <div class="modal-box" style="max-width: 380px;">
       <button class="modal-close" onclick="closeAuthModal()">&times;</button>
       <h2 id="authTitle" style="margin-bottom: 14px;">Sign In with Mobile</h2>
       
       <form id="authMainForm" onsubmit="handleAuthSubmit(event)" style="display:grid; gap:10px;">
-        <input type="tel" id="authPhone" placeholder="10-digit Mobile Number" pattern="[0-9]{{10}}" required style="width:100%; padding:10px; border:1px solid var(--glass-border); border-radius:6px; font-size:14px;">
-        <input type="password" id="authPassword" placeholder="Enter Password" required style="width:100%; padding:10px; border:1px solid var(--glass-border); border-radius:6px; font-size:14px;">
+        <input type="tel" id="authPhone" placeholder="10-digit Mobile Number" pattern="[0-9]{{10}}" required style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px; font-size:14px; background:var(--bg); color:var(--text);">
+        <input type="password" id="authPassword" placeholder="Enter Password" required style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px; font-size:14px; background:var(--bg); color:var(--text);">
         
         <div id="confirmPwGroup" style="display:none;">
-          <input type="password" id="authConfirmPassword" placeholder="Confirm Password" style="width:100%; padding:10px; border:1px solid var(--glass-border); border-radius:6px; font-size:14px;">
+          <input type="password" id="authConfirmPassword" placeholder="Confirm Password" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px; font-size:14px; background:var(--bg); color:var(--text);">
         </div>
 
         <div id="forgotPwLink" style="text-align:right; font-size:12px;">
@@ -837,13 +863,14 @@ CUSTOMER_HTML = f"""
       </form>
 
       <div id="otpBox" style="display:none; text-align:center; margin-top:14px;">
-        <p style="font-size:13px; color:var(--muted); margin-bottom:8px;">
-          💬 WhatsApp opened! Send verification code, then enter the 4-digit code below:
-        </p>
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:8px; margin-bottom:12px;">
+          <strong style="color:#15803d; font-size:13px;">🤖 WhatsApp Bot OTP Dispatched!</strong><br>
+          <p style="font-size:11px; color:var(--muted); margin-top:4px;">WhatsApp opened automatically. Click Send to trigger bot verification code.</p>
+        </div>
         <a id="waDirectBtn" href="#" target="_blank" class="btn-big btn-whatsapp" style="margin-bottom:12px; font-size:13px;">
-          📲 Click here if WhatsApp didn't open
+          📲 Resend WhatsApp Bot OTP
         </a>
-        <input type="number" id="otpInput" placeholder="Enter 4-digit Code" style="width:100%; padding:12px; border:2px solid var(--primary); border-radius:6px; text-align:center; font-size:18px; letter-spacing:6px; margin-bottom:10px;">
+        <input type="number" id="otpInput" placeholder="Enter 4-digit OTP" style="width:100%; padding:12px; border:2px solid var(--primary); border-radius:6px; text-align:center; font-size:18px; letter-spacing:6px; margin-bottom:10px; background:var(--bg); color:var(--text);">
         <button class="btn-big btn-primary" onclick="verifyMobileOtp()">VERIFY & CREATE ACCOUNT</button>
       </div>
 
@@ -908,6 +935,31 @@ CUSTOMER_HTML = f"""
       document.getElementById('searchInput').placeholder = d.searchPlace;
       localStorage.setItem('sm_lang', lang);
       toast("Language set to: " + (lang === 'te' ? "తెలుగు" : (lang === 'hi' ? "हिन्दी" : "English")));
+    }}
+
+    /* DARK / LIGHT MODE SWITCHER */
+    function toggleDarkMode() {{
+      const isDark = document.body.classList.toggle('dark-mode');
+      localStorage.setItem('sm_dark', isDark ? '1' : '0');
+      updateDarkModeUI(isDark);
+      toast(isDark ? "Dark Mode Enabled 🌙" : "Light Mode Enabled ☀️");
+    }}
+
+    function updateDarkModeUI(isDark) {{
+      const icon = document.getElementById('darkModeIcon');
+      const stat = document.getElementById('darkModeStatus');
+      if(isDark) {{
+        icon.innerText = "☀️";
+        stat.innerText = "Dark";
+      }} else {{
+        icon.innerText = "🌙";
+        stat.innerText = "Light";
+      }}
+    }}
+
+    if(localStorage.getItem('sm_dark') === '1') {{
+      document.body.classList.add('dark-mode');
+      updateDarkModeUI(true);
     }}
 
     function openLangModal() {{ document.getElementById('langModal').style.display = 'flex'; }}
@@ -978,7 +1030,6 @@ CUSTOMER_HTML = f"""
       setTimeout(() => {{ t.style.display = 'none'; }}, 2800);
     }}
 
-    /* POSTAL PINCODE LOOKUP & AUTO PROFILE SYNC */
     async function handlePincodeLookup(pin) {{
       pin = pin.trim();
       const status = document.getElementById('pincodeStatus');
@@ -1008,7 +1059,6 @@ CUSTOMER_HTML = f"""
       }} else {{ status.innerText = ""; }}
     }}
 
-    /* LIVE GPS DETECTION & AUTO PROFILE SAVE */
     function detectGPSLocation() {{
       if(!navigator.geolocation) return toast("Geolocation not supported.");
       toast("Fetching live GPS coordinates...");
@@ -1265,7 +1315,7 @@ CUSTOMER_HTML = f"""
           <div class="related-card" onclick="openProductPage(${{r.id}})">
             <img src="${{r.image}}" style="width:100%; height:90px; object-fit:cover; border-radius:6px; margin-bottom:4px;">
             <div style="font-size:11px; font-weight:bold; height:28px; overflow:hidden;">${{r.name}}</div>
-            <div style="font-size:12px; font-weight:bold; color:#000; margin-top:4px;">₹${{r.price.toLocaleString()}}</div>
+            <div style="font-size:12px; font-weight:bold; color:var(--text); margin-top:4px;">₹${{r.price.toLocaleString()}}</div>
           </div>
         `).join('');
       }}
@@ -1291,10 +1341,7 @@ CUSTOMER_HTML = f"""
       document.getElementById('mainHeader').style.display = isPdp ? 'none' : 'block';
       document.getElementById('mainBottomNav').style.display = isPdp ? 'none' : 'flex';
 
-      // 1. Search Bar visible ONLY on Home / Shop
       document.getElementById('mainSearchBar').style.display = isHome ? 'block' : 'none';
-
-      // 2. Location Strip visible ONLY on Orders or Profile
       document.getElementById('pincodeStrip').style.display = showLocation ? 'flex' : 'none';
 
       document.getElementById(name + 'Screen').classList.add('active');
@@ -1367,7 +1414,7 @@ CUSTOMER_HTML = f"""
       cont.innerHTML = items.map(i => {{
         subtotal += i.price * i.quantity;
         return `
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--glass-border);">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);">
             <div>
               <strong>${{i.name}}</strong><br>
               <span style="color:var(--primary); font-weight:800;">₹${{i.price}} &times; ${{i.quantity}}</span>
@@ -1480,12 +1527,12 @@ CUSTOMER_HTML = f"""
       }}
 
       cont.innerHTML = orders.map(o => `
-        <div style="border:1px solid var(--glass-border); border-radius:8px; padding:12px; margin-bottom:12px; background:#fff;">
+        <div style="border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:12px; background:var(--card-bg);">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <strong>Order #${{o.order_id}}</strong>
             <span style="color:var(--primary); font-weight:800; font-size:12px;">${{o.status}}</span>
           </div>
-          <div style="font-size:13px; color:#475569; margin:6px 0;">Items: ${{o.items}}</div>
+          <div style="font-size:13px; color:var(--muted); margin:6px 0;">Items: ${{o.items}}</div>
           <div style="font-size:12px; color:var(--muted);">Delivery: ${{o.name}} (${{o.phone}}), ${{o.address}} - PIN: ${{o.pincode}}</div>
           
           ${{getTimelineHTML(o.status)}}
@@ -1526,7 +1573,7 @@ CUSTOMER_HTML = f"""
       }}
 
       cont.innerHTML = items.map(i => `
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--glass-border);">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);">
           <div>
             <strong>${{i.name}}</strong><br>
             <span style="font-weight:bold; color:var(--primary);">₹${{i.price}}</span>
@@ -1575,7 +1622,7 @@ CUSTOMER_HTML = f"""
       document.getElementById('confirmPwGroup').style.display = isRegister ? 'block' : 'none';
       document.getElementById('forgotPwLink').style.display = isRegister ? 'none' : 'block';
       document.getElementById('authTitle').innerText = isRegister ? 'Create Supermart Account' : 'Sign In with Mobile';
-      document.getElementById('authSubmitBtn').innerText = isRegister ? 'VERIFY VIA WHATSAPP ➔' : 'SIGN IN';
+      document.getElementById('authSubmitBtn').innerText = isRegister ? 'SEND WHATSAPP BOT OTP ➔' : 'SIGN IN';
       document.getElementById('authSwitchLink').innerText = isRegister ? 'Already registered? Sign In' : 'New customer? Sign Up here';
       document.getElementById('authMainForm').style.display = 'grid';
       document.getElementById('otpBox').style.display = 'none';
@@ -1601,8 +1648,10 @@ CUSTOMER_HTML = f"""
           document.getElementById('authMainForm').style.display = 'none';
           document.getElementById('waDirectBtn').href = d.wa_link;
           document.getElementById('otpBox').style.display = 'block';
-          window.open(d.wa_link, '_blank');
-          toast("WhatsApp opened! Send code and verify here.");
+          
+          // Automatically trigger WhatsApp bot chat URL
+          window.location.href = d.wa_link;
+          toast("WhatsApp Bot opened! Send message to receive OTP code.");
         }} else {{
           toast(d.message || "Registration error.");
         }}
@@ -1988,7 +2037,7 @@ SELLER_HTML = """
       await fetch('/api/seller/order/update', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({order_id: id, status: st})
+        body: JSON.stringify({status: st, order_id: id})
       });
       alert('Updated Order Stage: ' + st);
       loadOrders();
@@ -2125,7 +2174,6 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
         body = self.rfile.read(length)
         data = json.loads(body.decode('utf-8')) if length else {}
 
-        # 1. Update Profile & Location directly to DB
         if url.path == '/api/user/update-profile':
             if not user: return self._json({"success": False, "message": "Login required"})
             name = data.get('name', '').strip()
@@ -2143,7 +2191,6 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             user['address'] = address
             return self._json({"success": True})
 
-        # 2. Request WhatsApp OTP
         if url.path == '/api/register/request-otp':
             phone = data.get('phone', '').strip().replace(' ', '')
             password = data.get('password', '')
@@ -2166,12 +2213,12 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
                 "otp": generated_otp
             }
 
-            wa_msg = urllib.parse.quote(f"Supermart Account Verification Code: {generated_otp} for Mobile: +91 {phone}")
+            # Automated WhatsApp Bot API URL format
+            wa_msg = urllib.parse.quote(f"🤖 *SUPERMART BOT VERIFICATION*\n\nYour 4-digit Account OTP is: *{generated_otp}*\n\n(Send this message to verify your mobile +91 {phone})")
             wa_link = f"https://wa.me/{ADMIN_WHATSAPP}?text={wa_msg}"
 
-            return self._json({"success": True, "wa_link": wa_link, "message": "WhatsApp verification opened."})
+            return self._json({"success": True, "wa_link": wa_link, "message": "WhatsApp Bot triggered."})
 
-        # 3. Verify WhatsApp OTP
         if url.path == '/api/register/verify-otp':
             phone = data.get('phone', '').strip()
             user_otp = data.get('otp', '').strip()
@@ -2198,7 +2245,6 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
                 self._json({"success": False, "message": "Mobile number already registered."})
             return
 
-        # 4. Login with Mobile + Password
         if url.path == '/api/login':
             phone = data.get('phone', '').strip()
             pw = hash_pw(data.get('password', ''))
@@ -2218,7 +2264,6 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
                 self._json({"success": False, "message": "Invalid Mobile Number or Password."})
             return
 
-        # 5. Change Password
         if url.path == '/api/user/change-password':
             if not user: return self._json({"success": False, "message": "Login required"})
             new_pw = hash_pw(data.get('password', ''))
@@ -2230,12 +2275,10 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
-        # 6. Logout
         if url.path == '/api/logout':
             self._json({"success": True}, set_cookie="sm_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT")
             return
 
-        # 7. Cart Add
         if url.path == '/api/cart/add':
             if not user: return self._json({"success": False, "message": "Login required"}, status=401)
             conn = sqlite3.connect(DB_FILE)
@@ -2249,7 +2292,6 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
-        # 8. Cart Remove
         if url.path == '/api/cart/remove':
             if not user: return self._json({"success": False})
             conn = sqlite3.connect(DB_FILE)
@@ -2260,7 +2302,6 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
-        # 9. Wishlist Toggle
         if url.path == '/api/wishlist/toggle':
             if not user: return self._json({"success": False, "message": "Login required"})
             pid = data.get('product_id')
@@ -2279,7 +2320,6 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True, "message": msg})
             return
 
-        # 10. Order Placement
         if url.path == '/api/order/place':
             if not user: return self._json({"success": False, "message": "Login required"})
             conn = sqlite3.connect(DB_FILE)
@@ -2320,7 +2360,6 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True, "order_id": order_id})
             return
 
-        # 11. Cancel Order
         if url.path == '/api/order/cancel':
             if not user: return self._json({"success": False})
             conn = sqlite3.connect(DB_FILE)
@@ -2337,7 +2376,6 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
                 self._json({"success": False, "message": "Order already in transit / cannot cancel."})
             return
 
-        # 12. Product Management
         if url.path == '/api/seller/product/add':
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()

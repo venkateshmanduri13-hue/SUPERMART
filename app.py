@@ -735,7 +735,7 @@ CUSTOMER_HTML = f"""
 """
 
 # ==============================================================================
-# 3. SELLER / ADMIN FRONTEND WITH PRODUCT DELETE & ORDER EDIT
+# 3. SELLER / ADMIN FRONTEND (WITH EDIT & DELETE)
 # ==============================================================================
 SELLER_HTML = """
 <!DOCTYPE html>
@@ -745,7 +745,7 @@ SELLER_HTML = """
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SUPERMART - Seller Dashboard</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Roboto, sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Roboto, -apple-system, sans-serif; }
     body { background: #f1f5f9; padding: 14px; color: #1e293b; padding-bottom: 50px; }
     .header-bar { background: #0f172a; color: #fff; padding: 14px 18px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
     .box { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin-bottom: 14px; }
@@ -754,26 +754,28 @@ SELLER_HTML = """
     .btn-blue { background: #2563eb; color: #fff; }
     .btn-green { background: #16a34a; color: #fff; flex: 1; }
     .btn-yellow { background: #d97706; color: #fff; flex: 1; }
-    .btn-danger { background: #ef4444; color: #fff; width: auto; padding: 6px 12px; min-height: 34px; font-size: 12px; }
-    .btn-edit { background: #6366f1; color: #fff; margin-top: 6px; }
+    .btn-red { background: #ef4444; color: #fff; }
+    .btn-gray { background: #64748b; color: #fff; }
     .btn-whatsapp { background: #25d366; color: #fff; margin-top: 8px; font-weight: bold; }
-    .order-card { background: #fff; border: 1px solid #cbd5e1; border-left: 6px solid #2563eb; border-radius: 6px; padding: 14px; margin-bottom: 12px; }
     
-    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 14px; }
-    .modal-box { background: #fff; width: 100%; max-width: 480px; max-height: 90vh; border-radius: 12px; overflow-y: auto; padding: 20px; position: relative; }
-    .modal-close { position: absolute; top: 12px; right: 16px; font-size: 22px; font-weight: bold; cursor: pointer; border: none; background: transparent; }
+    .order-card, .prod-row { background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; margin-bottom: 10px; }
+    .order-card { border-left: 6px solid #2563eb; }
+
+    /* Modal for Edit Product */
+    .modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; z-index:9999; padding:12px; }
+    .modal-box { background:#fff; width:100%; max-width:480px; border-radius:8px; padding:18px; max-height:90vh; overflow-y:auto; position:relative; }
   </style>
 </head>
 <body>
   <div class="header-bar">
     <div>
       <h2>SUPERMART SELLER HUB</h2>
-      <small style="color: #94a3b8;">Inventory, Product Control & Live Orders</small>
+      <small style="color: #94a3b8;">Inventory & Live Orders Fulfillment</small>
     </div>
     <button onclick="refreshAll()" style="background:#334155; color:#fff; border:none; padding:8px 16px; border-radius:4px; font-weight:bold; cursor:pointer;">🔄 REFRESH</button>
   </div>
 
-  <!-- 1. ADD NEW PRODUCT -->
+  <!-- 1. Add Product Box -->
   <div class="box">
     <h3>+ Add New Product to Supermart</h3>
     <form onsubmit="handleUpload(event)" style="margin-top: 10px;">
@@ -798,46 +800,169 @@ SELLER_HTML = """
     </form>
   </div>
 
-  <!-- 2. LIVE INVENTORY & DELETE PRODUCT -->
+  <!-- 2. Manage Store Inventory Box (Edit / Delete) -->
   <div class="box">
-    <h3>Live Products In Store (<span id="prodCount">0</span>)</h3>
-    <div id="productsHolder" style="margin-top: 12px; display: grid; gap: 10px;"></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <h3>Manage Inventory (<span id="prodCount">0</span> Items)</h3>
+      <button onclick="loadInventory()" style="background:#e2e8f0; border:none; padding:4px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">Reload</button>
+    </div>
+    <div id="inventoryHolder">Loading inventory...</div>
   </div>
 
-  <!-- 3. LIVE ORDERS & EDIT DETAILS -->
+  <!-- 3. Live Orders Box -->
   <div class="box">
     <h3>Live Customer Orders Received</h3>
     <div id="ordersHolder" style="margin-top: 12px;"></div>
   </div>
 
-  <!-- EDIT ORDER MODAL -->
-  <div class="modal" id="editOrderModal">
+  <!-- EDIT PRODUCT MODAL POPUP -->
+  <div class="modal" id="editModal">
     <div class="modal-box">
-      <button class="modal-close" onclick="closeEditModal()">&times;</button>
-      <h3 style="margin-bottom: 12px;">Edit Order Details</h3>
-      <form onsubmit="saveOrderEdit(event)">
-        <input type="hidden" id="editOrderId">
-        <label style="font-size:12px; font-weight:bold;">Customer Name:</label>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3>✏️ Edit Product Details</h3>
+        <button onclick="closeEditModal()" style="border:none; background:none; font-size:22px; cursor:pointer;">&times;</button>
+      </div>
+      <form onsubmit="handleSaveEdit(event)">
+        <input type="hidden" id="editId">
+        <label style="font-size:12px; font-weight:bold;">Product Title:</label>
         <input type="text" id="editName" required>
-        <label style="font-size:12px; font-weight:bold;">Customer Phone:</label>
-        <input type="tel" id="editPhone" required>
-        <label style="font-size:12px; font-weight:bold;">Delivery Address:</label>
-        <textarea id="editAddress" style="height:60px;" required></textarea>
-        <label style="font-size:12px; font-weight:bold;">Ordered Items:</label>
-        <textarea id="editItems" style="height:60px;" required></textarea>
-        <label style="font-size:12px; font-weight:bold;">Total Amount to Collect (₹):</label>
-        <input type="number" step="any" id="editTotal" required>
-        <button type="submit" class="btn btn-blue" style="margin-top:8px;">SAVE CHANGES</button>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+          <div>
+            <label style="font-size:12px; font-weight:bold;">Category:</label>
+            <select id="editCat">
+              <option value="Groceries">Groceries</option>
+              <option value="Vegetables">Vegetables</option>
+              <option value="Dairy">Dairy</option>
+              <option value="Electronics">Electronics</option>
+              <option value="Household">Household</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:bold;">Brand:</label>
+            <input type="text" id="editBrand" required>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+          <div>
+            <label style="font-size:12px; font-weight:bold;">Selling Price (₹):</label>
+            <input type="number" id="editPrice" required>
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:bold;">MRP Price (₹):</label>
+            <input type="number" id="editOrig" required>
+          </div>
+        </div>
+
+        <label style="font-size:12px; font-weight:bold;">Image URL:</label>
+        <input type="url" id="editImg" required>
+
+        <label style="font-size:12px; font-weight:bold;">Specifications:</label>
+        <textarea id="editSpecs" style="height:60px;"></textarea>
+
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button type="button" class="btn btn-gray" onclick="closeEditModal()" style="flex:1;">Cancel</button>
+          <button type="submit" class="btn btn-green" style="flex:2;">SAVE CHANGES</button>
+        </div>
       </form>
     </div>
   </div>
 
   <script>
-    let globalOrders = [];
+    let currentProducts = [];
 
     function refreshAll() {
-      loadProducts();
       loadOrders();
+      loadInventory();
+    }
+
+    async function loadInventory() {
+      const res = await fetch('/api/products');
+      currentProducts = await res.json();
+      document.getElementById('prodCount').innerText = currentProducts.length;
+      const cont = document.getElementById('inventoryHolder');
+
+      if (currentProducts.length === 0) {
+        cont.innerHTML = '<p style="color:#64748b; padding:10px 0;">No products in store.</p>';
+        return;
+      }
+
+      cont.innerHTML = currentProducts.map(p => `
+        <div class="prod-row" style="display:flex; gap:12px; align-items:center;">
+          <img src="${p.image}" style="width:50px; height:50px; object-fit:contain; border-radius:4px; border:1px solid #e2e8f0;">
+          <div style="flex:1;">
+            <strong style="font-size:14px;">${p.name}</strong><br>
+            <span style="font-size:12px; color:#64748b;">${p.category} | ${p.brand}</span><br>
+            <span style="color:#16a34a; font-weight:bold; font-size:14px;">₹${p.price}</span> 
+            <span style="color:#94a3b8; font-size:12px; text-decoration:line-through;">₹${p.orig_price}</span>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button onclick="openEditModal(${p.id})" style="background:#2563eb; color:#fff; border:none; padding:8px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">✏️ Edit</button>
+            <button onclick="handleDeleteProduct(${p.id})" style="background:#fee2e2; color:#ef4444; border:none; padding:8px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openEditModal(id) {
+      const p = currentProducts.find(x => x.id === id);
+      if(!p) return;
+      document.getElementById('editId').value = p.id;
+      document.getElementById('editName').value = p.name;
+      document.getElementById('editCat').value = p.category;
+      document.getElementById('editBrand').value = p.brand;
+      document.getElementById('editPrice').value = p.price;
+      document.getElementById('editOrig').value = p.orig_price;
+      document.getElementById('editImg').value = p.image;
+      document.getElementById('editSpecs').value = p.specs || '';
+      document.getElementById('editModal').style.display = 'flex';
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').style.display = 'none';
+    }
+
+    async function handleSaveEdit(e) {
+      e.preventDefault();
+      const payload = {
+        id: parseInt(document.getElementById('editId').value),
+        name: document.getElementById('editName').value,
+        category: document.getElementById('editCat').value,
+        brand: document.getElementById('editBrand').value,
+        price: parseFloat(document.getElementById('editPrice').value),
+        orig_price: parseFloat(document.getElementById('editOrig').value),
+        image: document.getElementById('editImg').value,
+        specs: document.getElementById('editSpecs').value
+      };
+
+      const res = await fetch('/api/seller/product/update', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const d = await res.json();
+      if (d.success) {
+        alert("Product updated successfully!");
+        closeEditModal();
+        loadInventory();
+      } else {
+        alert(d.message || "Failed to update product.");
+      }
+    }
+
+    async function handleDeleteProduct(id) {
+      if(!confirm("Are you sure you want to remove this product from store?")) return;
+      const res = await fetch('/api/seller/product/delete', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({id: id})
+      });
+      const d = await res.json();
+      if(d.success) {
+        alert("Product removed from store.");
+        loadInventory();
+      }
     }
 
     async function handleUpload(e) {
@@ -861,58 +986,21 @@ SELLER_HTML = """
       if(d.success) {
         alert("Product added live to Supermart customer app!");
         e.target.reset();
-        loadProducts();
-      }
-    }
-
-    async function loadProducts() {
-      const res = await fetch('/api/products');
-      const prods = await res.json();
-      document.getElementById('prodCount').innerText = prods.length;
-      const cont = document.getElementById('productsHolder');
-      if (prods.length === 0) {
-        cont.innerHTML = '<p style="color:#64748b;">No products available.</p>';
-        return;
-      }
-      cont.innerHTML = prods.map(p => `
-        <div style="display:flex; justify-content:space-between; align-items:center; border:1px solid #e2e8f0; padding:10px; border-radius:6px; background:#fafafa;">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <img src="${p.image}" style="width:45px; height:45px; object-fit:contain; border-radius:4px; background:#fff;">
-            <div>
-              <strong>${p.name}</strong><br>
-              <small style="color:#64748b;">${p.category} | ₹${p.price}</small>
-            </div>
-          </div>
-          <button class="btn btn-danger" onclick="deleteProduct(${p.id})">🗑️ Delete</button>
-        </div>
-      `).join('');
-    }
-
-    async function deleteProduct(id) {
-      if(!confirm("Are you sure you want to permanently delete this product?")) return;
-      const res = await fetch('/api/seller/product/delete', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({product_id: id})
-      });
-      const d = await res.json();
-      if(d.success) {
-        alert("Product deleted successfully!");
-        loadProducts();
+        loadInventory();
       }
     }
 
     async function loadOrders() {
       const res = await fetch('/api/seller/orders');
-      globalOrders = await res.json();
+      const orders = await res.json();
       const cont = document.getElementById('ordersHolder');
 
-      if(globalOrders.length === 0) {
+      if(orders.length === 0) {
         cont.innerHTML = '<p style="color:#64748b; padding:12px 0;">No active orders yet.</p>';
         return;
       }
 
-      cont.innerHTML = globalOrders.map(o => {
+      cont.innerHTML = orders.map(o => {
         const cleanPhone = (o.phone || '').replace(/[^0-9]/g, '');
         const targetPhone = cleanPhone.length === 10 ? ('91' + cleanPhone) : cleanPhone;
         const waMsg = encodeURIComponent(`Hi ${o.name}, update regarding your Supermart Order #${o.order_id}. Total: ₹${o.total}. Status: ${o.status}.`);
@@ -931,8 +1019,6 @@ SELLER_HTML = """
               <p style="font-weight:bold; font-size:15px; margin-top:6px; color:#16a34a;">Collect Cash: ₹${o.total.toLocaleString()} (incl. Delivery)</p>
             </div>
             
-            <button class="btn btn-edit" onclick="openEditModal(${o.id})">✏️ Edit Order (Price / Details)</button>
-
             <a href="${waUrl}" target="_blank" class="btn btn-whatsapp">
               💬 WhatsApp Customer (${o.phone})
             </a>
@@ -944,46 +1030,6 @@ SELLER_HTML = """
           </div>
         `;
       }).join('');
-    }
-
-    function openEditModal(id) {
-      const o = globalOrders.find(x => x.id === id);
-      if(!o) return;
-      document.getElementById('editOrderId').value = o.id;
-      document.getElementById('editName').value = o.name;
-      document.getElementById('editPhone').value = o.phone;
-      document.getElementById('editAddress').value = o.address;
-      document.getElementById('editItems').value = o.items;
-      document.getElementById('editTotal').value = o.total;
-      document.getElementById('editOrderModal').style.display = 'flex';
-    }
-
-    function closeEditModal() {
-      document.getElementById('editOrderModal').style.display = 'none';
-    }
-
-    async function saveOrderEdit(e) {
-      e.preventDefault();
-      const payload = {
-        order_id: parseInt(document.getElementById('editOrderId').value),
-        name: document.getElementById('editName').value,
-        phone: document.getElementById('editPhone').value,
-        address: document.getElementById('editAddress').value,
-        items: document.getElementById('editItems').value,
-        total: parseFloat(document.getElementById('editTotal').value)
-      };
-
-      const res = await fetch('/api/seller/order/edit', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
-      });
-      const d = await res.json();
-      if(d.success) {
-        alert("Order details updated successfully!");
-        closeEditModal();
-        loadOrders();
-      }
     }
 
     async function updateStatus(id, st) {
@@ -1003,7 +1049,7 @@ SELLER_HTML = """
 """
 
 # ==============================================================================
-# 4. HTTP REQUEST HANDLERS & APIS
+# 4. HTTP REQUEST HANDLERS & BACKEND APIS
 # ==============================================================================
 class UnifiedHandler(http.server.BaseHTTPRequestHandler):
 
@@ -1256,7 +1302,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
                 self._json({"success": False, "message": "Order already processed / cannot cancel."})
             return
 
-        # SELLER: ADD PRODUCT
+        # Product Management: Add
         if url.path == '/api/seller/product/add':
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()
@@ -1269,35 +1315,33 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             self._json({"success": True})
             return
 
-        # SELLER: DELETE PRODUCT
-        if url.path == '/api/seller/product/delete':
+        # Product Management: Update / Edit
+        if url.path == '/api/seller/product/update':
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()
-            c.execute("DELETE FROM products WHERE id = ?", (data['product_id'],))
+            c.execute("""
+                UPDATE products SET name = ?, category = ?, brand = ?, price = ?, orig_price = ?, specs = ?, image = ?
+                WHERE id = ?
+            """, (data['name'], data['category'], data['brand'], data['price'], data['orig_price'], data.get('specs', ''), data['image'], data['id']))
             conn.commit()
             conn.close()
             self._json({"success": True})
             return
 
-        # SELLER: UPDATE ORDER STATUS
+        # Product Management: Delete
+        if url.path == '/api/seller/product/delete':
+            conn = sqlite3.connect(DB_FILE)
+            c = conn.cursor()
+            c.execute("DELETE FROM products WHERE id = ?", (data['id'],))
+            conn.commit()
+            conn.close()
+            self._json({"success": True})
+            return
+
         if url.path == '/api/seller/order/update':
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()
             c.execute("UPDATE orders SET status = ? WHERE id = ?", (data['status'], data['order_id']))
-            conn.commit()
-            conn.close()
-            self._json({"success": True})
-            return
-
-        # SELLER: EDIT ORDER DETAILS & TOTAL PRICE
-        if url.path == '/api/seller/order/edit':
-            conn = sqlite3.connect(DB_FILE)
-            c = conn.cursor()
-            c.execute("""
-                UPDATE orders 
-                SET name = ?, phone = ?, address = ?, items = ?, total = ?
-                WHERE id = ?
-            """, (data['name'], data['phone'], data['address'], data['items'], data['total'], data['order_id']))
             conn.commit()
             conn.close()
             self._json({"success": True})

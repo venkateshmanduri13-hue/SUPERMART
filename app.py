@@ -137,7 +137,7 @@ PWA_MANIFEST = {
 }
 
 PWA_SW_JS = """
-const CACHE_NAME = 'supermart-cache-v15';
+const CACHE_NAME = 'supermart-cache-v16';
 const ASSETS = ['/', '/manifest.json'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
@@ -853,7 +853,7 @@ CUSTOMER_HTML = f"""
     </div>
   </div>
 
-  <!-- AUTH MODAL WITH PURE SMS OTP -->
+  <!-- AUTH MODAL WITH FAST2SMS OTP -->
   <div class="modal" id="authModal">
     <div class="modal-box" style="max-width: 380px;">
       <button class="modal-close" onclick="closeAuthModal()">&times;</button>
@@ -876,7 +876,7 @@ CUSTOMER_HTML = f"""
 
       <div id="otpBox" style="display:none; text-align:center; margin-top:14px;">
         <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:8px; margin-bottom:12px;">
-          <strong style="color:#15803d; font-size:13px;">📩 SMS OTP Dispatched!</strong><br>
+          <strong style="color:#15803d; font-size:13px;">📩 SMS OTP Dispatched via Fast2SMS!</strong><br>
           <p style="font-size:11px; color:var(--muted); margin-top:4px;">Check your phone's SMS Messenger app for the 4-digit code.</p>
         </div>
         <input type="number" id="otpInput" placeholder="Enter 4-digit SMS OTP" style="width:100%; padding:12px; border:2px solid var(--primary); border-radius:6px; text-align:center; font-size:18px; letter-spacing:6px; margin-bottom:10px; background:var(--bg); color:var(--text);">

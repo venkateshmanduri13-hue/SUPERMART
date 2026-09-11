@@ -1,0 +1,1176 @@
+import http.server
+import socketserver
+import sqlite3
+import json
+import urllib.parse
+import uuid
+import hashlib
+import threading
+from http import cookies
+
+DB_FILE = "supermart.db"
+SECRET_KEY = "SUPERMART_SECRET_KEY_PRO_2026"
+
+SESSIONS = {}
+
+def hash_pw(pw):
+    return hashlib.sha256((pw + SECRET_KEY).encode()).hexdigest()
+
+def init_db():
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+
+    # Users Table
+    c.execute('''CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        phone TEXT,
+        address TEXT,
+        pincode TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+
+    # Products Table
+    c.execute('''CREATE TABLE IF NOT EXISTS products (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        category TEXT NOT NULL,
+        brand TEXT NOT NULL,
+        price REAL NOT NULL,
+        orig_price REAL NOT NULL,
+        specs TEXT,
+        image TEXT NOT NULL,
+        rating REAL DEFAULT 4.5,
+        reviews_count INTEGER DEFAULT 85
+    )''')
+
+    # Cart Table
+    c.execute('''CREATE TABLE IF NOT EXISTS cart (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        product_id INTEGER NOT NULL,
+        quantity INTEGER NOT NULL DEFAULT 1,
+        UNIQUE(user_id, product_id)
+    )''')
+
+    # Wishlist Table
+    c.execute('''CREATE TABLE IF NOT EXISTS wishlist (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        product_id INTEGER NOT NULL,
+        UNIQUE(user_id, product_id)
+    )''')
+
+    # Orders Table
+    c.execute('''CREATE TABLE IF NOT EXISTS orders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_id TEXT NOT NULL,
+        user_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        pincode TEXT NOT NULL,
+        address TEXT NOT NULL,
+        subtotal REAL NOT NULL,
+        delivery_charge REAL NOT NULL,
+        total REAL NOT NULL,
+        status TEXT DEFAULT 'Confirmed (Packing)',
+        items TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+
+    # Seed Default Multi-Category Items
+    c.execute("SELECT COUNT(*) FROM products")
+    if c.fetchone()[0] == 0:
+        samples = [
+            ("Aashirvaad Sharbati Whole Wheat Atta 5kg", "Groceries", "Aashirvaad", 240, 290, "100% Pure MP Sharbati Wheat, Stone Ground, High Dietary Fibre", "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=400&q=80"),
+            ("Fortune Sunlite Refined Sunflower Cooking Oil 1L", "Groceries", "Fortune", 135, 170, "Fortified with Vitamin A & D, Triple Refined Light Oil", "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=400&q=80"),
+            ("India Gate Classic Aged Basmati Rice 1kg", "Groceries", "India Gate", 175, 230, "Extra Long Grain Basmati, Aged 2 Years, Non-Sticky Fragrance", "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=400&q=80"),
+            ("Fresh Organic Farm Red Tomatoes 1kg", "Vegetables", "FreshFarm", 35, 45, "Naturally Ripened, Rich in Lycopene, Direct From Local Farmers", "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=400&q=80"),
+            ("Farm Fresh Green Capsicum / Shimla Mirch 500g", "Vegetables", "FreshFarm", 40, 55, "Crispy, Pesticide-Free, Packed With Vitamin C", "https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?auto=format&fit=crop&w=400&q=80"),
+            ("Farm Fresh Organic Potatoes (Aloo) 1kg", "Vegetables", "FreshFarm", 30, 40, "Handpicked Clean Skin Potatoes, Ideal for Daily Curries & Fries", "https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&w=400&q=80"),
+            ("Amul Pure Clarified Cow Ghee Jar 1L", "Dairy", "Amul", 595, 680, "Traditional Granular Texture, Rich Aromatic Cow Clarified Butter", "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=400&q=80"),
+            ("Apple iPhone 15 (Blue, 128 GB)", "Electronics", "Apple", 65999, 79900, "128 GB ROM | 6.1 inch Super Retina XDR Display | 48MP Dual Camera", "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=400&q=80"),
+            ("boAt Airdopes 141 Bluetooth Wireless Earbuds", "Electronics", "boAt", 1199, 4490, "42 Hours Battery, Low Latency Beast Mode, IPX4 Water Resistance", "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=400&q=80"),
+            ("Surf Excel Quick Wash Front & Top Detergent 1kg", "Household", "Surf Excel", 155, 190, "Removes Tough Stains in 1 Wash, Safe for Color & Fabric", "https://images.unsplash.com/photo-1584813470613-5b1c1cad3d69?auto=format&fit=crop&w=400&q=80")
+        ]
+        c.executemany("INSERT INTO products (name, category, brand, price, orig_price, specs, image) VALUES (?, ?, ?, ?, ?, ?, ?)", samples)
+        conn.commit()
+    conn.close()
+
+# ==============================================================================
+# 2. CUSTOMER FRONTEND (SUPERMART)
+# ==============================================================================
+CUSTOMER_HTML = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SUPERMART - Online Grocery & Electronics</title>
+  <style>
+    :root {
+      --primary: #059669;
+      --primary-dark: #047857;
+      --accent: #f59e0b;
+      --accent-orange: #ea580c;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --danger: #ef4444;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Roboto, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); color: var(--text); padding-bottom: 75px; }
+
+    /* Premium Header */
+    .header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; position: sticky; top: 0; z-index: 1000; box-shadow: var(--shadow); padding: 12px 16px; }
+    .header-top { display: flex; justify-content: space-between; align-items: center; }
+    .brand-title { font-size: 22px; font-weight: 900; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .header-actions { display: flex; gap: 10px; align-items: center; }
+    .icon-btn { background: rgba(255,255,255,0.2); color: #fff; border: none; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    
+    .search-box { margin-top: 10px; position: relative; }
+    .search-box input { width: 100%; border: none; border-radius: 8px; padding: 12px 14px; font-size: 14px; outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); }
+
+    /* Category Navigation */
+    .category-strip { background: #fff; padding: 10px 14px; display: flex; gap: 10px; overflow-x: auto; border-bottom: 1px solid var(--border); }
+    .category-strip::-webkit-scrollbar { display: none; }
+    .cat-pill { border: none; background: #f1f5f9; color: var(--muted); font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 20px; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+    .cat-pill.active { background: var(--primary); color: #fff; }
+
+    /* Product Grid */
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; position: relative; cursor: pointer; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .wish-icon { position: absolute; top: 10px; right: 10px; background: #fff; border: 1px solid var(--border); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; cursor: pointer; z-index: 5; }
+    .card-img-wrap { width: 100%; height: 130px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
+    .card-img-wrap img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    
+    .card-title { font-size: 13px; font-weight: 700; height: 34px; overflow: hidden; line-height: 1.3; }
+    .rating-badge { background: #ecfdf5; color: var(--primary-dark); font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 4px; width: fit-content; margin: 4px 0; }
+    .price-row { display: flex; align-items: baseline; gap: 6px; margin: 4px 0 10px 0; }
+    .price-now { font-size: 16px; font-weight: 900; color: #000; }
+    .price-mrp { font-size: 12px; color: var(--muted); text-decoration: line-through; }
+
+    /* Big Mobile Buttons */
+    .btn-big { width: 100%; min-height: 48px; border: none; border-radius: 8px; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-orange { background: var(--accent-orange); color: #fff; }
+    .btn-outline-red { background: #fff; border: 1px solid var(--danger); color: var(--danger); }
+
+    /* Modal / Popups */
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 14px; }
+    .modal-box { background: #fff; width: 100%; max-width: 480px; max-height: 90vh; border-radius: 12px; overflow-y: auto; padding: 20px; position: relative; }
+    .modal-close { position: absolute; top: 12px; right: 16px; font-size: 24px; font-weight: bold; cursor: pointer; border: none; background: transparent; }
+
+    /* Screens */
+    .screen { display: none; padding: 12px; }
+    .screen.active { display: block; }
+    .sheet { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+
+    /* Success Order Celebration Banner */
+    .celebration-box { text-align: center; padding: 30px 16px; background: #fff; border-radius: 12px; border: 2px solid var(--primary); margin: 20px auto; max-width: 450px; }
+    .celebration-icon { font-size: 55px; margin-bottom: 12px; animation: bounce 1s infinite alternate; }
+    @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+
+    /* Bottom Nav Bar */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: #fff; border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 1000; }
+    .nav-btn { background: none; border: none; font-size: 11px; font-weight: 700; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; cursor: pointer; }
+    .nav-btn.active { color: var(--primary); }
+
+    .toast { position: fixed; top: 75px; left: 50%; transform: translateX(-50%); background: #1e293b; color: #fff; padding: 12px 22px; border-radius: 30px; font-size: 13px; font-weight: 700; z-index: 9999; display: none; box-shadow: var(--shadow); }
+  </style>
+</head>
+<body>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-top">
+      <div class="brand-title" onclick="switchView('shop')">
+        <span>🛒</span> SUPERMART
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" onclick="switchView('wishlist')">❤️ <span id="wishCount">0</span></button>
+        <button class="icon-btn" onclick="switchView('cart')">🛍️ <span id="cartCount">0</span></button>
+        <button class="icon-btn" id="userAuthBtn" onclick="handleAuthClick()">👤 Login</button>
+      </div>
+    </div>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search Atta, Oil, Fresh Vegetables, Phones..." onkeyup="filterItems()">
+    </div>
+  </header>
+
+  <!-- Categories -->
+  <div class="category-strip">
+    <button class="cat-pill active" onclick="setCategory('All', this)">All Items</button>
+    <button class="cat-pill" onclick="setCategory('Groceries', this)">🌾 Groceries</button>
+    <button class="cat-pill" onclick="setCategory('Vegetables', this)">🥦 Fresh Vegetables</button>
+    <button class="cat-pill" onclick="setCategory('Dairy', this)">🥛 Dairy & Ghee</button>
+    <button class="cat-pill" onclick="setCategory('Electronics', this)">📱 Electronics</button>
+    <button class="cat-pill" onclick="setCategory('Household', this)">🧼 Household</button>
+  </div>
+
+  <!-- 1. PRODUCT STORE VIEW -->
+  <section id="shopScreen" class="screen active">
+    <div class="grid" id="productGrid"></div>
+  </section>
+
+  <!-- 2. CART VIEW -->
+  <section id="cartScreen" class="screen">
+    <div class="sheet">
+      <h3>Shopping Basket (<span id="cartCountTitle">0</span>)</h3>
+      <div id="cartListHolder" style="margin: 14px 0;"></div>
+
+      <div style="border-top: 1px solid var(--border); padding-top: 12px; font-size: 14px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+          <span>Items Subtotal:</span>
+          <strong>₹<span id="cartSubtotal">0</span></strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom: 8px; color: var(--accent-orange);">
+          <span>Delivery Charges (Free above ₹500):</span>
+          <strong>₹<span id="cartDelivery">0</span></strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size: 18px; font-weight: 900; border-top: 1px dashed var(--border); padding-top: 8px;">
+          <span>Total Payable:</span>
+          <span style="color: var(--primary-dark);">₹<span id="cartTotal">0</span></span>
+        </div>
+      </div>
+
+      <button class="btn-big btn-orange" style="margin-top: 16px;" onclick="goToCheckout()">PROCEED TO CHECKOUT ➔</button>
+    </div>
+  </section>
+
+  <!-- 3. CHECKOUT VIEW -->
+  <section id="checkoutScreen" class="screen">
+    <div class="sheet">
+      <h3>Confirm Delivery Address</h3>
+      <form onsubmit="handlePlaceOrder(event)" style="display: grid; gap: 12px; margin-top: 14px;">
+        <input type="text" id="chkName" placeholder="Full Receiver Name" required style="padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px;">
+        <input type="tel" id="chkPhone" placeholder="10-digit Phone Number" pattern="[0-9]{10}" required style="padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px;">
+        <input type="text" id="chkPincode" placeholder="Postal Pincode" required style="padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px;">
+        <textarea id="chkAddress" placeholder="Complete Street, Flat/Door No, Landmark" required style="padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; height: 75px;"></textarea>
+
+        <div style="background: #ecfdf5; border: 1px solid #a7f3d0; padding: 12px; border-radius: 6px; font-size: 13px; font-weight: 700; color: var(--primary-dark);">
+          💵 Cash / UPI On Delivery Available (Safe & Verified)
+        </div>
+
+        <button type="submit" class="btn-big btn-primary">CONFIRM & PLACE ORDER NOW</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- 4. CONGRATS ORDER SUCCESS VIEW -->
+  <section id="orderSuccessScreen" class="screen">
+    <div class="celebration-box">
+      <div class="celebration-icon">🎉</div>
+      <h2 style="color: var(--primary); margin-bottom: 6px;">Congrats!</h2>
+      <h3 style="margin-bottom: 12px;">Your item is ordered successfully!</h3>
+      <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">Order ID: <strong id="successOrderId">#</strong><br>Our partner will deliver to your doorstep shortly.</p>
+      <button class="btn-big btn-primary" onclick="switchView('orders')">TRACK MY ORDER 📦</button>
+    </div>
+  </section>
+
+  <!-- 5. ORDERS TRACKING VIEW -->
+  <section id="ordersScreen" class="screen">
+    <div class="sheet">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+        <h3>My Orders & Live Delivery</h3>
+        <button onclick="loadOrders()" style="background:#f1f5f9; border:none; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">🔄 Refresh</button>
+      </div>
+      <div id="ordersFeed"></div>
+    </div>
+  </section>
+
+  <!-- 6. WISHLIST VIEW -->
+  <section id="wishlistScreen" class="screen">
+    <div class="sheet">
+      <h3>My Wishlist ❤️</h3>
+      <div id="wishlistFeed" style="margin-top: 12px;"></div>
+    </div>
+  </section>
+
+  <!-- 7. PROFILE & SAVED ADDRESS VIEW -->
+  <section id="profileScreen" class="screen">
+    <div class="sheet">
+      <h3>Customer Account</h3>
+      <div id="profileDetails" style="margin-top: 14px;"></div>
+      <button class="btn-big btn-outline-red" style="margin-top: 20px;" onclick="logout()">LOGOUT ACCOUNT</button>
+    </div>
+  </section>
+
+  <!-- PRODUCT DETAILS MODAL (FULL SPECS) -->
+  <div class="modal" id="prodModal">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <div style="width:100%; height:180px; display:flex; align-items:center; justify-content:center; margin-bottom:12px;">
+        <img id="mImg" src="" style="max-width:100%; max-height:100%; object-fit:contain;">
+      </div>
+      <span id="mBrand" style="color:var(--muted); font-size:12px; font-weight:800; text-transform:uppercase;"></span>
+      <h2 id="mTitle" style="font-size:17px; margin:4px 0 8px 0;"></h2>
+      <div id="mRating" class="rating-badge"></div>
+      <div class="price-row" style="margin: 10px 0;">
+        <span id="mPrice" class="price-now" style="font-size:22px;"></span>
+        <span id="mMvp" class="price-mrp" style="font-size:15px;"></span>
+      </div>
+      <h4 style="margin-top: 14px;">Product Specifications:</h4>
+      <p id="mSpecs" style="color:#475569; font-size:13px; line-height:1.5; margin:6px 0 20px 0;"></p>
+      <button id="mAddCartBtn" class="btn-big btn-primary">ADD TO BASKET 🛍️</button>
+    </div>
+  </div>
+
+  <!-- AUTH (SIGN UP / SIGN IN) MODAL -->
+  <div class="modal" id="authModal">
+    <div class="modal-box" style="max-width: 380px;">
+      <button class="modal-close" onclick="closeAuthModal()">&times;</button>
+      <h2 id="authTitle" style="margin-bottom: 14px;">Customer Login</h2>
+      
+      <form onsubmit="handleAuthSubmit(event)" style="display:grid; gap:10px;">
+        <div id="nameInputGroup" style="display:none;">
+          <input type="text" id="authName" placeholder="Your Full Name" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px;">
+        </div>
+        <input type="email" id="authEmail" placeholder="Email Address" required style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px;">
+        <input type="password" id="authPassword" placeholder="Password" required style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px;">
+        <button type="submit" class="btn-big btn-primary" id="authSubmitBtn">SIGN IN</button>
+      </form>
+
+      <p style="margin-top: 14px; font-size: 13px; text-align: center; color: var(--muted);">
+        <a href="javascript:void(0)" onclick="toggleAuthMode()" id="authSwitchLink" style="color: var(--primary); font-weight: bold; text-decoration:none;">New here? Create an account</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- Mobile Bottom Nav -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="bShop" onclick="switchView('shop')">
+      <span style="font-size: 18px;">🏪</span>
+      <span>Shop</span>
+    </button>
+    <button class="nav-btn" id="bCart" onclick="switchView('cart')">
+      <span style="font-size: 18px;">🛍️</span>
+      <span>Basket</span>
+    </button>
+    <button class="nav-btn" id="bOrders" onclick="switchView('orders')">
+      <span style="font-size: 18px;">📦</span>
+      <span>Orders</span>
+    </button>
+    <button class="nav-btn" id="bProfile" onclick="switchView('profile')">
+      <span style="font-size: 18px;">👤</span>
+      <span>Profile</span>
+    </button>
+  </nav>
+
+  <script>
+    let products = [];
+    let currentCategory = 'All';
+    let currentUser = null;
+    let isRegister = false;
+
+    function toast(msg) {
+      const t = document.getElementById('toast');
+      t.innerText = msg;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 2400);
+    }
+
+    async function checkUserSession() {
+      const res = await fetch('/api/me');
+      const data = await res.json();
+      if(data.authenticated) {
+        currentUser = data.user;
+        document.getElementById('userAuthBtn').innerText = '👤 ' + currentUser.name.split(' ')[0];
+      } else {
+        currentUser = null;
+        document.getElementById('userAuthBtn').innerText = '👤 Login';
+      }
+      refreshCounts();
+    }
+
+    async function loadCatalog() {
+      const res = await fetch('/api/products');
+      products = await res.json();
+      filterItems();
+    }
+
+    function filterItems() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = products.filter(p => {
+        const catMatch = (currentCategory === 'All' || p.category === currentCategory);
+        const textMatch = p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q);
+        return catMatch && textMatch;
+      });
+      renderFeed(filtered);
+    }
+
+    function renderFeed(items) {
+      const grid = document.getElementById('productGrid');
+      if (items.length === 0) {
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:30px; color:var(--muted);">No matching products found.</div>';
+        return;
+      }
+      grid.innerHTML = items.map(p => `
+        <div class="card" onclick="openDetails(${p.id})">
+          <div class="wish-icon" onclick="event.stopPropagation(); toggleWishlist(${p.id})">❤️</div>
+          <div class="card-img-wrap">
+            <img src="${p.image}" onerror="this.src='https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400'">
+          </div>
+          <div class="card-title">${p.name}</div>
+          <div class="rating-badge">★ ${p.rating}</div>
+          <div class="price-row">
+            <span class="price-now">₹${p.price.toLocaleString()}</span>
+            <span class="price-mrp">₹${p.orig_price.toLocaleString()}</span>
+          </div>
+          <button class="btn-big btn-primary" onclick="event.stopPropagation(); addToCart(${p.id})">Add to Basket 🛍️</button>
+        </div>
+      `).join('');
+    }
+
+    function setCategory(cat, btn) {
+      currentCategory = cat;
+      document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      filterItems();
+    }
+
+    function switchView(name) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+      document.getElementById(name + 'Screen').classList.add('active');
+      if(name === 'shop') document.getElementById('bShop').classList.add('active');
+      if(name === 'cart') { document.getElementById('bCart').classList.add('active'); renderCart(); }
+      if(name === 'orders') { document.getElementById('bOrders').classList.add('active'); loadOrders(); }
+      if(name === 'profile') { document.getElementById('bProfile').classList.add('active'); renderProfile(); }
+      if(name === 'wishlist') renderWishlist();
+    }
+
+    function openDetails(id) {
+      const p = products.find(x => x.id === id);
+      if(!p) return;
+      document.getElementById('mImg').src = p.image;
+      document.getElementById('mBrand').innerText = p.brand;
+      document.getElementById('mTitle').innerText = p.name;
+      document.getElementById('mRating').innerText = '★ ' + p.rating + ' (' + p.reviews_count + ' reviews)';
+      document.getElementById('mPrice').innerText = '₹' + p.price.toLocaleString();
+      document.getElementById('mMvp').innerText = '₹' + p.orig_price.toLocaleString();
+      document.getElementById('mSpecs').innerText = p.specs || 'Certified Premium Quality Product with Supermart Assured Freshness Guarantee.';
+      document.getElementById('mAddCartBtn').onclick = () => { addToCart(p.id); closeModal(); };
+      document.getElementById('prodModal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('prodModal').style.display = 'none'; }
+
+    async function addToCart(id) {
+      if(!currentUser) {
+        toast("Please Login to add items!");
+        openAuthModal();
+        return;
+      }
+      const res = await fetch('/api/cart/add', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ product_id: id })
+      });
+      const d = await res.json();
+      if(d.success) {
+        toast("Item added to basket!");
+        refreshCounts();
+      }
+    }
+
+    async function toggleWishlist(id) {
+      if(!currentUser) { toast("Please Login first!"); openAuthModal(); return; }
+      const res = await fetch('/api/wishlist/toggle', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ product_id: id })
+      });
+      const d = await res.json();
+      toast(d.message);
+      refreshCounts();
+    }
+
+    async function refreshCounts() {
+      if(!currentUser) {
+        document.getElementById('cartCount').innerText = '0';
+        document.getElementById('wishCount').innerText = '0';
+        return;
+      }
+      const [cRes, wRes] = await Promise.all([fetch('/api/cart'), fetch('/api/wishlist')]);
+      const cData = await cRes.json();
+      const wData = await wRes.json();
+      document.getElementById('cartCount').innerText = cData.items ? cData.items.length : 0;
+      document.getElementById('cartCountTitle').innerText = cData.items ? cData.items.length : 0;
+      document.getElementById('wishCount').innerText = wData.items ? wData.items.length : 0;
+    }
+
+    async function renderCart() {
+      if(!currentUser) {
+        document.getElementById('cartListHolder').innerHTML = '<p style="padding:20px 0; text-align:center;">Please login to view basket.</p>';
+        return;
+      }
+      const res = await fetch('/api/cart');
+      const d = await res.json();
+      const items = d.items || [];
+      const cont = document.getElementById('cartListHolder');
+
+      if(items.length === 0) {
+        cont.innerHTML = '<p style="padding:20px 0; text-align:center; color:var(--muted);">Basket is empty!</p>';
+        document.getElementById('cartSubtotal').innerText = '0';
+        document.getElementById('cartDelivery').innerText = '0';
+        document.getElementById('cartTotal').innerText = '0';
+        return;
+      }
+
+      let subtotal = 0;
+      cont.innerHTML = items.map(i => {
+        subtotal += i.price * i.quantity;
+        return `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);">
+            <div>
+              <strong>${i.name}</strong><br>
+              <span style="color:var(--primary); font-weight:800;">₹${i.price} &times; ${i.quantity}</span>
+            </div>
+            <button onclick="removeCart(${i.cart_id})" style="background:#fee2e2; color:#ef4444; border:none; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">Remove</button>
+          </div>
+        `;
+      }).join('');
+
+      let delivery = (subtotal >= 500 || subtotal === 0) ? 0 : 40;
+      document.getElementById('cartSubtotal').innerText = subtotal.toLocaleString();
+      document.getElementById('cartDelivery').innerText = delivery.toLocaleString();
+      document.getElementById('cartTotal').innerText = (subtotal + delivery).toLocaleString();
+    }
+
+    async function removeCart(id) {
+      await fetch('/api/cart/remove', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({cart_id:id}) });
+      renderCart();
+      refreshCounts();
+    }
+
+    function goToCheckout() {
+      const total = parseFloat(document.getElementById('cartTotal').innerText.replace(/,/g,''));
+      if(total <= 0) return toast("Your basket is empty!");
+      if(currentUser && currentUser.address) {
+        document.getElementById('chkName').value = currentUser.name || '';
+        document.getElementById('chkPhone').value = currentUser.phone || '';
+        document.getElementById('chkPincode').value = currentUser.pincode || '';
+        document.getElementById('chkAddress').value = currentUser.address || '';
+      }
+      switchView('checkout');
+    }
+
+    async function handlePlaceOrder(e) {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('chkName').value,
+        phone: document.getElementById('chkPhone').value,
+        pincode: document.getElementById('chkPincode').value,
+        address: document.getElementById('chkAddress').value
+      };
+
+      const res = await fetch('/api/order/place', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const d = await res.json();
+      if(d.success) {
+        document.getElementById('successOrderId').innerText = '#' + d.order_id;
+        refreshCounts();
+        switchView('orderSuccess');
+      } else {
+        toast(d.message || "Failed to place order.");
+      }
+    }
+
+    async function loadOrders() {
+      if(!currentUser) {
+        document.getElementById('ordersFeed').innerHTML = '<p style="padding:20px 0; text-align:center;">Login to view orders.</p>';
+        return;
+      }
+      const res = await fetch('/api/orders');
+      const orders = await res.json();
+      const cont = document.getElementById('ordersFeed');
+
+      if(orders.length === 0) {
+        cont.innerHTML = '<p style="padding:20px 0; text-align:center; color:var(--muted);">No orders placed yet.</p>';
+        return;
+      }
+
+      cont.innerHTML = orders.map(o => `
+        <div style="border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong>Order #${o.order_id}</strong>
+            <span style="color:var(--primary-dark); font-weight:800; font-size:12px;">${o.status}</span>
+          </div>
+          <div style="font-size:13px; color:#475569; margin:6px 0;">Items: ${o.items}</div>
+          <div style="font-size:12px; color:var(--muted);">Delivery to: ${o.name} (${o.phone}), ${o.address} - PIN: ${o.pincode}</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+            <strong style="font-size:15px;">Total: ₹${o.total.toLocaleString()}</strong>
+            ${o.status.includes('Confirmed') ? `<button onclick="cancelOrder(${o.id})" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">Cancel Order</button>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function cancelOrder(id) {
+      if(!confirm("Are you sure you want to cancel this order?")) return;
+      const res = await fetch('/api/order/cancel', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({order_id: id})
+      });
+      const d = await res.json();
+      toast(d.message);
+      loadOrders();
+    }
+
+    async function renderWishlist() {
+      if(!currentUser) {
+        document.getElementById('wishlistFeed').innerHTML = '<p style="padding:20px 0; text-align:center;">Login to see wishlist.</p>';
+        return;
+      }
+      const res = await fetch('/api/wishlist');
+      const d = await res.json();
+      const items = d.items || [];
+      const cont = document.getElementById('wishlistFeed');
+
+      if(items.length === 0) {
+        cont.innerHTML = '<p style="padding:20px 0; text-align:center; color:var(--muted);">Your wishlist is empty!</p>';
+        return;
+      }
+
+      cont.innerHTML = items.map(i => `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);">
+          <div>
+            <strong>${i.name}</strong><br>
+            <span style="font-weight:bold; color:var(--primary);">₹${i.price}</span>
+          </div>
+          <button onclick="addToCart(${i.id})" class="btn-big btn-primary" style="min-height:36px; padding:0 12px; font-size:12px; width:auto;">Move to Basket</button>
+        </div>
+      `).join('');
+    }
+
+    function renderProfile() {
+      const cont = document.getElementById('profileDetails');
+      if(!currentUser) {
+        cont.innerHTML = '<p>You are not logged in. <a href="javascript:openAuthModal()" style="color:var(--primary); font-weight:bold;">Click here to Login</a></p>';
+        return;
+      }
+      cont.innerHTML = `
+        <div style="line-height: 1.8; font-size: 14px;">
+          <p><strong>Name:</strong> ${currentUser.name}</p>
+          <p><strong>Email:</strong> ${currentUser.email}</p>
+          <p><strong>Saved Phone:</strong> ${currentUser.phone || 'Not Saved'}</p>
+          <p><strong>Saved Address:</strong> ${currentUser.address ? (currentUser.address + ' - ' + currentUser.pincode) : 'No address saved yet. (Auto-saves on checkout)'}</p>
+        </div>
+      `;
+    }
+
+    /* Auth Handlers */
+    function handleAuthClick() {
+      if(currentUser) switchView('profile');
+      else openAuthModal();
+    }
+    function openAuthModal() { document.getElementById('authModal').style.display = 'flex'; }
+    function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
+    function toggleAuthMode() {
+      isRegister = !isRegister;
+      document.getElementById('nameInputGroup').style.display = isRegister ? 'block' : 'none';
+      document.getElementById('authTitle').innerText = isRegister ? 'Create Supermart Account' : 'Customer Login';
+      document.getElementById('authSubmitBtn').innerText = isRegister ? 'REGISTER & SIGN IN' : 'SIGN IN';
+      document.getElementById('authSwitchLink').innerText = isRegister ? 'Already registered? Login here' : 'New here? Create an account';
+    }
+
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      const endpoint = isRegister ? '/api/register' : '/api/login';
+      const payload = {
+        email: document.getElementById('authEmail').value,
+        password: document.getElementById('authPassword').value,
+        name: document.getElementById('authName').value
+      };
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const d = await res.json();
+      if(d.success) {
+        toast("Welcome to Supermart!");
+        closeAuthModal();
+        checkUserSession();
+      } else {
+        toast(d.message || "Authentication error.");
+      }
+    }
+
+    async function logout() {
+      await fetch('/api/logout', {method:'POST'});
+      currentUser = null;
+      checkUserSession();
+      switchView('shop');
+      toast("Logged out successfully.");
+    }
+
+    checkUserSession();
+    loadCatalog();
+  </script>
+</body>
+</html>
+"""
+
+# ==============================================================================
+# 3. SELLER / ADMIN FRONTEND (PORT 5001)
+# ==============================================================================
+SELLER_HTML = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SUPERMART - Seller Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Roboto, sans-serif; }
+    body { background: #f1f5f9; padding: 14px; color: #1e293b; padding-bottom: 50px; }
+    .header-bar { background: #0f172a; color: #fff; padding: 14px 18px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .box { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin-bottom: 14px; }
+    input, textarea, select { width: 100%; min-height: 46px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; margin-bottom: 10px; font-size: 14px; }
+    .btn { min-height: 48px; border: none; border-radius: 6px; font-weight: 800; cursor: pointer; width: 100%; font-size: 14px; }
+    .btn-blue { background: #2563eb; color: #fff; }
+    .btn-green { background: #16a34a; color: #fff; flex: 1; }
+    .btn-yellow { background: #d97706; color: #fff; flex: 1; }
+    .order-card { background: #fff; border: 1px solid #cbd5e1; border-left: 6px solid #2563eb; border-radius: 6px; padding: 14px; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <div class="header-bar">
+    <div>
+      <h2>SUPERMART SELLER HUB</h2>
+      <small style="color: #94a3b8;">Inventory & Live Orders Fulfillment</small>
+    </div>
+    <button onclick="loadOrders()" style="background:#334155; color:#fff; border:none; padding:8px 16px; border-radius:4px; font-weight:bold; cursor:pointer;">🔄 REFRESH</button>
+  </div>
+
+  <div class="box">
+    <h3>+ Add New Product to Supermart</h3>
+    <form onsubmit="handleUpload(event)" style="margin-top: 10px;">
+      <input type="text" id="pName" placeholder="Product Title (e.g. Fortune Pure Besan 1kg)" required>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <select id="pCat">
+          <option value="Groceries">Groceries</option>
+          <option value="Vegetables">Vegetables</option>
+          <option value="Dairy">Dairy</option>
+          <option value="Electronics">Electronics</option>
+          <option value="Household">Household</option>
+        </select>
+        <input type="text" id="pBrand" placeholder="Brand Name" required>
+      </div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <input type="number" id="pPrice" placeholder="Selling Price (₹)" required>
+        <input type="number" id="pOrig" placeholder="MRP Price (₹)" required>
+      </div>
+      <input type="url" id="pImg" placeholder="Direct Image URL (https://...)" required>
+      <textarea id="pSpecs" placeholder="Product Specifications & Features" style="height: 60px;"></textarea>
+      <button type="submit" class="btn btn-blue">UPLOAD LIVE TO STORE</button>
+    </form>
+  </div>
+
+  <div class="box">
+    <h3>Live Customer Orders Received</h3>
+    <div id="ordersHolder" style="margin-top: 12px;"></div>
+  </div>
+
+  <script>
+    async function handleUpload(e) {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('pName').value,
+        category: document.getElementById('pCat').value,
+        brand: document.getElementById('pBrand').value,
+        price: parseFloat(document.getElementById('pPrice').value),
+        orig_price: parseFloat(document.getElementById('pOrig').value),
+        image: document.getElementById('pImg').value,
+        specs: document.getElementById('pSpecs').value
+      };
+
+      const res = await fetch('/api/seller/product/add', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const d = await res.json();
+      if(d.success) {
+        alert("Product added live to Supermart customer app!");
+        e.target.reset();
+      }
+    }
+
+    async function loadOrders() {
+      const res = await fetch('/api/seller/orders');
+      const orders = await res.json();
+      const cont = document.getElementById('ordersHolder');
+
+      if(orders.length === 0) {
+        cont.innerHTML = '<p style="color:#64748b; padding:12px 0;">No active orders yet.</p>';
+        return;
+      }
+
+      cont.innerHTML = orders.map(o => `
+        <div class="order-card">
+          <div style="display:flex; justify-content:space-between; font-weight:bold;">
+            <span>Order #${o.order_id}</span>
+            <span style="background:#e2e8f0; padding:2px 8px; border-radius:4px;">${o.status}</span>
+          </div>
+          <div style="margin: 10px 0; font-size:14px; line-height:1.5;">
+            <p><strong>Customer:</strong> ${o.name} (📞 <a href="tel:${o.phone}" style="color:#2563eb; font-weight:bold;">${o.phone}</a>)</p>
+            <p><strong>Address:</strong> ${o.address} - PIN: ${o.pincode}</p>
+            <p><strong>Items:</strong> ${o.items}</p>
+            <p style="font-weight:bold; font-size:15px; margin-top:6px; color:#16a34a;">Collect Cash: ₹${o.total.toLocaleString()} (incl. Delivery)</p>
+          </div>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button class="btn btn-yellow" onclick="updateStatus(${o.id}, 'Out for Delivery')">Mark Out for Delivery</button>
+            <button class="btn btn-green" onclick="updateStatus(${o.id}, 'Delivered Successfully')">Mark Delivered</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function updateStatus(id, st) {
+      await fetch('/api/seller/order/update', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({order_id: id, status: st})
+      });
+      alert('Status updated to: ' + st);
+      loadOrders();
+    }
+
+    loadOrders();
+  </script>
+</body>
+</html>
+"""
+
+# ==============================================================================
+# 4. HTTP REQUEST HANDLERS & BACKEND APIS
+# ==============================================================================
+class CustomerHandler(http.server.BaseHTTPRequestHandler):
+
+    def _get_user(self):
+        cookie_header = self.headers.get('Cookie')
+        if not cookie_header: return None
+        c = cookies.SimpleCookie(cookie_header)
+        if 'sm_session' in c:
+            return SESSIONS.get(c['sm_session'].value)
+        return None
+
+    def _json(self, data, status=200, set_cookie=None):
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json')
+        if set_cookie:
+            self.send_header('Set-Cookie', set_cookie)
+        self.end_headers()
+        self.wfile.write(json.dumps(data).encode('utf-8'))
+
+    def do_GET(self):
+        url = urllib.parse.urlparse(self.path)
+        user = self._get_user()
+
+        if url.path in ['/', '/shop']:
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+            self.end_headers()
+            self.wfile.write(CUSTOMER_HTML.encode('utf-8'))
+            return
+
+        if url.path == '/api/me':
+            if user: self._json({"authenticated": True, "user": user})
+            else: self._json({"authenticated": False})
+            return
+
+        if url.path == '/api/products':
+            conn = sqlite3.connect(DB_FILE)
+            c = conn.cursor()
+            c.execute("SELECT id, name, category, brand, price, orig_price, specs, image, rating, reviews_count FROM products ORDER BY id DESC")
+            rows = c.fetchall()
+            conn.close()
+            result = [{
+                "id": r[0], "name": r[1], "category": r[2], "brand": r[3], "price": r[4],
+                "orig_price": r[5], "specs": r[6], "image": r[7], "rating": r[8], "reviews_count": r[9]
+            } for r in rows]
+            self._json(result)
+            return
+
+        if url.path == '/api/cart':
+            if not user: return self._json({"items": []})
+            conn = sqlite3.connect(DB_FILE)
+            c = conn.cursor()
+            c.execute("""
+                SELECT c.id, p.id, p.name, p.price, p.image, c.quantity
+                FROM cart c JOIN products p ON c.product_id = p.id
+                WHERE c.user_id = ?
+            """, (user['id'],))
+            rows = c.fetchall()
+            conn.close()
+            self._json({"items": [{"cart_id": r[0], "product_id": r[1], "name": r[2], "price": r[3], "image": r[4], "quantity": r[5]} for r in rows]})
+            return
+
+        if url.path == '/api/wishlist':
+            if not user: return self._json({"items": []})
+            conn = sqlite3.connect(DB_FILE)
+            c = conn.cursor()
+            c.execute("""
+                SELECT p.id, p.name, p.price, p.image
+                FROM wishlist w JOIN products p ON w.product_id = p.id
+                WHERE w.user_id = ?
+            """, (user['id'],))
+            rows = c.fetchall()
+            conn.close()
+            self._json({"items": [{"id": r[0], "name": r[1], "price": r[2], "image": r[3]} for r in rows]})
+            return
+
+        if url.path == '/api/orders':
+            if not user: return self._json([])
+            conn = sqlite3.connect(DB_FILE)
+            c = conn.cursor()
+            c.execute("SELECT id, order_id, name, phone, pincode, address, total, status, items FROM orders WHERE user_id = ? ORDER BY id DESC", (user['id'],))
+            rows = c.fetchall()
+            conn.close()
+            self._json([{"id": r[0], "order_id": r[1], "name": r[2], "phone": r[3], "pincode": r[4], "address": r[5], "total": r[6], "status": r[7], "items": r[8]} for r in rows])
+            return
+
+        self.send_error(404)
+
+    def do_POST(self):
+        url = urllib.parse.urlparse(self.path)
+        user = self._get_user()
+        length = int(self.headers.get('content-length', 0))
+        body = self.rfile.read(length)
+        data = json.loads(body.decode('utf-8')) if length else {}
+
+        # 1. Register
+        if url.path == '/api/register':
+            email = data.get('email', '').strip().lower()
+            name = data.get('name', '').strip()
+            pw = hash_pw(data.get('password', ''))
+            conn = sqlite3.connect(DB_FILE)
+            c = conn.cursor()
+            try:
+                c.execute("INSERT INTO users (name, email, password) VALUES (?, ?, ?)", (name, email, pw))
+                uid = c.lastrowid
+                conn.commit()
+                conn.close()
+                token = str(uuid.uuid4())
+                u_obj = {"id": uid, "name": name, "email": email, "phone": "", "address": "", "pincode": ""}
+                SESSIONS[token] = u_obj
+                self._json({"success": True}, set_cookie=f"sm_session={token}; Path=/; HttpOnly")
+            except sqlite3.IntegrityError:
+                conn.close()
+                self._json({"success": False, "message": "Email already registered."})
+            return
+
+        # 2. Login
+        if url.path == '/api/login':
+            email = data.get('email', '').strip().lower()
+            pw = hash_pw(data.get('password', ''))
+            conn = sqlite3.connect(DB_FILE)
+            c = conn.cursor()
+            c.execute("SELECT id, name, email, phone, address, pincode FROM users WHERE email = ? AND password = ?", (email, pw))
+            row = c.fetchone()
+            conn.close()
+            if row:
+                token = str(uuid.uuid4())
+                u_obj = {"id": row[0], "name": row[1], "email": row[2], "phone": row[3], "address": row[4], "pincode": row[5]}
+                SESSIONS[token] = u_obj
+                self._json({"success": True}, set_cookie=f"sm_session={token}; Path=/; HttpOnly")
+            else:
+                self._json({"success": False, "message": "Invalid email or password."})
+            return
+
+        # 3. Logout
+        if url.path == '/api/logout':
+            self._json({"success": True}, set_cookie="sm_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT")
+            return
+
+        # 4. Cart Add
+        if url.path == '/api/cart/add':
+            if not user: return self._json({"success": False, "message": "Login required"}, status=401)
+            conn = sqlite3.connect(DB_FILE)
+            c = conn.cursor()
+            c.execute("""
+                INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, 1)
+                ON CONFLICT(user_id, product_id) DO UPDATE SET quantity = quantity + 1
+            """, (user['id'], data.get('product_id')))
+            conn.commit()
+            conn.close()
+            self._json({"success": True})
+            return
+
+        # 5. Cart Remove
+        if url.path == '/api/cart/remove':
+            if not user: return self._json({"success": False})
+            conn = sqlite3.connect(DB_FILE)
+            c = conn.cursor()
+            c.execute("DELETE FROM cart WHERE id = ? AND user_id = ?", (data.get('cart_id'), user['id']))
+            conn.commit()
+            conn.close()
+            self._json({"success": True})
+            return
+
+        # 6. Wishlist Toggle
+        if url.path == '/api/wishlist/toggle':
+            if not user: return self._json({"success": False, "message": "Login required"})
+            pid = data.get('product_id')
+            conn = sqlite3.connect(DB_FILE)
+            c = conn.cursor()
+            c.execute("SELECT id FROM wishlist WHERE user_id = ? AND product_id = ?", (user['id'], pid))
+            exists = c.fetchone()
+            if exists:
+                c.execute("DELETE FROM wishlist WHERE id = ?", (exists[0],))
+                msg = "Removed from wishlist"
+            else:
+                c.execute("INSERT INTO wishlist (user_id, product_id) VALUES (?, ?)", (user['id'], pid))
+                msg = "Added to wishlist ❤️"
+            conn.commit()
+            conn.close()
+            self._json({"success": True, "message": msg})
+            return
+
+        # 7. Place Order (Auto-saves Address)
+        if url.path == '/api/order/place':
+            if not user: return self._json({"success": False, "message": "Login required"})
+            conn = sqlite3.connect(DB_FILE)
+            c = conn.cursor()
+            c.execute("""
+                SELECT p.name, p.price, c.quantity
+                FROM cart c JOIN products p ON c.product_id = p.id
+                WHERE c.user_id = ?
+            """, (user['id'],))
+            items = c.fetchall()
+            if not items:
+                conn.close()
+                return self._json({"success": False, "message": "Basket is empty"})
+
+            subtotal = sum(r[1] * r[2] for r in items)
+            delivery_charge = 0.0 if subtotal >= 500 else 40.0
+            total = subtotal + delivery_charge
+            items_str = ", ".join([f"{r[0]} (x{r[2]})" for r in items])
+            order_id = "SM" + str(uuid.uuid4().hex[:6]).upper()
+
+            # Save / Update User Address Automatically
+            c.execute("UPDATE users SET phone = ?, address = ?, pincode = ? WHERE id = ?",
+                      (data['phone'], data['address'], data['pincode'], user['id']))
+            user['phone'] = data['phone']
+            user['address'] = data['address']
+            user['pincode'] = data['pincode']
+
+            c.execute("""
+                INSERT INTO orders (order_id, user_id, name, phone, pincode, address, subtotal, delivery_charge, total, items)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (order_id, user['id'], data['name'], data['phone'], data['pincode'], data['address'], subtotal, delivery_charge, total, items_str))
+
+            c.execute("DELETE FROM cart WHERE user_id = ?", (user['id'],))
+            conn.commit()
+            conn.close()
+            self._json({"success": True, "order_id": order_id})
+            return
+
+        # 8. Cancel Order
+        if url.path == '/api/order/cancel':
+            if not user: return self._json({"success": False})
+            conn = sqlite3.connect(DB_FILE)
+            c = conn.cursor()
+            c.execute("SELECT status FROM orders WHERE id = ? AND user_id = ?", (data['order_id'], user['id']))
+            od = c.fetchone()
+            if od and 'Confirmed' in od[0]:
+                c.execute("UPDATE orders SET status = 'Cancelled by Customer' WHERE id = ?", (data['order_id'],))
+                conn.commit()
+                conn.close()
+                self._json({"success": True, "message": "Order cancelled successfully."})
+            else:
+                conn.close()
+                self._json({"success": False, "message": "Order already processed / cannot cancel."})
+            return
+
+        self.send_error(404)
+
+class SellerHandler(http.server.BaseHTTPRequestHandler):
+
+    def _json(self, data, status=200):
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        self.wfile.write(json.dumps(data).encode('utf-8'))
+
+    def do_GET(self):
+        url = urllib.parse.urlparse(self.path)
+        if url.path == '/':
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+            self.end_headers()
+            self.wfile.write(SELLER_HTML.encode('utf-8'))
+            return
+
+        if url.path == '/api/seller/orders':
+            conn = sqlite3.connect(DB_FILE)
+            c = conn.cursor()
+            c.execute("SELECT id, order_id, name, phone, pincode, address, total, status, items FROM orders ORDER BY id DESC")
+            rows = c.fetchall()
+            conn.close()
+            self._json([{"id": r[0], "order_id": r[1], "name": r[2], "phone": r[3], "pincode": r[4], "address": r[5], "total": r[6], "status": r[7], "items": r[8]} for r in rows])
+            return
+
+        self.send_error(404)
+
+    def do_POST(self):
+        url = urllib.parse.urlparse(self.path)
+        length = int(self.headers.get('content-length', 0))
+        body = self.rfile.read(length)
+        data = json.loads(body.decode('utf-8')) if length else {}
+
+        if url.path == '/api/seller/product/add':
+            conn = sqlite3.connect(DB_FILE)
+            c = conn.cursor()
+            c.execute("""
+                INSERT INTO products (name, category, brand, price, orig_price, specs, image)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (data['name'], data['category'], data['brand'], data['price'], data['orig_price'], data.get('specs', ''), data['image']))
+            conn.commit()
+            conn.close()
+            self._json({"success": True})
+            return
+
+        if url.path == '/api/seller/order/update':
+            conn = sqlite3.connect(DB_FILE)
+            c = conn.cursor()
+            c.execute("UPDATE orders SET status = ? WHERE id = ?", (data['status'], data['order_id']))
+            conn.commit()
+            conn.close()
+            self._json({"success": True})
+            return
+
+        self.send_error(404)
+
+def run_customer():
+    with socketserver.TCPServer(("", 5000), CustomerHandler) as httpd:
+        httpd.serve_forever()
+
+def run_seller():
+    with socketserver.TCPServer(("", 5001), SellerHandler) as httpd:
+        httpd.serve_forever()
+
+if __name__ == '__main__':
+    init_db()
+    print("=========================================================")
+    print(" 🛒 1. CUSTOMER STORE (PRO): http://localhost:5000")
+    print(" 💼 2. SELLER HUB (ADMIN):   http://localhost:5001")
+    print("=========================================================")
+    threading.Thread(target=run_customer, daemon=True).start()
+    run_seller()

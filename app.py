@@ -21,9 +21,10 @@ def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
 
+    # Users Table with UNIQUE Name & UNIQUE Email
     c.execute('''CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
+        name TEXT UNIQUE NOT NULL,
         email TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
         phone TEXT,
@@ -94,9 +95,6 @@ def init_db():
         conn.commit()
     conn.close()
 
-# ==============================================================================
-# 2. CUSTOMER FRONTEND (WITH FLIPKART STYLE PRODUCT DETAILS & RELATED ITEMS)
-# ==============================================================================
 CUSTOMER_HTML = f"""
 <!DOCTYPE html>
 <html lang="en">
@@ -226,7 +224,7 @@ CUSTOMER_HTML = f"""
       font-size: 13px; font-weight: 800; cursor: pointer; width: 100%; margin-top: auto;
     }}
 
-    /* Flipkart Style Full View Layout */
+    /* Flipkart Style Product View */
     .product-view-sheet {{
       background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 75px; box-shadow: var(--shadow);
     }}
@@ -242,9 +240,7 @@ CUSTOMER_HTML = f"""
       display: flex; justify-content: space-around; background: #f8fafc; border: 1px solid #e2e8f0;
       border-radius: 8px; padding: 12px; margin: 14px 0; text-align: center; font-size: 11px; font-weight: bold;
     }}
-    .related-scroll {{
-      display: flex; gap: 10px; overflow-x: auto; padding: 10px 0;
-    }}
+    .related-scroll {{ display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; }}
     .related-scroll::-webkit-scrollbar {{ display: none; }}
     .related-card {{
       min-width: 140px; max-width: 140px; background: #fff; border: 1px solid #e2e8f0;
@@ -255,12 +251,8 @@ CUSTOMER_HTML = f"""
       position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
       background: #fff; border-top: 1px solid #e2e8f0; display: flex; z-index: 1000;
     }}
-    .btn-pdp-cart {{
-      flex: 1; background: #fff; color: #000; border: none; font-weight: bold; font-size: 14px; cursor: pointer;
-    }}
-    .btn-pdp-buy {{
-      flex: 1; background: #ff9f00; color: #fff; border: none; font-weight: bold; font-size: 14px; cursor: pointer;
-    }}
+    .btn-pdp-cart {{ flex: 1; background: #fff; color: #000; border: none; font-weight: bold; font-size: 14px; cursor: pointer; }}
+    .btn-pdp-buy {{ flex: 1; background: #ff9f00; color: #fff; border: none; font-weight: bold; font-size: 14px; cursor: pointer; }}
 
     .btn-big {{
       width: 100%; min-height: 46px; border: none; border-radius: 8px;
@@ -308,9 +300,32 @@ CUSTOMER_HTML = f"""
       background: #0f172a; color: #fff; padding: 10px 20px; border-radius: 30px;
       font-size: 13px; font-weight: 700; z-index: 9999; display: none; box-shadow: var(--shadow);
     }}
+
+    /* OFFLINE DOG SCREEN OVERLAY */
+    #offlineOverlay {{
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(12px);
+      z-index: 999999; display: none; flex-direction: column;
+      align-items: center; justify-content: center; padding: 24px; text-align: center;
+    }}
+    .offline-dog-img {{
+      width: 220px; height: 220px; border-radius: 20px; object-fit: cover;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15); margin-bottom: 20px;
+      border: 3px solid #e9d5ff;
+    }}
   </style>
 </head>
 <body>
+
+  <!-- OFFLINE DOG SCREEN -->
+  <div id="offlineOverlay">
+    <img class="offline-dog-img" src="https://cdn.phototourl.com/free/2026-09-11-91ddede7-9160-4e0a-885b-2f1f0256fb17.jpg" alt="No Connection Dog">
+    <h2 style="color:var(--text); font-size: 20px; margin-bottom: 8px;">Waiting for Connection...</h2>
+    <p style="color:var(--muted); font-size: 14px; max-width: 280px; line-height: 1.4; margin-bottom: 20px;">
+      Looks like your internet connection took a little walk! Please turn on Wi-Fi or Mobile Data.
+    </p>
+    <button class="btn-big btn-primary" onclick="window.location.reload()" style="max-width:200px;">🔄 Try Reconnecting</button>
+  </div>
 
   <div id="toast" class="toast"></div>
 
@@ -428,12 +443,10 @@ CUSTOMER_HTML = f"""
 
       <hr style="border:none; border-top:1px solid #e2e8f0; margin:16px 0;">
 
-      <!-- SIMILAR / RELATED PRODUCTS SECTION -->
       <h3 style="font-size:15px; margin-bottom:8px;">Similar & Related Products</h3>
       <div class="related-scroll" id="relatedGrid"></div>
     </div>
 
-    <!-- Fixed Bottom Buy Bar -->
     <div class="pdp-bottom-bar" id="pdpBottomBar">
       <button class="btn-pdp-cart" id="pdpAddToCartBtn">ADD TO CART</button>
       <button class="btn-pdp-buy" id="pdpBuyNowBtn">BUY NOW</button>
@@ -533,7 +546,7 @@ CUSTOMER_HTML = f"""
     </div>
   </section>
 
-  <!-- AUTH MODAL -->
+  <!-- AUTH MODAL WITH FORGOT PASSWORD & UNIQUE NAME CHECK -->
   <div class="modal" id="authModal">
     <div class="modal-box" style="max-width: 380px;">
       <button class="modal-close" onclick="closeAuthModal()">&times;</button>
@@ -541,10 +554,15 @@ CUSTOMER_HTML = f"""
       
       <form onsubmit="handleAuthSubmit(event)" style="display:grid; gap:10px;">
         <div id="nameInputGroup" style="display:none;">
-          <input type="text" id="authName" placeholder="Your Full Name" style="width:100%; padding:10px; border:1px solid var(--glass-border); border-radius:6px;">
+          <input type="text" id="authName" placeholder="Unique Full Name / Username" style="width:100%; padding:10px; border:1px solid var(--glass-border); border-radius:6px;">
         </div>
         <input type="email" id="authEmail" placeholder="Email Address" required style="width:100%; padding:10px; border:1px solid var(--glass-border); border-radius:6px;">
         <input type="password" id="authPassword" placeholder="Password" required style="width:100%; padding:10px; border:1px solid var(--glass-border); border-radius:6px;">
+        
+        <div id="forgotPwLink" style="text-align:right; font-size:12px;">
+          <a href="https://wa.me/{ADMIN_WHATSAPP}?text=Hello%20Supermart,%20I%20forgot%20my%20login%20password.%20Please%20help%20me%20reset%20it." target="_blank" style="color:var(--primary); font-weight:bold; text-decoration:none;">Forgot Password?</a>
+        </div>
+
         <button type="submit" class="btn-big btn-primary" id="authSubmitBtn">SIGN IN</button>
       </form>
 
@@ -580,6 +598,50 @@ CUSTOMER_HTML = f"""
     let currentUser = null;
     let isRegister = false;
     let activeProduct = null;
+
+    /* PROFESSIONAL AUDIOCONTEXT TOUCH SOUND */
+    let audioCtx = null;
+    function playTouchSound() {{
+      try {{
+        if (!audioCtx) {{
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }}
+        if (audioCtx.state === 'suspended') {{
+          audioCtx.resume();
+        }}
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.04);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.04);
+      }} catch(e) {{}}
+    }}
+
+    // Global listener for touch click feedback
+    document.addEventListener('click', function(e) {{
+      if (e.target.closest('button') || e.target.closest('.card') || e.target.closest('.circle-item') || e.target.closest('.nav-btn') || e.target.closest('.icon-bubble')) {{
+        playTouchSound();
+      }}
+    }}, true);
+
+    /* LIVE NETWORK / OFFLINE DETECTOR */
+    function checkNetworkStatus() {{
+      const overlay = document.getElementById('offlineOverlay');
+      if (!navigator.onLine) {{
+        overlay.style.display = 'flex';
+      }} else {{
+        overlay.style.display = 'none';
+      }}
+    }}
+    window.addEventListener('online', checkNetworkStatus);
+    window.addEventListener('offline', checkNetworkStatus);
+    checkNetworkStatus();
 
     function toast(msg) {{
       const t = document.getElementById('toast');
@@ -674,7 +736,6 @@ CUSTOMER_HTML = f"""
       }}).join('');
     }}
 
-    /* Open Flipkart Style Product Details Page with Related Items */
     function openProductPage(id) {{
       const p = products.find(x => x.id === id);
       if(!p) return;
@@ -695,12 +756,11 @@ CUSTOMER_HTML = f"""
       document.getElementById('pdpAddToCartBtn').onclick = () => addToCart(p.id);
       document.getElementById('pdpBuyNowBtn').onclick = () => buyNow(p.id);
 
-      // Render Related Products (same category, excluding current product)
       const related = products.filter(item => item.category === p.category && item.id !== p.id);
       const relGrid = document.getElementById('relatedGrid');
       
       if (related.length === 0) {{
-        relGrid.innerHTML = '<div style="font-size:12px; color:var(--muted); padding:10px 0;">No related items in this category.</div>';
+        relGrid.innerHTML = '<div style="font-size:12px; color:var(--muted); padding:10px 0;">No other items in this category.</div>';
       }} else {{
         relGrid.innerHTML = related.map(r => `
           <div class="related-card" onclick="openProductPage(${{r.id}})">
@@ -959,6 +1019,7 @@ CUSTOMER_HTML = f"""
     function openAuthModal() {{ 
       isRegister = false;
       document.getElementById('nameInputGroup').style.display = 'none';
+      document.getElementById('forgotPwLink').style.display = 'block';
       document.getElementById('authTitle').innerText = 'Customer Login';
       document.getElementById('authSubmitBtn').innerText = 'SIGN IN';
       document.getElementById('authSwitchLink').innerText = 'New here? Create an account';
@@ -968,6 +1029,7 @@ CUSTOMER_HTML = f"""
     function toggleAuthMode() {{
       isRegister = !isRegister;
       document.getElementById('nameInputGroup').style.display = isRegister ? 'block' : 'none';
+      document.getElementById('forgotPwLink').style.display = isRegister ? 'none' : 'block';
       document.getElementById('authTitle').innerText = isRegister ? 'Create Supermart Account' : 'Customer Login';
       document.getElementById('authSubmitBtn').innerText = isRegister ? 'REGISTER & SIGN IN' : 'SIGN IN';
       document.getElementById('authSwitchLink').innerText = isRegister ? 'Already registered? Login here' : 'New here? Create an account';
@@ -977,10 +1039,11 @@ CUSTOMER_HTML = f"""
       e.preventDefault();
       const endpoint = isRegister ? '/api/register' : '/api/login';
       const payload = {{
-        email: document.getElementById('authEmail').value,
+        email: document.getElementById('authEmail').value.trim(),
         password: document.getElementById('authPassword').value,
-        name: document.getElementById('authName').value
+        name: document.getElementById('authName').value.trim()
       }};
+
       const res = await fetch(endpoint, {{
         method: 'POST',
         headers: {{'Content-Type': 'application/json'}},
@@ -993,7 +1056,7 @@ CUSTOMER_HTML = f"""
         checkUserSession();
       }} else {{
         if(isRegister && d.message && d.message.includes("already registered")) {{
-          toast("Account exists! Switched to Login mode. Enter password to sign in.");
+          toast("Account with this Name or Email exists! Please Sign In.");
           toggleAuthMode();
         }} else {{
           toast(d.message || "Authentication error.");
@@ -1017,7 +1080,7 @@ CUSTOMER_HTML = f"""
 """
 
 # ==============================================================================
-# 3. SELLER / ADMIN FRONTEND (WITH EDIT & DELETE)
+# 3. SELLER / ADMIN FRONTEND
 # ==============================================================================
 SELLER_HTML = """
 <!DOCTYPE html>
@@ -1455,7 +1518,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
                 self._json({"success": True}, set_cookie=f"sm_session={token}; Path=/; HttpOnly")
             except sqlite3.IntegrityError:
                 conn.close()
-                self._json({"success": False, "message": "Email already registered."})
+                self._json({"success": False, "message": "Account with this Name or Email already registered."})
             return
 
         if url.path == '/api/login':

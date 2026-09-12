@@ -109,7 +109,7 @@ PWA_MANIFEST = {
 }
 
 PWA_SW_JS = """
-const CACHE_NAME = 'supermart-cache-v18';
+const CACHE_NAME = 'supermart-cache-v19';
 const ASSETS = ['/', '/manifest.json'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
@@ -124,7 +124,7 @@ self.addEventListener('fetch', (e) => {
 });
 """
 
-CUSTOMER_HTML = f"""
+CUSTOMER_HTML = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -139,7 +139,7 @@ CUSTOMER_HTML = f"""
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3081/3081840.png">
 
   <style>
-    :root {{
+    :root {
       --primary: #9333ea;
       --primary-dark: #7e22ce;
       --accent: #ec4899;
@@ -150,252 +150,252 @@ CUSTOMER_HTML = f"""
       --muted: #64748b;
       --whatsapp: #25d366;
       --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }}
+    }
 
-    body.dark-mode {{
+    body.dark-mode {
       --bg: #0f172a;
       --card-bg: #1e293b;
       --border: #334155;
       --text: #f8fafc;
       --muted: #94a3b8;
       --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }}
+    }
 
-    * {{ box-sizing: border-box; margin: 0; padding: 0; font-family: Roboto, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }}
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Roboto, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
     
-    body {{
+    body {
       background: var(--bg);
       color: var(--text);
       padding-bottom: 75px;
       min-height: 100vh;
       transition: background 0.3s ease, color 0.3s ease;
-    }}
+    }
 
-    .top-bar {{
+    .top-bar {
       position: sticky; top: 0; z-index: 1000;
       background: var(--card-bg);
       backdrop-filter: blur(14px);
       border-bottom: 1px solid var(--border);
       padding: 10px 14px;
       transition: background 0.3s ease;
-    }}
-    .header-row1 {{ display: flex; justify-content: space-between; align-items: center; }}
-    .brand-logo {{ font-size: 20px; font-weight: 900; color: var(--primary); display: flex; align-items: center; gap: 6px; cursor: pointer; }}
-    .brand-logo span {{ background: linear-gradient(135deg, #9333ea, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
+    }
+    .header-row1 { display: flex; justify-content: space-between; align-items: center; }
+    .brand-logo { font-size: 20px; font-weight: 900; color: var(--primary); display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .brand-logo span { background: linear-gradient(135deg, #9333ea, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     
-    .top-icons {{ display: flex; gap: 10px; align-items: center; }}
+    .top-icons { display: flex; gap: 10px; align-items: center; }
     
-    .icon-2d-btn {{
+    .icon-2d-btn {
       width: 38px; height: 38px; border-radius: 50%;
       background: var(--card-bg); border: 1px solid var(--border);
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 2px 5px rgba(0,0,0,0.04); position: relative; cursor: pointer;
       transition: transform 0.15s ease;
-    }}
-    .icon-2d-btn:active {{ transform: scale(0.92); }}
-    body.dark-mode .icon-2d-btn svg {{ stroke: #f8fafc; fill: #f8fafc; }}
+    }
+    .icon-2d-btn:active { transform: scale(0.92); }
+    body.dark-mode .icon-2d-btn svg { stroke: #f8fafc; fill: #f8fafc; }
     
-    .icon-badge-num {{
+    .icon-badge-num {
       position: absolute; top: -3px; right: -3px;
       background: #ef4444; color: #fff; font-size: 10px; font-weight: bold;
       width: 17px; height: 17px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    }}
+    }
     
-    .search-container {{ margin-top: 8px; position: relative; }}
-    .search-input {{
+    .search-container { margin-top: 8px; position: relative; }
+    .search-input {
       width: 100%; height: 42px; border: 1px solid var(--border);
       border-radius: 24px; padding: 0 42px 0 38px; font-size: 13px;
       outline: none; background: var(--card-bg); color: var(--text);
       box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
-    }}
-    .search-left-icon {{ position: absolute; left: 14px; top: 11px; color: var(--muted); font-size: 15px; }}
-    .search-right-icon {{ position: absolute; right: 14px; top: 10px; color: var(--muted); font-size: 16px; cursor: pointer; }}
+    }
+    .search-left-icon { position: absolute; left: 14px; top: 11px; color: var(--muted); font-size: 15px; }
+    .search-right-icon { position: absolute; right: 14px; top: 10px; color: var(--muted); font-size: 16px; cursor: pointer; }
 
-    .delivery-strip {{
+    .delivery-strip {
       background: var(--card-bg); padding: 9px 14px; font-size: 12px; font-weight: bold; color: var(--text);
       display: none; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border);
       cursor: pointer;
-    }}
+    }
 
-    .circles-strip {{
+    .circles-strip {
       display: flex; gap: 14px; overflow-x: auto; padding: 12px 14px;
       background: var(--card-bg); border-bottom: 1px solid var(--border);
-    }}
-    .circles-strip::-webkit-scrollbar {{ display: none; }}
-    .circle-item {{ display: flex; flex-direction: column; align-items: center; min-width: 66px; cursor: pointer; }}
-    .circle-2d-box {{
+    }
+    .circles-strip::-webkit-scrollbar { display: none; }
+    .circle-item { display: flex; flex-direction: column; align-items: center; min-width: 66px; cursor: pointer; }
+    .circle-2d-box {
       width: 52px; height: 52px; border-radius: 50%;
       background: var(--bg); border: 1.5px solid var(--border);
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 2px 5px rgba(0,0,0,0.03); transition: transform 0.15s, border-color 0.15s;
-    }}
-    body.dark-mode .circle-2d-box svg {{ stroke: #cbd5e1; }}
-    .circle-item.active .circle-2d-box {{ border-color: var(--primary); background: #fdf4ff; transform: scale(1.06); }}
-    .circle-label {{ font-size: 11px; font-weight: bold; margin-top: 5px; color: var(--text); text-align: center; white-space: nowrap; }}
+    }
+    body.dark-mode .circle-2d-box svg { stroke: #cbd5e1; }
+    .circle-item.active .circle-2d-box { border-color: var(--primary); background: #fdf4ff; transform: scale(1.06); }
+    .circle-label { font-size: 11px; font-weight: bold; margin-top: 5px; color: var(--text); text-align: center; white-space: nowrap; }
 
-    .sort-filter-bar {{
+    .sort-filter-bar {
       display: flex; justify-content: space-between; align-items: center;
       background: var(--card-bg); padding: 8px 14px; border-bottom: 1px solid var(--border);
       font-size: 13px; font-weight: 700; color: var(--muted);
-    }}
-    .sort-select {{ border: none; background: transparent; font-weight: bold; color: var(--primary); outline: none; font-size: 13px; cursor: pointer; }}
+    }
+    .sort-select { border: none; background: transparent; font-weight: bold; color: var(--primary); outline: none; font-size: 13px; cursor: pointer; }
 
-    .grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; }}
-    .card {{
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; }
+    .card {
       background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
       padding: 10px; display: flex; flex-direction: column; position: relative;
       box-shadow: var(--shadow); cursor: pointer;
-    }}
-    .card-heart {{
+    }
+    .card-heart {
       position: absolute; top: 8px; right: 8px; background: var(--card-bg);
       border: 1px solid var(--border); width: 30px; height: 30px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2;
-    }}
+    }
     
-    .card-img-wrap {{
+    .card-img-wrap {
       width: 100%; height: 155px; border-radius: 8px; overflow: hidden;
       margin-bottom: 8px; background: var(--bg);
-    }}
-    .card-img-wrap img {{
+    }
+    .card-img-wrap img {
       width: 100%; height: 100%; object-fit: cover; object-position: center;
       transition: transform 0.2s ease;
-    }}
-    .card:hover .card-img-wrap img {{ transform: scale(1.04); }}
+    }
+    .card:hover .card-img-wrap img { transform: scale(1.04); }
     
-    .mall-tag {{
+    .mall-tag {
       background: #6b21a8; color: #fff; font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 4px; width: fit-content; margin-bottom: 4px;
-    }}
-    .card-name {{ font-size: 13px; font-weight: 700; height: 34px; overflow: hidden; line-height: 1.3; margin-bottom: 4px; color: var(--text); }}
-    .price-row {{ display: flex; align-items: baseline; gap: 6px; }}
-    .price-now {{ font-size: 16px; font-weight: 900; color: var(--text); }}
-    .price-mrp {{ font-size: 12px; color: var(--muted); text-decoration: line-through; }}
-    .price-off {{ font-size: 12px; color: #16a34a; font-weight: 800; }}
+    }
+    .card-name { font-size: 13px; font-weight: 700; height: 34px; overflow: hidden; line-height: 1.3; margin-bottom: 4px; color: var(--text); }
+    .price-row { display: flex; align-items: baseline; gap: 6px; }
+    .price-now { font-size: 16px; font-weight: 900; color: var(--text); }
+    .price-mrp { font-size: 12px; color: var(--muted); text-decoration: line-through; }
+    .price-off { font-size: 12px; color: #16a34a; font-weight: 800; }
     
-    .rating-pill {{
+    .rating-pill {
       background: #15803d; color: #fff; font-size: 11px; font-weight: 800;
       padding: 1px 6px; border-radius: 12px; display: inline-flex; align-items: center; gap: 2px; width: fit-content; margin: 4px 0 8px 0;
-    }}
+    }
 
-    .btn-cart {{
+    .btn-cart {
       background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       color: #fff; border: none; border-radius: 8px; padding: 10px 0;
       font-size: 13px; font-weight: 800; cursor: pointer; width: 100%; margin-top: auto;
-    }}
+    }
 
-    .product-view-sheet {{
+    .product-view-sheet {
       background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 75px; box-shadow: var(--shadow);
-    }}
-    .pdp-img-box {{
+    }
+    .pdp-img-box {
       width: 100%; height: 260px; display: flex; align-items: center; justify-content: center; position: relative;
       background: var(--bg); border-radius: 10px; margin-bottom: 14px; overflow:hidden;
-    }}
-    .pdp-img-box img {{ width: 100%; height: 100%; object-fit: contain; }}
-    .offer-box {{ background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); border-radius: 8px; padding: 12px; margin: 14px 0; }}
-    .trust-badges {{
+    }
+    .pdp-img-box img { width: 100%; height: 100%; object-fit: contain; }
+    .offer-box { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); border-radius: 8px; padding: 12px; margin: 14px 0; }
+    .trust-badges {
       display: flex; justify-content: space-around; background: var(--bg); border: 1px solid var(--border);
       border-radius: 8px; padding: 12px; margin: 14px 0; text-align: center; font-size: 11px; font-weight: bold;
     }}
-    .related-scroll {{ display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; }}
-    .related-scroll::-webkit-scrollbar {{ display: none; }}
-    .related-card {{
+    .related-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; }
+    .related-scroll::-webkit-scrollbar { display: none; }
+    .related-card {
       min-width: 140px; max-width: 140px; background: var(--card-bg); border: 1px solid var(--border);
       border-radius: 8px; padding: 8px; cursor: pointer; flex-shrink: 0;
-    }}
+    }
 
-    .pdp-bottom-bar {{
+    .pdp-bottom-bar {
       position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
       background: var(--card-bg); border-top: 1px solid var(--border); display: flex; z-index: 1000;
-    }}
-    .btn-pdp-cart {{ flex: 1; background: var(--card-bg); color: var(--text); border: none; font-weight: bold; font-size: 14px; cursor: pointer; }}
-    .btn-pdp-buy {{ flex: 1; background: #ff9f00; color: #fff; border: none; font-weight: bold; font-size: 14px; cursor: pointer; }}
+    }
+    .btn-pdp-cart { flex: 1; background: var(--card-bg); color: var(--text); border: none; font-weight: bold; font-size: 14px; cursor: pointer; }
+    .btn-pdp-buy { flex: 1; background: #ff9f00; color: #fff; border: none; font-weight: bold; font-size: 14px; cursor: pointer; }
 
-    .timeline {{ margin: 14px 0 10px 0; padding-left: 10px; border-left: 2px solid var(--border); }}
-    .timeline-step {{ position: relative; padding-bottom: 12px; padding-left: 16px; font-size: 12px; }}
-    .timeline-step::before {{
+    .timeline { margin: 14px 0 10px 0; padding-left: 10px; border-left: 2px solid var(--border); }
+    .timeline-step { position: relative; padding-bottom: 12px; padding-left: 16px; font-size: 12px; }
+    .timeline-step::before {
       content: ''; position: absolute; left: -6px; top: 2px; width: 10px; height: 10px;
       border-radius: 50%; background: var(--muted);
-    }}
-    .timeline-step.done {{ color: #16a34a; font-weight: bold; }}
-    .timeline-step.done::before {{ background: #16a34a; }}
-    .timeline-step.current {{ color: #2563eb; font-weight: 900; }}
-    .timeline-step.current::before {{ background: #2563eb; box-shadow: 0 0 0 3px #bfdbfe; }}
+    }
+    .timeline-step.done { color: #16a34a; font-weight: bold; }
+    .timeline-step.done::before { background: #16a34a; }
+    .timeline-step.current { color: #2563eb; font-weight: 900; }
+    .timeline-step.current::before { background: #2563eb; box-shadow: 0 0 0 3px #bfdbfe; }
 
-    .meesho-item-row {{
+    .meesho-item-row {
       display: flex; justify-content: space-between; align-items: center;
       padding: 15px 12px; border-bottom: 1px solid var(--border); cursor: pointer;
       background: var(--card-bg); text-decoration: none; color: var(--text);
-    }}
-    .meesho-item-row:active {{ background: var(--bg); }}
-    .meesho-item-left {{ display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; }}
+    }
+    .meesho-item-row:active { background: var(--bg); }
+    .meesho-item-left { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; }
 
-    .btn-big {{
+    .btn-big {
       width: 100%; min-height: 46px; border: none; border-radius: 8px;
       font-size: 14px; font-weight: 800; cursor: pointer; display: flex;
       align-items: center; justify-content: center; gap: 6px; text-decoration: none;
-    }}
-    .btn-primary {{ background: var(--primary); color: #fff; }}
-    .btn-orange {{ background: #ea580c; color: #fff; }}
-    .btn-whatsapp {{ background: var(--whatsapp); color: #fff; }}
-    .btn-outline-red {{ background: transparent; border: 1px solid #ef4444; color: #ef4444; }}
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-orange { background: #ea580c; color: #fff; }
+    .btn-whatsapp { background: var(--whatsapp); color: #fff; }
+    .btn-outline-red { background: transparent; border: 1px solid #ef4444; color: #ef4444; }
 
-    .screen {{ display: none; padding: 12px; }}
-    .screen.active {{ display: block; }}
-    .sheet {{
+    .screen { display: none; padding: 12px; }
+    .screen.active { display: block; }
+    .sheet {
       background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
       padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow);
-    }}
+    }
 
-    .modal {{
+    .modal {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
       z-index: 2000; display: none; align-items: center; justify-content: center; padding: 14px;
-    }}
-    .modal-box {{
+    }
+    .modal-box {
       background: var(--card-bg); color: var(--text); width: 100%; max-width: 440px; max-height: 90vh;
       border-radius: 14px; overflow-y: auto; padding: 20px; position: relative;
-    }}
-    .modal-close {{ position: absolute; top: 12px; right: 16px; font-size: 24px; font-weight: bold; cursor: pointer; border: none; background: transparent; color: var(--text); }}
+    }
+    .modal-close { position: absolute; top: 12px; right: 16px; font-size: 24px; font-weight: bold; cursor: pointer; border: none; background: transparent; color: var(--text); }
 
-    #locationModal .modal-box {{
+    #locationModal .modal-box {
       position: fixed; bottom: 0; left: 0; right: 0; max-width: 100%;
       border-radius: 16px 16px 0 0; padding: 20px 16px 30px 16px;
-    }}
+    }
 
-    .bottom-nav {{
+    .bottom-nav {
       position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
       background: var(--card-bg); border-top: 1px solid var(--border);
       display: flex; justify-content: space-around; align-items: center; z-index: 1000;
       transition: background 0.3s ease;
-    }}
-    .nav-btn {{
+    }
+    .nav-btn {
       background: none; border: none; font-size: 11px; font-weight: 700;
       color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; cursor: pointer;
-    }}
-    .nav-btn.active {{ color: var(--primary); }}
-    .nav-btn svg {{ stroke: var(--muted); }}
-    .nav-btn.active svg {{ stroke: var(--primary); fill: rgba(147,51,234,0.12); }}
+    }
+    .nav-btn.active { color: var(--primary); }
+    .nav-btn svg { stroke: var(--muted); }
+    .nav-btn.active svg { stroke: var(--primary); fill: rgba(147,51,234,0.12); }
 
-    .toast {{
+    .toast {
       position: fixed; top: 75px; left: 50%; transform: translateX(-50%);
       background: #0f172a; color: #fff; padding: 10px 20px; border-radius: 30px;
       font-size: 13px; font-weight: 700; z-index: 9999; display: none; box-shadow: var(--shadow);
-    }}
+    }
 
-    #offlineOverlay {{
+    #offlineOverlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(255, 255, 255, 0.96); z-index: 999999;
       display: none; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center;
-    }}
-    .offline-dog-img {{
+    }
+    .offline-dog-img {
       width: 220px; height: 220px; border-radius: 20px; object-fit: cover;
       box-shadow: 0 10px 25px rgba(0,0,0,0.15); margin-bottom: 20px; border: 3px solid #e9d5ff;
-    }}
+    }
 
-    #pwaInstallBanner {{
+    #pwaInstallBanner {
       background: linear-gradient(135deg, #1e1b4b, #312e81); color: #fff;
       padding: 10px 14px; display: none; justify-content: space-between; align-items: center;
       font-size: 13px; font-weight: bold;
-    }}
+    }
   </style>
 </head>
 <body>
@@ -635,7 +635,7 @@ CUSTOMER_HTML = f"""
       <h3 style="margin-bottom: 12px;">Your order has been placed successfully!</h3>
       <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">Order ID: <strong id="successOrderId">#</strong><br>Our partner will deliver to your doorstep as per the live timeline.</p>
       
-      <a id="waSupportLink" href="https://wa.me/{ADMIN_WHATSAPP}" target="_blank" class="btn-big btn-whatsapp" style="margin-bottom:10px;">
+      <a id="waSupportLink" href="https://wa.me/917670912836" target="_blank" class="btn-big btn-whatsapp" style="margin-bottom:10px;">
         💬 Chat on WhatsApp with Store
       </a>
 
@@ -675,7 +675,7 @@ CUSTOMER_HTML = f"""
     </div>
 
     <div style="display:flex; gap:10px; margin-bottom:14px;">
-      <a href="https://wa.me/{ADMIN_WHATSAPP}?text=Hello%20Supermart%20Support" target="_blank" style="flex:1; background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:14px; text-align:center; text-decoration:none; color:var(--text); box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+      <a href="https://wa.me/917670912836?text=Hello%20Supermart%20Support" target="_blank" style="flex:1; background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:14px; text-align:center; text-decoration:none; color:var(--text); box-shadow:0 1px 3px rgba(0,0,0,0.03);">
         <div style="font-size:20px; margin-bottom:4px;">📞</div>
         <strong style="font-size:13px;">Help Centre</strong>
       </a>
@@ -738,7 +738,7 @@ CUSTOMER_HTML = f"""
         <span style="color:var(--muted);">❯</span>
       </div>
 
-      <a href="https://wa.me/{ADMIN_WHATSAPP}?text=Hello%20Supermart%20Support" target="_blank" class="meesho-item-row">
+      <a href="https://wa.me/917670912836?text=Hello%20Supermart%20Support" target="_blank" class="meesho-item-row">
         <div class="meesho-item-left">
           <span>💬</span>
           <span>WhatsApp Customer Support</span>
@@ -750,7 +750,6 @@ CUSTOMER_HTML = f"""
     <button class="btn-big btn-outline-red" style="border-radius:10px; background:var(--card-bg);" onclick="logout()">LOGOUT ACCOUNT</button>
   </section>
 
-  <!-- PASSWORD MODAL -->
   <div class="modal" id="passwordModal">
     <div class="modal-box">
       <button class="modal-close" onclick="closePasswordModal()">&times;</button>
@@ -762,7 +761,6 @@ CUSTOMER_HTML = f"""
     </div>
   </div>
 
-  <!-- LANGUAGE MODAL -->
   <div class="modal" id="langModal">
     <div class="modal-box">
       <button class="modal-close" onclick="closeLangModal()">&times;</button>
@@ -775,7 +773,6 @@ CUSTOMER_HTML = f"""
     </div>
   </div>
 
-  <!-- EDIT PROFILE MODAL -->
   <div class="modal" id="editProfileModal">
     <div class="modal-box">
       <button class="modal-close" onclick="closeEditProfileModal()">&times;</button>
@@ -795,7 +792,6 @@ CUSTOMER_HTML = f"""
     </div>
   </div>
 
-  <!-- LOCATION SHEET -->
   <div class="modal" id="locationModal">
     <div class="modal-box">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
@@ -825,7 +821,7 @@ CUSTOMER_HTML = f"""
     </div>
   </div>
 
-  <!-- AUTH MODAL -->
+  <!-- AUTH MODAL: DIRECT WHATSAPP BOT AUTO SIGNUP (NO OTP BOX) -->
   <div class="modal" id="authModal">
     <div class="modal-box" style="max-width: 380px;">
       <button class="modal-close" onclick="closeAuthModal()">&times;</button>
@@ -840,20 +836,11 @@ CUSTOMER_HTML = f"""
         </div>
 
         <div id="forgotPwLink" style="text-align:right; font-size:12px;">
-          <a href="https://wa.me/{ADMIN_WHATSAPP}?text=Hello%20Supermart,%20I%20forgot%20my%20login%20password.%20Please%20help%20me%20reset%20it." target="_blank" style="color:var(--primary); font-weight:bold; text-decoration:none;">Forgot Password?</a>
+          <a href="https://wa.me/917670912836?text=Hello%20Supermart,%20I%20forgot%20my%20login%20password.%20Please%20help%20me%20reset%20it." target="_blank" style="color:var(--primary); font-weight:bold; text-decoration:none;">Forgot Password?</a>
         </div>
 
         <button type="submit" class="btn-big btn-primary" id="authSubmitBtn">SIGN IN</button>
       </form>
-
-      <div id="otpBox" style="display:none; text-align:center; margin-top:14px;">
-        <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:8px; margin-bottom:12px;">
-          <strong style="color:#15803d; font-size:13px;">📩 SMS OTP Dispatched!</strong><br>
-          <p style="font-size:11px; color:var(--muted); margin-top:4px;">Check your phone's SMS Messenger app for the 4-digit code.</p>
-        </div>
-        <input type="number" id="otpInput" placeholder="Enter 4-digit SMS OTP" style="width:100%; padding:12px; border:2px solid var(--primary); border-radius:6px; text-align:center; font-size:18px; letter-spacing:6px; margin-bottom:10px; background:var(--bg); color:var(--text);">
-        <button class="btn-big btn-primary" onclick="verifyMobileOtp()">VERIFY & CREATE ACCOUNT</button>
-      </div>
 
       <p style="margin-top: 14px; font-size: 13px; text-align: center; color: var(--muted);">
         <a href="javascript:void(0)" onclick="toggleAuthMode()" id="authSwitchLink" style="color: var(--primary); font-weight: bold; text-decoration:none;">New customer? Sign Up here</a>
@@ -886,7 +873,6 @@ CUSTOMER_HTML = f"""
     let currentUser = null;
     let isRegister = false;
     let activeProduct = null;
-    let currentRegPhone = "";
     let currentLang = "en";
 
     const LANG_DATA = {
@@ -1455,7 +1441,7 @@ CUSTOMER_HTML = f"""
       if(d.success) {
         document.getElementById('successOrderId').innerText = '#' + d.order_id;
         const waMsg = encodeURIComponent(`Hi Supermart, I placed order #${d.order_id}. Receiver: ${payload.name}, Phone: ${payload.phone}, Address: ${payload.address}`);
-        document.getElementById('waSupportLink').href = `https://wa.me/{ADMIN_WHATSAPP}?text=${waMsg}`;
+        document.getElementById('waSupportLink').href = `https://wa.me/917670912836?text=${waMsg}`;
         refreshCounts();
         checkUserSession();
         switchView('orderSuccess');
@@ -1588,8 +1574,6 @@ CUSTOMER_HTML = f"""
       document.getElementById('authTitle').innerText = 'Sign In with Mobile';
       document.getElementById('authSubmitBtn').innerText = 'SIGN IN';
       document.getElementById('authSwitchLink').innerText = 'New customer? Sign Up here';
-      document.getElementById('authMainForm').style.display = 'grid';
-      document.getElementById('otpBox').style.display = 'none';
       document.getElementById('authModal').style.display = 'flex'; 
     }
     function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
@@ -1598,10 +1582,8 @@ CUSTOMER_HTML = f"""
       document.getElementById('confirmPwGroup').style.display = isRegister ? 'block' : 'none';
       document.getElementById('forgotPwLink').style.display = isRegister ? 'none' : 'block';
       document.getElementById('authTitle').innerText = isRegister ? 'Create Supermart Account' : 'Sign In with Mobile';
-      document.getElementById('authSubmitBtn').innerText = isRegister ? 'SEND SMS OTP ➔' : 'SIGN IN';
+      document.getElementById('authSubmitBtn').innerText = isRegister ? 'SIGN UP & VERIFY VIA BOT ➔' : 'SIGN IN';
       document.getElementById('authSwitchLink').innerText = isRegister ? 'Already registered? Sign In' : 'New customer? Sign Up here';
-      document.getElementById('authMainForm').style.display = 'grid';
-      document.getElementById('otpBox').style.display = 'none';
     }
 
     async function handleAuthSubmit(e) {
@@ -1613,17 +1595,19 @@ CUSTOMER_HTML = f"""
         const confirmPw = document.getElementById('authConfirmPassword').value;
         if(password !== confirmPw) return toast("Passwords do not match!");
 
-        const res = await fetch('/api/register/request-otp', {
+        const res = await fetch('/api/register', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ phone: phone, password: password })
         });
         const d = await res.json();
         if(d.success) {
-          currentRegPhone = phone;
-          document.getElementById('authMainForm').style.display = 'none';
-          document.getElementById('otpBox').style.display = 'block';
-          toast("SMS OTP dispatched to your mobile!");
+          toast("Account Created! Connecting to WhatsApp Bot...");
+          closeAuthModal();
+          checkUserSession();
+          if(d.bot_url) {
+            window.location.href = d.bot_url;
+          }
         } else {
           toast(d.message || "Registration error.");
         }
@@ -1641,25 +1625,6 @@ CUSTOMER_HTML = f"""
         } else {
           toast(d.message || "Invalid Mobile Number or Password.");
         }
-      }
-    }
-
-    async function verifyMobileOtp() {
-      const otp = document.getElementById('otpInput').value.trim();
-      if(!otp || otp.length !== 4) return toast("Enter valid 4-digit code!");
-
-      const res = await fetch('/api/register/verify-otp', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ phone: currentRegPhone, otp: otp })
-      });
-      const d = await res.json();
-      if(d.success) {
-        toast("Mobile verified & Account created!");
-        closeAuthModal();
-        checkUserSession();
-      } else {
-        toast(d.message || "Invalid verification code!");
       }
     }
 
@@ -2177,7 +2142,8 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             user['address'] = address
             return self._json({"success": True})
 
-        if url.path == '/api/register/request-otp':
+        # DIRECT SIGNUP WITHOUT OTP (WITH BOT REDIRECT)
+        if url.path == '/api/register':
             phone = data.get('phone', '').strip().replace(' ', '')
             password = data.get('password', '')
 
@@ -2186,46 +2152,23 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
 
             conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()
-            c.execute("SELECT id FROM users WHERE phone = ?", (phone,))
-            exists = c.fetchone()
-            conn.close()
-
-            if exists:
-                return self._json({"success": False, "message": "This mobile number is already registered! Please Sign In."})
-
-            generated_otp = str(random.randint(1000, 9999))
-            PENDING_REGISTRATIONS[phone] = {
-                "password": hash_pw(password),
-                "otp": generated_otp
-            }
-
-            send_real_sms_otp(phone, generated_otp)
-            return self._json({"success": True, "message": "SMS OTP sent to mobile phone."})
-
-        if url.path == '/api/register/verify-otp':
-            phone = data.get('phone', '').strip()
-            user_otp = data.get('otp', '').strip()
-
-            pending = PENDING_REGISTRATIONS.get(phone)
-            if not pending or pending['otp'] != user_otp:
-                return self._json({"success": False, "message": "Invalid SMS OTP code."})
-
-            conn = sqlite3.connect(DB_FILE)
-            c = conn.cursor()
             try:
-                c.execute("INSERT INTO users (phone, password) VALUES (?, ?)", (phone, pending['password']))
+                c.execute("INSERT INTO users (phone, password) VALUES (?, ?)", (phone, hash_pw(password)))
                 uid = c.lastrowid
                 conn.commit()
                 conn.close()
-                del PENDING_REGISTRATIONS[phone]
 
                 token = str(uuid.uuid4())
                 u_obj = {"id": uid, "phone": phone, "name": "", "address": "", "pincode": ""}
                 SESSIONS[token] = u_obj
-                self._json({"success": True}, set_cookie=f"sm_session={token}; Path=/; HttpOnly")
+
+                msg = urllib.parse.quote(f"Hello Supermart Bot! I have registered with Mobile: +91 {phone}. Please confirm my customer account.")
+                bot_url = f"https://wa.me/{ADMIN_WHATSAPP}?text={msg}"
+
+                self._json({"success": True, "bot_url": bot_url}, set_cookie=f"sm_session={token}; Path=/; HttpOnly")
             except sqlite3.IntegrityError:
                 conn.close()
-                self._json({"success": False, "message": "Mobile number already registered."})
+                self._json({"success": False, "message": "Mobile number already registered! Please Login."})
             return
 
         if url.path == '/api/login':
@@ -2372,7 +2315,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             return
 
         if url.path == '/api/seller/product/update':
-            conn = sqlite3.sqlite3.connect(DB_FILE) if hasattr(sqlite3, 'sqlite3') else sqlite3.connect(DB_FILE)
+            conn = sqlite3.connect(DB_FILE)
             c = conn.cursor()
             c.execute("""
                 UPDATE products SET name = ?, category = ?, brand = ?, price = ?, orig_price = ?, specs = ?, image = ?

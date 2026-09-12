@@ -109,7 +109,7 @@ PWA_MANIFEST = {
 }
 
 PWA_SW_JS = """
-const CACHE_NAME = 'supermart-cache-v20';
+const CACHE_NAME = 'supermart-cache-v21';
 const ASSETS = ['/', '/manifest.json'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
@@ -166,21 +166,22 @@ CUSTOMER_HTML = """
     body {
       background: var(--bg);
       color: var(--text);
+      padding-top: env(safe-area-inset-top, 0px);
       padding-bottom: calc(75px + env(safe-area-inset-bottom, 0px));
       min-height: 100vh;
       transition: background 0.3s ease, color 0.3s ease;
     }
 
-    /* Fixed Notch / Status bar padding for Top Header */
+    /* Fixed Camera Notch / Status bar safe area */
     .top-bar {
       position: sticky; top: 0; z-index: 1000;
       background: var(--card-bg);
       backdrop-filter: blur(14px);
       border-bottom: 1px solid var(--border);
-      padding-top: max(14px, env(safe-area-inset-top, 0px));
+      padding-top: max(16px, env(safe-area-inset-top, 16px));
       padding-bottom: 10px;
-      padding-left: max(14px, env(safe-area-inset-left, 0px));
-      padding-right: max(14px, env(safe-area-inset-right, 0px));
+      padding-left: 14px;
+      padding-right: 14px;
       transition: background 0.3s ease;
     }
     .header-row1 { display: flex; justify-content: space-between; align-items: center; }
@@ -307,7 +308,8 @@ CUSTOMER_HTML = """
     }
 
     .pdp-bottom-bar {
-      position: fixed; bottom: 0; left: 0; right: 0; height: calc(60px + env(safe-area-inset-bottom, 0px));
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: calc(60px + env(safe-area-inset-bottom, 0px));
       padding-bottom: env(safe-area-inset-bottom, 0px);
       background: var(--card-bg); border-top: 1px solid var(--border); display: flex; z-index: 1000;
     }
@@ -366,7 +368,6 @@ CUSTOMER_HTML = """
       border-radius: 16px 16px 0 0; padding: 20px 16px 30px 16px;
     }
 
-    /* Fixed Bottom Nav for Mobile Safe Area */
     .bottom-nav {
       position: fixed; bottom: 0; left: 0; right: 0;
       height: calc(60px + env(safe-area-inset-bottom, 0px));
@@ -829,7 +830,7 @@ CUSTOMER_HTML = """
     </div>
   </div>
 
-  <!-- AUTH MODAL: DIRECT WHATSAPP BOT AUTO SIGNUP (NO OTP BOX) -->
+  <!-- AUTH MODAL: DIRECT SIGNUP / LOGIN (NO OTP BOX) -->
   <div class="modal" id="authModal">
     <div class="modal-box" style="max-width: 380px;">
       <button class="modal-close" onclick="closeAuthModal()">&times;</button>
@@ -1154,9 +1155,13 @@ CUSTOMER_HTML = """
     }
 
     async function loadCatalog() {
-      const res = await fetch('/api/products');
-      products = await res.json();
-      filterAndSortItems();
+      try {
+        const res = await fetch('/api/products');
+        products = await res.json();
+        filterAndSortItems();
+      } catch(err) {
+        console.error("Error loading products:", err);
+      }
     }
 
     function selectCircleCategory(cat, el) {
@@ -1405,7 +1410,11 @@ CUSTOMER_HTML = """
     }
 
     async function removeCart(id) {
-      await fetch('/api/cart/remove', { method:'POST', headers:{{'Content-Type':'application/json'}}, body:JSON.stringify({cart_id:id}) });
+      await fetch('/api/cart/remove', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({cart_id: id})
+      });
       renderCart();
       refreshCounts();
     }
@@ -1590,7 +1599,7 @@ CUSTOMER_HTML = """
       document.getElementById('confirmPwGroup').style.display = isRegister ? 'block' : 'none';
       document.getElementById('forgotPwLink').style.display = isRegister ? 'none' : 'block';
       document.getElementById('authTitle').innerText = isRegister ? 'Create Supermart Account' : 'Sign In with Mobile';
-      document.getElementById('authSubmitBtn').innerText = isRegister ? 'SIGN UP & VERIFY VIA BOT ➔' : 'SIGN IN';
+      document.getElementById('authSubmitBtn').innerText = isRegister ? 'SIGN UP & CONNECT BOT ➔' : 'SIGN IN';
       document.getElementById('authSwitchLink').innerText = isRegister ? 'Already registered? Sign In' : 'New customer? Sign Up here';
     }
 
@@ -2150,7 +2159,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             user['address'] = address
             return self._json({"success": True})
 
-        # DIRECT BOT AUTO-SIGNUP (NO OTP BOX)
+        # DIRECT SIGNUP WITHOUT ANY OTP BOX
         if url.path == '/api/register':
             phone = data.get('phone', '').strip().replace(' ', '')
             password = data.get('password', '')

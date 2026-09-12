@@ -99,7 +99,7 @@ PWA_MANIFEST = {
     "short_name": "Supermart",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#f8fafc",
+    "background_color": "#ffffff",
     "theme_color": "#9333ea",
     "orientation": "portrait",
     "icons": [
@@ -109,7 +109,7 @@ PWA_MANIFEST = {
 }
 
 PWA_SW_JS = """
-const CACHE_NAME = 'supermart-cache-v19';
+const CACHE_NAME = 'supermart-cache-v20';
 const ASSETS = ['/', '/manifest.json'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
@@ -129,13 +129,13 @@ CUSTOMER_HTML = """
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>SUPERMART - Online Smart Shopping</title>
   
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#9333ea">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3081/3081840.png">
 
   <style>
@@ -166,17 +166,21 @@ CUSTOMER_HTML = """
     body {
       background: var(--bg);
       color: var(--text);
-      padding-bottom: 75px;
+      padding-bottom: calc(75px + env(safe-area-inset-bottom, 0px));
       min-height: 100vh;
       transition: background 0.3s ease, color 0.3s ease;
     }
 
+    /* Fixed Notch / Status bar padding for Top Header */
     .top-bar {
       position: sticky; top: 0; z-index: 1000;
       background: var(--card-bg);
       backdrop-filter: blur(14px);
       border-bottom: 1px solid var(--border);
-      padding: 10px 14px;
+      padding-top: max(14px, env(safe-area-inset-top, 0px));
+      padding-bottom: 10px;
+      padding-left: max(14px, env(safe-area-inset-left, 0px));
+      padding-right: max(14px, env(safe-area-inset-right, 0px));
       transition: background 0.3s ease;
     }
     .header-row1 { display: flex; justify-content: space-between; align-items: center; }
@@ -201,7 +205,7 @@ CUSTOMER_HTML = """
       width: 17px; height: 17px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
     }
     
-    .search-container { margin-top: 8px; position: relative; }
+    .search-container { margin-top: 10px; position: relative; }
     .search-input {
       width: 100%; height: 42px; border: 1px solid var(--border);
       border-radius: 24px; padding: 0 42px 0 38px; font-size: 13px;
@@ -294,7 +298,7 @@ CUSTOMER_HTML = """
     .trust-badges {
       display: flex; justify-content: space-around; background: var(--bg); border: 1px solid var(--border);
       border-radius: 8px; padding: 12px; margin: 14px 0; text-align: center; font-size: 11px; font-weight: bold;
-    }}
+    }
     .related-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; }
     .related-scroll::-webkit-scrollbar { display: none; }
     .related-card {
@@ -303,7 +307,8 @@ CUSTOMER_HTML = """
     }
 
     .pdp-bottom-bar {
-      position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
+      position: fixed; bottom: 0; left: 0; right: 0; height: calc(60px + env(safe-area-inset-bottom, 0px));
+      padding-bottom: env(safe-area-inset-bottom, 0px);
       background: var(--card-bg); border-top: 1px solid var(--border); display: flex; z-index: 1000;
     }
     .btn-pdp-cart { flex: 1; background: var(--card-bg); color: var(--text); border: none; font-weight: bold; font-size: 14px; cursor: pointer; }
@@ -361,8 +366,11 @@ CUSTOMER_HTML = """
       border-radius: 16px 16px 0 0; padding: 20px 16px 30px 16px;
     }
 
+    /* Fixed Bottom Nav for Mobile Safe Area */
     .bottom-nav {
-      position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: calc(60px + env(safe-area-inset-bottom, 0px));
+      padding-bottom: env(safe-area-inset-bottom, 0px);
       background: var(--card-bg); border-top: 1px solid var(--border);
       display: flex; justify-content: space-around; align-items: center; z-index: 1000;
       transition: background 0.3s ease;
@@ -1397,7 +1405,7 @@ CUSTOMER_HTML = """
     }
 
     async function removeCart(id) {
-      await fetch('/api/cart/remove', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({cart_id:id}) });
+      await fetch('/api/cart/remove', { method:'POST', headers:{{'Content-Type':'application/json'}}, body:JSON.stringify({cart_id:id}) });
       renderCart();
       refreshCounts();
     }
@@ -2142,7 +2150,7 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
             user['address'] = address
             return self._json({"success": True})
 
-        # DIRECT SIGNUP WITHOUT OTP (WITH BOT REDIRECT)
+        # DIRECT BOT AUTO-SIGNUP (NO OTP BOX)
         if url.path == '/api/register':
             phone = data.get('phone', '').strip().replace(' ', '')
             password = data.get('password', '')
@@ -2162,13 +2170,13 @@ class UnifiedHandler(http.server.BaseHTTPRequestHandler):
                 u_obj = {"id": uid, "phone": phone, "name": "", "address": "", "pincode": ""}
                 SESSIONS[token] = u_obj
 
-                msg = urllib.parse.quote(f"Hello Supermart Bot! I have registered with Mobile: +91 {phone}. Please confirm my customer account.")
+                msg = urllib.parse.quote(f"Hello Supermart Bot! I have registered my account with Mobile: +91 {phone}.")
                 bot_url = f"https://wa.me/{ADMIN_WHATSAPP}?text={msg}"
 
                 self._json({"success": True, "bot_url": bot_url}, set_cookie=f"sm_session={token}; Path=/; HttpOnly")
             except sqlite3.IntegrityError:
                 conn.close()
-                self._json({"success": False, "message": "Mobile number already registered! Please Login."})
+                self._json({"success": False, "message": "Mobile number already registered! Please Sign In."})
             return
 
         if url.path == '/api/login':
